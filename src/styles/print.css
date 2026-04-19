@@ -1,0 +1,606 @@
+/* ═══════════════════════════════════════════════════════════════
+   print.css — Professionele afdrukstijlen voor BYT Studio
+   Geïmporteerd in OfferteDetail.jsx
+   Accentkleur wordt via --hs-primair CSS-variabele doorgegeven
+   vanuit PrintLayout (React inline style).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Schermweergave: printblok verbergen ──────────────────────── */
+.offerte-print {
+  display: none;
+}
+
+/* ── Print media ──────────────────────────────────────────────── */
+@media print {
+
+  /* Paginaformaat en marges */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 20mm 15mm;
+  }
+
+  /* Verberg alle UI-chrome */
+  body > *,
+  #root > * {
+    display: none !important;
+  }
+
+  /* Verberg specifieke navigatie-elementen als ze toch zichtbaar zijn */
+  nav,
+  aside,
+  header,
+  .sidebar,
+  .topbar,
+  .banner,
+  .no-print,
+  button,
+  [role="navigation"] {
+    display: none !important;
+  }
+
+  /* Toon alleen het printblok */
+  .offerte-print {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    color: #000;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+  }
+
+  /* Reset alle kleuren naar zwart-wit */
+  .offerte-print * {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Header-balk (huisstijl-accentlijn) ─────────────────────── */
+  .op-header-balk {
+    background: var(--hs-primair, #185FA5) !important;
+    height: 4px;
+    width: 100%;
+    margin-bottom: 12mm;
+  }
+
+  /* ── Bedrijfs- en offerte-header ────────────────────────────── */
+  .op-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10mm;
+  }
+
+  .op-bedrijf-naam {
+    font-size: 18pt;
+    font-weight: 700;
+    color: var(--hs-primair, #185FA5) !important;
+    margin-bottom: 2mm;
+    line-height: 1.2;
+  }
+
+  .op-bedrijf-details {
+    font-size: 8.5pt;
+    color: #555 !important;
+    line-height: 1.6;
+  }
+
+  .op-offerte-blok {
+    text-align: right;
+  }
+
+  .op-offerte-label {
+    font-size: 22pt;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--hs-primair, #185FA5) !important;
+    line-height: 1;
+    margin-bottom: 2mm;
+  }
+
+  .op-offerte-meta {
+    font-size: 8.5pt;
+    color: #555 !important;
+    line-height: 1.7;
+  }
+
+  .op-offerte-meta strong {
+    color: #000 !important;
+  }
+
+  /* ── Scheidingslijn ─────────────────────────────────────────── */
+  .op-divider {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 6mm 0;
+  }
+
+  /* ── Van / Aan sectie ───────────────────────────────────────── */
+  .op-partijen {
+    display: flex;
+    gap: 10mm;
+    margin-bottom: 8mm;
+  }
+
+  .op-partij {
+    flex: 1;
+  }
+
+  .op-partij-label {
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--hs-primair, #185FA5) !important;
+    margin-bottom: 2mm;
+    padding-bottom: 1mm;
+    border-bottom: 1px solid var(--hs-primair, #185FA5);
+  }
+
+  .op-partij-content {
+    font-size: 9.5pt;
+    line-height: 1.7;
+    color: #000 !important;
+  }
+
+  .op-partij-content .naam {
+    font-weight: 600;
+    font-size: 10.5pt;
+  }
+
+  .op-partij-content .grijs {
+    color: #555 !important;
+    font-size: 8.5pt;
+  }
+
+  /* ── Betreft-regel ──────────────────────────────────────────── */
+  .op-betreft {
+    font-size: 10pt;
+    margin-bottom: 8mm;
+    padding: 3mm 4mm;
+    background: #f5f8fc !important;
+    border-left: 3px solid var(--hs-primair, #185FA5);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .op-betreft strong {
+    color: var(--hs-primair, #185FA5) !important;
+  }
+
+  /* ── Itemtabel ──────────────────────────────────────────────── */
+  .op-tabel {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 6mm;
+    font-size: 9.5pt;
+  }
+
+  .op-tabel thead tr {
+    background: var(--hs-primair, #185FA5) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .op-tabel thead th {
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2.5mm 3mm;
+    text-align: left;
+  }
+
+  .op-tabel thead th:last-child,
+  .op-tabel thead th:nth-child(2),
+  .op-tabel thead th:nth-child(3) {
+    text-align: right;
+  }
+
+  /* Tabelrijen nooit splitsen over pagina's */
+  .op-tabel tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .op-tabel tbody tr:nth-child(even) {
+    background: #f9fbfd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .op-tabel tbody td {
+    padding: 2mm 3mm;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    color: #000 !important;
+  }
+
+  .op-tabel tbody td:nth-child(2),
+  .op-tabel tbody td:nth-child(3),
+  .op-tabel tbody td:nth-child(4) {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Totaalrijen onderaan tabel */
+  .op-tabel tfoot tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .op-tabel tfoot td {
+    padding: 1.5mm 3mm;
+    border: none;
+  }
+
+  .op-tabel tfoot td:last-child {
+    text-align: right;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .op-tabel tfoot td:first-child {
+    text-align: right;
+    color: #555 !important;
+    font-size: 9pt;
+  }
+
+  .op-tabel .rij-subtotaal td {
+    border-top: 1px solid #ddd;
+    padding-top: 2.5mm;
+  }
+
+  .op-tabel .rij-btw td {
+    color: #555 !important;
+  }
+
+  .op-tabel .rij-totaal td {
+    border-top: 2px solid var(--hs-primair, #185FA5);
+    padding-top: 2.5mm;
+    font-size: 11pt;
+    font-weight: 700;
+  }
+
+  .op-tabel .rij-totaal td:last-child {
+    color: var(--hs-primair, #185FA5) !important;
+  }
+
+  /* ── Voettekst ──────────────────────────────────────────────── */
+  .op-voettekst {
+    margin-top: 12mm;
+    padding-top: 4mm;
+    border-top: 1px solid #ddd;
+    font-size: 7.5pt;
+    color: #777 !important;
+    line-height: 1.6;
+  }
+
+  .op-voettekst-titel {
+    font-weight: 600;
+    font-size: 8pt;
+    color: #444 !important;
+    margin-bottom: 1mm;
+  }
+
+  /* ── Handtekeninglijn ───────────────────────────────────────── */
+  .op-handtekening {
+    display: flex;
+    gap: 20mm;
+    margin-top: 14mm;
+    page-break-inside: avoid;
+  }
+
+  .op-handtekening-blok {
+    flex: 1;
+  }
+
+  .op-handtekening-lijn {
+    border-top: 1px solid #aaa;
+    margin-bottom: 1.5mm;
+    margin-top: 10mm;
+  }
+
+  .op-handtekening-label {
+    font-size: 7.5pt;
+    color: #777 !important;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   HANDLEIDING PRINT STIJLEN
+   Geïmporteerd in HandleidingDetail.jsx
+   --hs-primair wordt via inline style op .handleiding-print-content gezet
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Verberg op scherm */
+.handleiding-print-content {
+  display: none;
+}
+
+@media print {
+  /* Paginaformaat voor handleidingen */
+  @page {
+    size: A4 portrait;
+    margin: 20mm 20mm 28mm 20mm;
+  }
+
+  /* Paginanummer rechtsonder via @page (werkt in Chrome/Edge) */
+  @page {
+    @bottom-right {
+      content: "p. " counter(page);
+      font-size: 8pt;
+      color: #9ca3af;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+  }
+
+  /* Toon alleen handleiding-printblok */
+  .handleiding-print-content {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    color: #000;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.65;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Verberg alle andere UI-elementen */
+  body > *,
+  #root > * {
+    display: none !important;
+  }
+
+  .offerte-print,
+  .handleiding-print-content {
+    display: block !important;
+  }
+
+  /* ── Bovenste kleurband ──────────────────────────────────────── */
+  .hp-kleurband {
+    height: 5px;
+    background: var(--hs-primair, #185FA5) !important;
+    width: 100%;
+    margin-bottom: 10mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Document header ─────────────────────────────────────────── */
+  .hp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6mm;
+  }
+
+  .hp-header-links {
+    flex: 1;
+  }
+
+  .hp-project-naam {
+    font-size: 20pt;
+    font-weight: 700;
+    color: var(--hs-primair, #185FA5) !important;
+    line-height: 1.2;
+    margin-bottom: 1.5mm;
+  }
+
+  .hp-klant-naam {
+    font-size: 9pt;
+    color: #6b7280 !important;
+    margin-bottom: 2mm;
+  }
+
+  .hp-header-rechts {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .hp-type-label {
+    font-size: 14pt;
+    font-weight: 700;
+    color: var(--hs-primair, #185FA5) !important;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.5mm;
+  }
+
+  .hp-meta {
+    font-size: 8pt;
+    color: #9ca3af !important;
+    line-height: 1.7;
+  }
+
+  /* ── Scheidingslijn in primaire kleur ────────────────────────── */
+  .hp-divider {
+    border: none;
+    border-top: 2px solid var(--hs-primair, #185FA5);
+    margin: 5mm 0 8mm 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Inhoudsopgave ───────────────────────────────────────────── */
+  .hp-toc {
+    margin-bottom: 10mm;
+    page-break-after: avoid;
+  }
+
+  .hp-toc-titel {
+    font-size: 10pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--hs-primair, #185FA5) !important;
+    margin-bottom: 3mm;
+  }
+
+  .hp-toc-lijst {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .hp-toc-item {
+    display: flex;
+    align-items: baseline;
+    font-size: 9.5pt;
+    color: #374151 !important;
+    margin-bottom: 1.5mm;
+    gap: 2mm;
+  }
+
+  .hp-toc-nr {
+    font-weight: 600;
+    color: var(--hs-primair, #185FA5) !important;
+    min-width: 6mm;
+    flex-shrink: 0;
+  }
+
+  .hp-toc-vulling {
+    flex: 1;
+    border-bottom: 1px dotted #d1d5db;
+    margin: 0 2mm;
+    height: 1em;
+  }
+
+  /* ── Inhoud scheidingslijn voor body ─────────────────────────── */
+  .hp-body-start {
+    border-top: 1px solid #e5e7eb;
+    margin: 6mm 0 8mm 0;
+  }
+
+  /* ── Markdown inhoud stijlen ─────────────────────────────────── */
+  .hp-body h1 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #111827 !important;
+    margin: 8mm 0 4mm 0;
+    page-break-before: always;
+    page-break-after: avoid;
+  }
+
+  .hp-body h1:first-child {
+    page-break-before: avoid;
+  }
+
+  .hp-body h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: var(--hs-primair, #185FA5) !important;
+    margin: 6mm 0 3mm 0;
+    border-bottom: 1px solid var(--hs-primair, #185FA5);
+    padding-bottom: 1mm;
+    page-break-after: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .hp-body h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #1f2937 !important;
+    margin: 4mm 0 2mm 0;
+    page-break-after: avoid;
+  }
+
+  .hp-body h4 {
+    font-size: 10pt;
+    font-weight: 600;
+    color: #374151 !important;
+    margin: 3mm 0 1.5mm 0;
+  }
+
+  .hp-body p {
+    font-size: 10pt;
+    color: #374151 !important;
+    margin-bottom: 3mm;
+    line-height: 1.7;
+  }
+
+  .hp-body ul,
+  .hp-body ol {
+    margin: 2mm 0 4mm 6mm;
+    padding: 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .hp-body li {
+    font-size: 10pt;
+    color: #374151 !important;
+    margin-bottom: 1.5mm;
+    line-height: 1.6;
+  }
+
+  .hp-body pre {
+    background: #f3f4f6 !important;
+    border-radius: 4pt;
+    padding: 3mm 4mm;
+    font-family: 'Courier New', monospace;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 3mm 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .hp-body code {
+    background: #f3f4f6 !important;
+    padding: 0.5mm 1.5mm;
+    border-radius: 2pt;
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .hp-body hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 5mm 0;
+  }
+
+  .hp-body a {
+    color: var(--hs-primair, #185FA5) !important;
+    text-decoration: underline;
+  }
+
+  /* ── Paginavoettekst (herhaalt op elke pagina) ───────────────── */
+  .hp-voettekst {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #e5e7eb;
+    padding: 3mm 5mm;
+    font-size: 7.5pt;
+    color: #9ca3af !important;
+    background: #fff !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

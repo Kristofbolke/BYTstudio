@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
+import BannerInstellingen from '../components/BannerInstellingen'
 
 export default function Instellingen() {
   const [email, setEmail] = useState('')
@@ -77,6 +78,11 @@ export default function Instellingen() {
               {loading ? 'Opslaan...' : 'Wachtwoord opslaan'}
             </button>
           </form>
+        </div>
+
+        {/* Banner */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <BannerInstellingen />
         </div>
 
         {/* App-info */}

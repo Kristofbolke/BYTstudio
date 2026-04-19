@@ -4,23 +4,32 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
+import Banner from './components/Banner'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Klanten from './pages/Klanten'
 import Projecten from './pages/Projecten'
+import ProjectDetail from './pages/ProjectDetail'
 import Studio from './pages/Studio'
 import Offertes from './pages/Offertes'
+import OfferteNieuw from './pages/OfferteNieuw'
+import OfferteDetail from './pages/OfferteDetail'
 import Handleidingen from './pages/Handleidingen'
+import HandleidingDetail from './pages/HandleidingDetail'
+import HandleidingNieuw from './pages/HandleidingNieuw'
 import Instellingen from './pages/Instellingen'
 
 function ProtectedLayout({ children }) {
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#f8fafc' }}>
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <TopBar />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <Banner />
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <Sidebar />
+        <main style={{ flex: 1, overflow: 'auto' }}>
+          <TopBar />
+          <div style={{ padding: '24px' }}>
+            {children}
+          </div>
         </main>
       </div>
     </div>
@@ -67,10 +76,15 @@ export default function App() {
         <Route path="/dashboard"     element={<Dashboard />} />
         <Route path="/klanten"       element={<Klanten />} />
         <Route path="/projecten"     element={<Projecten />} />
+        <Route path="/projecten/:id" element={<ProjectDetail />} />
         <Route path="/studio"        element={<Studio />} />
         <Route path="/offertes"      element={<Offertes />} />
-        <Route path="/handleidingen" element={<Handleidingen />} />
-        <Route path="/instellingen"  element={<Instellingen />} />
+        <Route path="/offertes/nieuw" element={<OfferteNieuw />} />
+        <Route path="/offertes/:id"  element={<OfferteDetail />} />
+        <Route path="/handleidingen"          element={<Handleidingen />} />
+        <Route path="/handleidingen/nieuw"    element={<HandleidingNieuw />} />
+        <Route path="/handleidingen/:id"      element={<HandleidingDetail />} />
+        <Route path="/instellingen"      element={<Instellingen />} />
         <Route path="*"              element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </ProtectedLayout>

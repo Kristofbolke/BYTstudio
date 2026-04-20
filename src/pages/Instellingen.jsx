@@ -1,8 +1,9 @@
 // src/pages/Instellingen.jsx — Persoonlijke configuratie voor de developer/eigenaar
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
-import { Building2, CreditCard, Megaphone, Shield, Info, CheckCircle, AlertCircle } from 'lucide-react'
+import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2 } from 'lucide-react'
 
 const LEGE_INST = {
   eigenaar_naam: '',
@@ -25,6 +26,9 @@ const LEGE_INST = {
   nalatigheidsintrest: 10,
   forfait_schadevergoeding: 40,
   rechtbank: 'arrondissement Gent',
+  standaard_projectstatus: 'intake',
+  standaard_handleiding_versie: 'v1.0',
+  standaard_auteur_handleiding: 'Build Your Tools',
   banner_zichtbaar: true,
   banner_titel: 'Welkom bij Build Your Tools',
   banner_subtitel: 'Slimme apps voor slimme bedrijven',
@@ -88,11 +92,11 @@ const inputKlasse = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-s
 const textareaKlasse = `${inputKlasse} resize-none`
 
 export default function Instellingen() {
+  const navigate = useNavigate()
   const [inst, setInst] = useState(LEGE_INST)
   const [instId, setInstId] = useState(null)
   const [laden, setLaden] = useState(true)
   const [authEmail, setAuthEmail] = useState('')
-  const [nieuwWachtwoord, setNieuwWachtwoord] = useState('')
 
   // Per-sectie laden en bericht
   const [ladenBedrijf, setLadenBedrijf] = useState(false)
@@ -101,8 +105,17 @@ export default function Instellingen() {
   const [berichtFinancieel, setBerichtFinancieel] = useState('')
   const [ladenBanner, setLadenBanner] = useState(false)
   const [berichtBanner, setBerichtBanner] = useState('')
-  const [ladenWw, setLadenWw] = useState(false)
-  const [berichtWw, setBerichtWw] = useState('')
+  const [ladenApp, setLadenApp] = useState(false)
+  const [berichtApp, setBerichtApp] = useState('')
+
+  // App-beheer UI-staat
+  const [resetVerzonden, setResetVerzonden] = useState(false)
+  const [exporterenKlanten, setExporterenKlanten] = useState(false)
+  const [exporterenProjecten, setExporterenProjecten] = useState(false)
+  const [verwijderTekst, setVerwijderTekst] = useState('')
+  const [verwijderDialog, setVerwijderDialog] = useState(false)
+  const [verwijderLaden, setVerwijderLaden] = useState(false)
+  const [verwijderBericht, setVerwijderBericht] = useState('')
 
   useEffect(() => {
     laadInstellingen()
@@ -148,17 +161,60 @@ export default function Instellingen() {
     setLadenFn(false)
   }
 
-  async function slaWachtwoordOp() {
-    if (!nieuwWachtwoord) return
-    setLadenWw(true)
-    setBerichtWw('')
-    const { error } = await supabase.auth.updateUser({ password: nieuwWachtwoord })
-    if (error) setBerichtWw('Fout: ' + error.message)
-    else {
-      setBerichtWw('Wachtwoord bijgewerkt.')
-      setNieuwWachtwoord('')
+  async function stuurResetLink() {
+    if (!authEmail) return
+    setResetVerzonden(false)
+    const { error } = await supabase.auth.resetPasswordForEmail(authEmail)
+    if (!error) setResetVerzonden(true)
+  }
+
+  function downloadCsv(bestandsnaam, rijen, kolommen) {
+    const header = kolommen.join(';')
+    const body = rijen.map(r => kolommen.map(k => `"${(r[k] ?? '').toString().replace(/"/g, '""')}"`).join(';')).join('\n')
+    const blob = new Blob(['\uFEFF' + header + '\n' + body], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = bestandsnaam; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function exporteerKlanten() {
+    setExporterenKlanten(true)
+    const { data } = await supabase.from('klanten').select('naam,bedrijfsnaam,btw_nummer,adres,email,telefoon,sector,aangemaakt_op').order('aangemaakt_op')
+    if (data) downloadCsv('klanten.csv', data, ['naam','bedrijfsnaam','btw_nummer','adres','email','telefoon','sector','aangemaakt_op'])
+    setExporterenKlanten(false)
+  }
+
+  async function exporteerProjecten() {
+    setExporterenProjecten(true)
+    const { data } = await supabase.from('projecten').select('naam,status,github_url,netlify_url,aangemaakt_op,klanten(naam)').order('aangemaakt_op')
+    if (data) {
+      const rijen = data.map(p => ({ ...p, klantnaam: p.klanten?.naam ?? '' }))
+      downloadCsv('projecten.csv', rijen, ['naam','klantnaam','status','github_url','netlify_url','aangemaakt_op'])
     }
-    setLadenWw(false)
+    setExporterenProjecten(false)
+  }
+
+  async function verwijderTestdata() {
+    if (verwijderTekst !== 'VERWIJDER') return
+    setVerwijderLaden(true)
+    setVerwijderBericht('')
+    const patroon = ['%(test)%', '%(demo)%']
+    for (const p of patroon) {
+      await supabase.from('handleidingen').delete().ilike('project_id', '%') // via projecten
+      await supabase.from('offertes').delete().ilike('naam', p)
+      await supabase.from('projecten').delete().ilike('naam', p)
+      await supabase.from('klanten').delete().ilike('naam', p)
+    }
+    setVerwijderBericht('Testdata verwijderd.')
+    setVerwijderTekst('')
+    setVerwijderDialog(false)
+    setVerwijderLaden(false)
+  }
+
+  async function uitloggen() {
+    await supabase.auth.signOut()
+    navigate('/login')
   }
 
   if (laden) {
@@ -457,74 +513,165 @@ export default function Instellingen() {
           </div>
         </SectieKaart>
 
-        {/* 4. Beveiliging */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-50">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#e94560]/10 flex items-center justify-center">
-                <Shield size={16} className="text-[#e94560]" />
-              </div>
+        {/* 4. App-beheer */}
+        <SectieKaart
+          icon={Settings}
+          titel="App-beheer"
+          subtitel="Technische instellingen en beheer van de BYT Studio applicatie."
+          onOpslaan={() => slaOp(
+            ['standaard_projectstatus','standaard_handleiding_versie','standaard_auteur_handleiding'],
+            setLadenApp, setBerichtApp, 'App-instellingen opgeslagen.'
+          )}
+          laden={ladenApp}
+          bericht={berichtApp}
+          opslaanLabel="App-instellingen opslaan"
+        >
+          {/* — Subsectie 1: Account — */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Account</p>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
               <div>
-                <p className="text-sm font-semibold text-gray-800">Beveiliging</p>
-                <p className="text-xs text-gray-400 mt-0.5">Supabase Auth account.</p>
+                <p className="text-xs text-gray-400 mb-0.5">Ingelogd als</p>
+                <p className="text-sm font-medium text-gray-800">{authEmail || '—'}</p>
               </div>
-            </div>
-          </div>
-          <div className="px-6 py-5 space-y-4">
-            <Veld label="E-mailadres (login)">
-              <p className="text-sm text-gray-700 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-100">
-                {authEmail || '—'}
-              </p>
-            </Veld>
-            <Veld label="Nieuw wachtwoord">
-              <input
-                type="password"
-                className={inputKlasse}
-                value={nieuwWachtwoord}
-                onChange={e => setNieuwWachtwoord(e.target.value)}
-                placeholder="Minimaal 6 tekens"
-                style={{ maxWidth: 320 }}
-              />
-            </Veld>
-            <div className="flex items-center gap-3">
               <button
-                onClick={slaWachtwoordOp}
-                disabled={ladenWw || !nieuwWachtwoord}
-                className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-40 transition-opacity"
-                style={{ background: '#e94560' }}
+                onClick={stuurResetLink}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:border-[#e94560] hover:text-[#e94560] transition-colors"
               >
-                {ladenWw ? 'Opslaan...' : 'Wachtwoord wijzigen'}
+                Wachtwoord wijzigen
               </button>
-              <Bericht tekst={berichtWw} />
             </div>
-          </div>
-        </div>
-
-        {/* 5. Over BYT Studio */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-50">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <Info size={16} className="text-gray-500" />
+            {resetVerzonden && (
+              <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg mt-2">
+                <CheckCircle size={13} />
+                Reset-link verzonden naar {authEmail}
               </div>
-              <p className="text-sm font-semibold text-gray-800">Over BYT Studio</p>
+            )}
+          </div>
+
+          {/* — Subsectie 2: Standaard projectinstellingen — */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Standaard projectinstellingen</p>
+            <div className="grid grid-cols-3 gap-4">
+              <Veld label="Standaard projectstatus bij aanmaken">
+                <select
+                  className={inputKlasse}
+                  value={inst.standaard_projectstatus}
+                  onChange={stel('standaard_projectstatus')}
+                >
+                  <option value="intake">intake</option>
+                  <option value="offerte">offerte</option>
+                  <option value="in_ontwikkeling">in_ontwikkeling</option>
+                </select>
+              </Veld>
+              <Veld label="Standaard handleidingsversie">
+                <select
+                  className={inputKlasse}
+                  value={inst.standaard_handleiding_versie}
+                  onChange={stel('standaard_handleiding_versie')}
+                >
+                  <option value="v1.0">v1.0</option>
+                  <option value="v1">v1</option>
+                  <option value="">Geen versienummer</option>
+                </select>
+              </Veld>
+              <Veld label="Standaard auteursnaam handleidingen">
+                <input
+                  className={inputKlasse}
+                  value={inst.standaard_auteur_handleiding}
+                  onChange={stel('standaard_auteur_handleiding')}
+                  placeholder="Build Your Tools"
+                />
+              </Veld>
             </div>
           </div>
-          <div className="px-6 py-5">
-            <div className="space-y-2 text-sm">
-              {[
-                ['Versie', '0.2.0'],
-                ['Gebouwd door', 'Build Your Tools'],
-                ['Stack', 'React 18 + Supabase + Netlify'],
-              ].map(([label, waarde]) => (
-                <div key={label} className="flex justify-between text-gray-500">
-                  <span>{label}</span>
-                  <span className="font-medium text-gray-700">{waarde}</span>
+
+          {/* — Subsectie 3: Data en backup — */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Data en backup</p>
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={exporteerKlanten}
+                disabled={exporterenKlanten}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-[#e94560] hover:text-[#e94560] disabled:opacity-50 transition-colors"
+              >
+                <Download size={14} />
+                {exporterenKlanten ? 'Exporteren...' : 'Exporteer alle klanten als CSV'}
+              </button>
+              <button
+                onClick={exporteerProjecten}
+                disabled={exporterenProjecten}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-[#e94560] hover:text-[#e94560] disabled:opacity-50 transition-colors"
+              >
+                <Download size={14} />
+                {exporterenProjecten ? 'Exporteren...' : 'Exporteer alle projecten als CSV'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-3 leading-relaxed">
+              Supabase maakt automatisch dagelijkse backups van alle data (Pro plan).<br />
+              Op het Free plan: exporteer regelmatig via de knoppen hierboven.
+            </p>
+          </div>
+
+          {/* — Subsectie 4: Gevaarzone — */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+              <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Gevaarzone — niet omkeerbaar</p>
+
+              {!verwijderDialog ? (
+                <button
+                  onClick={() => { setVerwijderDialog(true); setVerwijderBericht('') }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  Alle testdata verwijderen
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-red-700">
+                    Dit verwijdert alle klanten, projecten, offertes en handleidingen die zijn aangemaakt voor testdoeleinden.
+                    Typ <strong>VERWIJDER</strong> om te bevestigen.
+                  </p>
+                  <input
+                    className="w-full px-3 py-2 rounded-lg border border-red-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+                    placeholder="Typ VERWIJDER"
+                    value={verwijderTekst}
+                    onChange={e => setVerwijderTekst(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={verwijderTestdata}
+                      disabled={verwijderTekst !== 'VERWIJDER' || verwijderLaden}
+                      className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium disabled:opacity-40 hover:bg-red-700 transition-colors"
+                    >
+                      {verwijderLaden ? 'Verwijderen...' : 'Bevestig verwijdering'}
+                    </button>
+                    <button
+                      onClick={() => { setVerwijderDialog(false); setVerwijderTekst('') }}
+                      className="px-4 py-2 rounded-lg border border-red-200 bg-white text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                  {verwijderBericht && (
+                    <p className="text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg">{verwijderBericht}</p>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        </div>
+
+          {/* Uitloggen — losgekoppeld van opslaan-knop */}
+          <div className="border-t border-gray-100 pt-4 flex justify-end">
+            <button
+              onClick={uitloggen}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+            >
+              <LogOut size={14} />
+              Uitloggen
+            </button>
+          </div>
+        </SectieKaart>
 
       </div>
     </PageWrapper>

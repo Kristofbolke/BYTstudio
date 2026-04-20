@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { genereerGebruiker, genereerTechnisch, moduleNamenVanProject } from '../lib/handleidingGenerators'
+import { useInstellingen } from '../context/InstellingenContext'
 import {
   ArrowLeft, ChevronDown, Zap, PenLine,
   Heading1, Heading2, Bold, Italic, List, ListOrdered,
@@ -83,6 +84,7 @@ export default function HandleidingNieuw() {
   const navigate       = useNavigate()
   const [searchParams] = useSearchParams()
   const editorRef      = useRef(null)
+  const { instellingen, laden: instLaden } = useInstellingen()
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [projecten,    setProjecten]    = useState([])
@@ -95,6 +97,14 @@ export default function HandleidingNieuw() {
   const [auteur,       setAuteur]       = useState('Build Your Tools')
   const [opslaan,      setOpslaan]      = useState(false)
   const [gegenereerd,  setGegenereerd]  = useState(false)
+
+  // Stel versie en auteur in vanuit instellingen zodra die geladen zijn
+  useEffect(() => {
+    if (!instLaden) {
+      setVersie(instellingen.standaard_handleiding_versie || 'v1.0')
+      setAuteur(instellingen.standaard_auteur_handleiding || instellingen.bedrijfsnaam || 'Build Your Tools')
+    }
+  }, [instLaden])
 
   // ── Laad projecten ────────────────────────────────────────────────────────
   useEffect(() => {

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
+import { useInstellingen } from '../context/InstellingenContext'
 import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2 } from 'lucide-react'
 
 const LEGE_INST = {
@@ -93,6 +94,7 @@ const textareaKlasse = `${inputKlasse} resize-none`
 
 export default function Instellingen() {
   const navigate = useNavigate()
+  const { herlaad } = useInstellingen()
   const [inst, setInst] = useState(LEGE_INST)
   const [instId, setInstId] = useState(null)
   const [laden, setLaden] = useState(true)
@@ -157,7 +159,7 @@ export default function Instellingen() {
     payload.bijgewerkt_op = new Date().toISOString()
     const { error } = await supabase.from('instellingen').update(payload).eq('id', instId)
     if (error) setBerichtFn('Fout: ' + error.message)
-    else setBerichtFn(succesMsg)
+    else { setBerichtFn(succesMsg); herlaad() }
     setLadenFn(false)
   }
 
@@ -428,19 +430,10 @@ export default function Instellingen() {
           icon={Megaphone}
           titel="Banner instellingen"
           subtitel="De reclamebanner bovenaan de app."
-          onOpslaan={async () => {
-            await slaOp(
-              ['banner_zichtbaar','banner_titel','banner_subtitel'],
-              setLadenBanner, setBerichtBanner, 'Banner-instellingen opgeslagen.'
-            )
-            window.dispatchEvent(new CustomEvent('byt-banner-update', {
-              detail: {
-                zichtbaar: inst.banner_zichtbaar,
-                titel: inst.banner_titel,
-                subtitel: inst.banner_subtitel,
-              }
-            }))
-          }}
+          onOpslaan={() => slaOp(
+            ['banner_zichtbaar','banner_titel','banner_subtitel'],
+            setLadenBanner, setBerichtBanner, 'Banner-instellingen opgeslagen.'
+          )}
           laden={ladenBanner}
           bericht={berichtBanner}
           opslaanLabel="Banner-instellingen opslaan"
@@ -456,9 +449,7 @@ export default function Instellingen() {
                   await supabase.from('instellingen')
                     .update({ banner_zichtbaar: nieuw, bijgewerkt_op: new Date().toISOString() })
                     .eq('id', instId)
-                  window.dispatchEvent(new CustomEvent('byt-banner-update', {
-                    detail: { zichtbaar: nieuw, titel: inst.banner_titel, subtitel: inst.banner_subtitel }
-                  }))
+                  herlaad()
                 }
               }}
               style={{ width: 40, height: 22, flexShrink: 0 }}

@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useInstellingen } from '../context/InstellingenContext'
 import { ChevronLeft, ChevronDown, Plus, Save } from 'lucide-react'
 
 // ── Constanten ───────────────────────────────────────────────────────────────
@@ -155,6 +156,8 @@ export default function OfferteNieuw() {
   const initKlantId   = params.get('klant_id') ?? ''
   const initProjectId = params.get('project_id') ?? ''
 
+  const { instellingen, laden: instLaden } = useInstellingen()
+
   // Basisgegevens
   const [nummer,    setNummer]    = useState('')
   const [klantId,   setKlantId]   = useState(initKlantId)
@@ -162,7 +165,7 @@ export default function OfferteNieuw() {
   const [status,    setStatus]    = useState('concept')
   const [geldigTot, setGeldigTot] = useState(vandaagPlus(30))
 
-  // Berekening
+  // Berekening — defaults worden gezet zodra instellingen geladen zijn
   const [uurtarief, setUurtarief] = useState(75)
   const [btw,       setBtw]       = useState(21)
   const [marge,     setMarge]     = useState(15)
@@ -187,6 +190,16 @@ export default function OfferteNieuw() {
   // UI
   const [opslaan, setOpslaan] = useState(false)
   const [fout,    setFout]    = useState('')
+
+  // Stel standaardwaarden in vanuit instellingen zodra die geladen zijn
+  useEffect(() => {
+    if (!instLaden) {
+      setUurtarief(instellingen.uurtarief ?? 75)
+      setBtw(instellingen.btw_percentage ?? 21)
+      setMarge(instellingen.marge_percentage ?? 15)
+      setGeldigTot(vandaagPlus(instellingen.offerte_geldigheid ?? 30))
+    }
+  }, [instLaden])
 
   // Laad offertenummer + klanten + projecten
   useEffect(() => {

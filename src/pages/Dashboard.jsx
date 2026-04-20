@@ -1,7 +1,10 @@
 // Dashboard.jsx — Startpagina met live statistieken uit Supabase
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Users, FolderKanban, FileText, CheckCircle, ArrowRight, Bug, ExternalLink } from 'lucide-react'
+import {
+  Users, FolderKanban, FileText, CheckCircle, ArrowRight, Bug, ExternalLink,
+  UserPlus, FolderPlus, FilePlus, Wrench, BookOpen, Settings,
+} from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { useInstellingen } from '../context/InstellingenContext'
@@ -130,9 +133,12 @@ export default function Dashboard() {
   const [openOfferteRijen,    setOpenOfferteRijen]    = useState([])
   const [ladenOpenOffertes,   setLadenOpenOffertes]   = useState(true)
 
-  const [statusData,    setStatusData]    = useState(null) // voor donut
-  const [omzetData,     setOmzetData]     = useState(null) // voor bar
-  const [ladenGrafi,   setLadenGrafi]    = useState(true)
+  const [statusData,    setStatusData]    = useState(null)
+  const [omzetData,     setOmzetData]     = useState(null)
+  const [ladenGrafi,    setLadenGrafi]    = useState(true)
+
+  const [meldingen,     setMeldingen]     = useState([])
+  const [ladenMeld,     setLadenMeld]     = useState(true)
 
   const [totalKlanten,    setTotalKlanten]    = useState(0)
   const [klantDezeMaand,  setKlantDezeMaand]  = useState(0)
@@ -273,6 +279,17 @@ export default function Dashboard() {
 
       setLadenGrafi(false)
     })
+
+    // ── 8. Recente bug_meldingen ────────────────────────────────────────────
+    supabase.from('bug_meldingen')
+      .select('id, onderdeel, ernst, status, aangemaakt_op, project_id, projecten(id, naam)')
+      .in('status', ['nieuw', 'in_behandeling'])
+      .order('aangemaakt_op', { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        setMeldingen(data ?? [])
+        setLadenMeld(false)
+      })
   }, [])
 
   const naam = instellingen.eigenaar_naam
@@ -337,22 +354,23 @@ export default function Dashboard() {
 
       {/* ── Snel starten ───────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <p className="text-sm font-semibold text-gray-700 mb-4">Snel starten</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <p className="text-sm font-semibold text-gray-800 mb-4">Snel starten</p>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {[
-            { label: 'Nieuwe klant',       to: '/klanten',            kleur: '#3b82f6' },
-            { label: 'Nieuw project',      to: '/projecten',          kleur: '#8b5cf6' },
-            { label: 'Nieuwe offerte',     to: '/offertes/nieuw',     kleur: '#f59e0b' },
-            { label: 'Nieuwe handleiding', to: '/handleidingen/nieuw', kleur: '#10b981' },
-          ].map(({ label, to, kleur }) => (
+            { label: 'Nieuwe klant',       to: '/klanten',             icon: UserPlus  },
+            { label: 'Nieuw project',      to: '/projecten',           icon: FolderPlus },
+            { label: 'Nieuwe offerte',     to: '/offertes/nieuw',      icon: FilePlus  },
+            { label: 'Open Studio',        to: '/studio',              icon: Wrench    },
+            { label: 'Nieuwe handleiding', to: '/handleidingen/nieuw', icon: BookOpen  },
+            { label: 'Instellingen',       to: '/instellingen',        icon: Settings  },
+          ].map(({ label, to, icon: Icon }) => (
             <button
               key={label}
               onClick={() => navigate(to)}
-              className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
-              style={{ background: kleur }}
+              className="flex flex-col items-center gap-2 px-3 py-4 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:border-[#e94560] hover:text-[#e94560] hover:bg-[#e94560]/5 transition-colors cursor-pointer"
             >
-              {label}
-              <ArrowRight size={14} />
+              <Icon size={18} />
+              <span className="text-center leading-tight">{label}</span>
             </button>
           ))}
         </div>
@@ -590,13 +608,104 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Open bugmeldingen ──────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Bug size={15} className="text-gray-400" />
-          <p className="text-sm font-semibold text-gray-700">Open bugmeldingen</p>
+      {/* ── Recente meldingen ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+          <div className="flex items-center gap-2">
+            <Bug size={14} className="text-gray-400" />
+            <p className="text-sm font-semibold text-gray-800">Recente meldingen</p>
+          </div>
+          <button
+            onClick={() => navigate('/projecten')}
+            className="text-xs text-[#e94560] hover:underline font-medium"
+          >
+            Alle meldingen bekijken →
+          </button>
         </div>
-        <p className="text-sm text-gray-400">Nog geen openstaande bugmeldingen.</p>
+
+        {ladenMeld ? (
+          <div className="px-6 py-4 space-y-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex gap-3 items-center">
+                <div className="h-5 w-12 bg-gray-100 rounded-full animate-pulse" />
+                <div className="h-4 bg-gray-100 rounded animate-pulse flex-1" />
+                <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : meldingen.length === 0 ? (
+          <div className="mx-6 my-5 px-4 py-4 bg-green-50 border border-green-100 rounded-xl flex items-center gap-3">
+            <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+            <p className="text-sm text-green-700 font-medium">Geen openstaande meldingen. Alles loopt goed!</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-gray-400 font-medium border-b border-gray-50">
+                <th className="text-left px-6 py-3">Ernst</th>
+                <th className="text-left px-3 py-3">Project</th>
+                <th className="text-left px-3 py-3">Onderdeel</th>
+                <th className="text-left px-3 py-3">Datum</th>
+                <th className="text-left px-3 py-3">Status</th>
+                <th className="px-6 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {meldingen.map(m => {
+                const ernst = {
+                  laag:   { label: 'Laag',   kleur: '#16a34a', bg: '#dcfce7' },
+                  medium: { label: 'Medium', kleur: '#d97706', bg: '#fef9ee' },
+                  hoog:   { label: 'Hoog',   kleur: '#dc2626', bg: '#fee2e2' },
+                }[m.ernst] ?? { label: m.ernst, kleur: '#64748b', bg: '#f1f5f9' }
+
+                const statusStijl = m.status === 'nieuw'
+                  ? { label: 'Nieuw',          kleur: '#2563eb', bg: '#dbeafe' }
+                  : { label: 'In behandeling', kleur: '#d97706', bg: '#fef9ee' }
+
+                return (
+                  <tr key={m.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="px-6 py-3">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                        style={{ color: ernst.kleur, background: ernst.bg }}>
+                        {ernst.label}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3">
+                      {m.projecten ? (
+                        <Link
+                          to={`/projecten/${m.projecten.id}`}
+                          className="text-gray-700 font-medium hover:text-[#e94560] transition-colors"
+                        >
+                          {m.projecten.naam}
+                        </Link>
+                      ) : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-3 py-3 text-gray-500">{m.onderdeel ?? '—'}</td>
+                    <td className="px-3 py-3 text-xs text-gray-400 whitespace-nowrap">
+                      {new Date(m.aangemaakt_op).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                        style={{ color: statusStijl.kleur, background: statusStijl.bg }}>
+                        {statusStijl.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      {m.projecten && (
+                        <Link
+                          to={`/projecten/${m.projecten.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#e94560] hover:text-[#e94560] transition-colors"
+                        >
+                          <ExternalLink size={11} /> Bekijk
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </PageWrapper>
   )

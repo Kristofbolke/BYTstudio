@@ -1,10 +1,36 @@
 // Dashboard.jsx — Startpagina met live statistieken uit Supabase
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Users, FolderKanban, FileText, CheckCircle, ArrowRight, Bug } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { Users, FolderKanban, FileText, CheckCircle, ArrowRight, Bug, ExternalLink } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { useInstellingen } from '../context/InstellingenContext'
+
+// ── Status configuraties ───────────────────────────────────────────────────
+const PROJECT_STATUSSEN = {
+  intake:          { label: 'Intake',          kleur: '#64748b', bg: '#f1f5f9' },
+  offerte:         { label: 'Offerte',          kleur: '#d97706', bg: '#fef9ee' },
+  in_ontwikkeling: { label: 'In ontwikkeling',  kleur: '#2563eb', bg: '#eff6ff' },
+  afgeleverd:      { label: 'Afgeleverd',       kleur: '#16a34a', bg: '#f0fdf4' },
+  onderhoud:       { label: 'Onderhoud',        kleur: '#7c3aed', bg: '#faf5ff' },
+}
+
+const OFFERTE_STATUSSEN = {
+  concept:      { label: 'Concept',      kleur: '#64748b', bg: '#f1f5f9' },
+  verzonden:    { label: 'Verzonden',     kleur: '#2563eb', bg: '#dbeafe' },
+  goedgekeurd:  { label: 'Goedgekeurd',  kleur: '#16a34a', bg: '#dcfce7' },
+  gefactureerd: { label: 'Gefactureerd', kleur: '#7c3aed', bg: '#ede9fe' },
+}
+
+function StatusBadge({ status, map }) {
+  const s = map[status] ?? { label: status, kleur: '#64748b', bg: '#f1f5f9' }
+  return (
+    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+      style={{ color: s.kleur, background: s.bg }}>
+      {s.label}
+    </span>
+  )
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function begroeting() {
@@ -68,6 +94,11 @@ export default function Dashboard() {
   const [ladenOffertes,  setLadenOffertes]  = useState(true)
   const [ladenAfgel,     setLadenAfgel]     = useState(true)
 
+  const [recenteProjecten,    setRecenteProjecten]    = useState([])
+  const [ladenRecente,        setLadenRecente]        = useState(true)
+  const [openOfferteRijen,    setOpenOfferteRijen]    = useState([])
+  const [ladenOpenOffertes,   setLadenOpenOffertes]   = useState(true)
+
   const [totalKlanten,    setTotalKlanten]    = useState(0)
   const [klantDezeMaand,  setKlantDezeMaand]  = useState(0)
   const [actieveProj,     setActieveProj]     = useState(0)
@@ -128,6 +159,26 @@ export default function Dashboard() {
       setInOnderhoud(onderh.count ?? 0)
       setLadenAfgel(false)
     })
+
+    // ── 5. Recente projecten ────────────────────────────────────────────────
+    supabase.from('projecten')
+      .select('id, naam, status, bijgewerkt_op, klanten(naam)')
+      .order('bijgewerkt_op', { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        setRecenteProjecten(data ?? [])
+        setLadenRecente(false)
+      })
+
+    // ── 6. Openstaande offertes ─────────────────────────────────────────────
+    supabase.from('offertes')
+      .select('id, nummer, status, geldig_tot, items_json, btw, marge, klanten(naam), projecten(naam)')
+      .in('status', ['concept', 'verzonden'])
+      .order('aangemaakt_op', { ascending: false })
+      .then(({ data }) => {
+        setOpenOfferteRijen(data ?? [])
+        setLadenOpenOffertes(false)
+      })
   }, [])
 
   const naam = instellingen.eigenaar_naam
@@ -211,6 +262,158 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* ── Recente projecten ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+          <p className="text-sm font-semibold text-gray-800">Recente projecten</p>
+          <Link to="/projecten" className="text-xs text-[#e94560] hover:underline font-medium">
+            Alle projecten →
+          </Link>
+        </div>
+
+        {ladenRecente ? (
+          <div className="px-6 py-4 space-y-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex gap-4 items-center">
+                <div className="h-4 bg-gray-100 rounded animate-pulse flex-1" />
+                <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
+                <div className="h-5 w-24 bg-gray-100 rounded-full animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : recenteProjecten.length === 0 ? (
+          <div className="px-6 py-8 text-center">
+            <p className="text-sm text-gray-400 mb-3">Nog geen projecten aangemaakt.</p>
+            <button
+              onClick={() => navigate('/projecten')}
+              className="px-4 py-2 rounded-lg text-white text-sm font-medium"
+              style={{ background: '#8b5cf6' }}
+            >
+              Eerste project aanmaken
+            </button>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-gray-400 font-medium border-b border-gray-50">
+                <th className="text-left px-6 py-3">Project</th>
+                <th className="text-left px-3 py-3">Klant</th>
+                <th className="text-left px-3 py-3">Status</th>
+                <th className="text-left px-3 py-3">Bijgewerkt</th>
+                <th className="px-6 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {recenteProjecten.map(p => (
+                <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
+                  <td className="px-6 py-3 font-medium text-gray-800">
+                    <Link to={`/projecten/${p.id}`} className="hover:text-[#e94560] transition-colors">
+                      {p.naam}
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3 text-gray-500">{p.klanten?.naam ?? '—'}</td>
+                  <td className="px-3 py-3">
+                    <StatusBadge status={p.status} map={PROJECT_STATUSSEN} />
+                  </td>
+                  <td className="px-3 py-3 text-gray-400 text-xs">
+                    {p.bijgewerkt_op
+                      ? new Date(p.bijgewerkt_op).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })
+                      : '—'}
+                  </td>
+                  <td className="px-6 py-3 text-right">
+                    <Link
+                      to={`/projecten/${p.id}`}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#e94560] hover:text-[#e94560] transition-colors"
+                    >
+                      <ExternalLink size={11} /> Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* ── Openstaande offertes ───────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+          <p className="text-sm font-semibold text-gray-800">Openstaande offertes</p>
+          <Link to="/offertes" className="text-xs text-[#e94560] hover:underline font-medium">
+            Alle offertes →
+          </Link>
+        </div>
+
+        {ladenOpenOffertes ? (
+          <div className="px-6 py-4 space-y-3">
+            {[1,2].map(i => (
+              <div key={i} className="flex gap-4 items-center">
+                <div className="h-4 w-28 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 bg-gray-100 rounded animate-pulse flex-1" />
+                <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : openOfferteRijen.length === 0 ? (
+          <div className="px-6 py-8 text-center">
+            <p className="text-sm text-gray-400">Geen openstaande offertes.</p>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-gray-400 font-medium border-b border-gray-50">
+                <th className="text-left px-6 py-3">Nummer</th>
+                <th className="text-left px-3 py-3">Klant</th>
+                <th className="text-left px-3 py-3">Project</th>
+                <th className="text-right px-3 py-3">Totaal incl. BTW</th>
+                <th className="text-left px-3 py-3">Geldig tot</th>
+                <th className="text-left px-6 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {openOfferteRijen.map(o => {
+                const items = Array.isArray(o.items_json) ? o.items_json : []
+                const sub = items.reduce((s, i) => s + (Number(i.hoeveelheid) || 0) * (Number(i.eenheidsprijs) || 0), 0)
+                const metMarge = sub * (1 + (Number(o.marge) || 0) / 100)
+                const totaal = metMarge * (1 + (Number(o.btw) || 0) / 100)
+
+                const nu = new Date(); nu.setHours(0,0,0,0)
+                const geldig = o.geldig_tot ? new Date(o.geldig_tot) : null
+                const dagVerschil = geldig ? Math.ceil((geldig - nu) / 86400000) : null
+                const verlopen = geldig && dagVerschil < 0
+                const bijna = geldig && dagVerschil >= 0 && dagVerschil <= 7
+
+                return (
+                  <tr key={o.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="px-6 py-3 font-mono text-xs font-semibold text-gray-700">
+                      <Link to={`/offertes/${o.id}`} className="hover:text-[#e94560] transition-colors">
+                        {o.nummer ?? '—'}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-3 text-gray-500">{o.klanten?.naam ?? '—'}</td>
+                    <td className="px-3 py-3 text-gray-500">{o.projecten?.naam ?? '—'}</td>
+                    <td className="px-3 py-3 text-right font-semibold text-gray-800">
+                      € {fmt(totaal)}
+                    </td>
+                    <td className="px-3 py-3 text-xs whitespace-nowrap">
+                      {geldig ? (
+                        <span style={{ color: verlopen ? '#dc2626' : bijna ? '#d97706' : '#6b7280' }}>
+                          {geldig.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {verlopen && ' (Verlopen)'}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className="px-6 py-3">
+                      <StatusBadge status={o.status} map={OFFERTE_STATUSSEN} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* ── Open bugmeldingen ──────────────────────────────────────────────── */}

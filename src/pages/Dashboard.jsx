@@ -5,6 +5,14 @@ import { Users, FolderKanban, FileText, CheckCircle, ArrowRight, Bug, ExternalLi
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { useInstellingen } from '../context/InstellingenContext'
+import {
+  Chart as ChartJS,
+  ArcElement, Tooltip, Legend,
+  CategoryScale, LinearScale, BarElement, Title,
+} from 'chart.js'
+import { Doughnut, Bar } from 'react-chartjs-2'
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
 
 // ── Status configuraties ───────────────────────────────────────────────────
 const PROJECT_STATUSSEN = {
@@ -55,6 +63,29 @@ function fmt(n) {
   return Number(n).toLocaleString('nl-BE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
+const MAANDEN_NL = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+
+function berekenTotaalIncl(offerte) {
+  const items = Array.isArray(offerte.items_json) ? offerte.items_json : []
+  const sub = items.reduce((s, i) => s + (Number(i.hoeveelheid) || 0) * (Number(i.eenheidsprijs) || 0), 0)
+  const metMarge = sub * (1 + (Number(offerte.marge) || 0) / 100)
+  return metMarge * (1 + (Number(offerte.btw) || 0) / 100)
+}
+
+// Bouw een lijst van de laatste 6 maanden als { key: 'YYYY-MM', label: 'jan' }
+function laatste6Maanden() {
+  const lijst = []
+  const nu = new Date()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(nu.getFullYear(), nu.getMonth() - i, 1)
+    lijst.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: MAANDEN_NL[d.getMonth()],
+    })
+  }
+  return lijst
+}
+
 // ── Stat-kaart ─────────────────────────────────────────────────────────────
 function StatKaart({ label, getal, subtekst, kleur, bg, icon: Icon, laden, onClick }) {
   return (
@@ -98,6 +129,10 @@ export default function Dashboard() {
   const [ladenRecente,        setLadenRecente]        = useState(true)
   const [openOfferteRijen,    setOpenOfferteRijen]    = useState([])
   const [ladenOpenOffertes,   setLadenOpenOffertes]   = useState(true)
+
+  const [statusData,    setStatusData]    = useState(null) // voor donut
+  const [omzetData,     setOmzetData]     = useState(null) // voor bar
+  const [ladenGrafi,   setLadenGrafi]    = useState(true)
 
   const [totalKlanten,    setTotalKlanten]    = useState(0)
   const [klantDezeMaand,  setKlantDezeMaand]  = useState(0)
@@ -179,6 +214,65 @@ export default function Dashboard() {
         setOpenOfferteRijen(data ?? [])
         setLadenOpenOffertes(false)
       })
+
+    // ── 7. Grafieken ────────────────────────────────────────────────────────
+    Promise.all([
+      // Projecten per status (donut)
+      supabase.from('projecten').select('status'),
+      // Omzet per maand (bar) — goedgekeurd + gefactureerd, laatste 6 maanden
+      supabase.from('offertes')
+        .select('aangemaakt_op, items_json, btw, marge')
+        .in('status', ['goedgekeurd', 'gefactureerd'])
+        .gte('aangemaakt_op', (() => {
+          const d = new Date(); d.setMonth(d.getMonth() - 6); return d.toISOString()
+        })()),
+    ]).then(([projRes, offRes]) => {
+      // Donut data
+      const STATUS_GRAFIEK = [
+        { key: 'intake',          label: 'Intake',           kleur: '#94a3b8' },
+        { key: 'offerte',         label: 'Offerte',          kleur: '#f59e0b' },
+        { key: 'in_ontwikkeling', label: 'In ontwikkeling',  kleur: '#3b82f6' },
+        { key: 'afgeleverd',      label: 'Afgeleverd',       kleur: '#22c55e' },
+        { key: 'onderhoud',       label: 'Onderhoud',        kleur: '#8b5cf6' },
+      ]
+      const telling = {}
+      ;(projRes.data ?? []).forEach(p => { telling[p.status] = (telling[p.status] ?? 0) + 1 })
+      const heeftProjData = Object.keys(telling).length > 0
+      setStatusData(heeftProjData ? {
+        labels: STATUS_GRAFIEK.map(s => s.label),
+        datasets: [{
+          data: STATUS_GRAFIEK.map(s => telling[s.key] ?? 0),
+          backgroundColor: STATUS_GRAFIEK.map(s => s.kleur),
+          borderWidth: 0,
+          hoverOffset: 6,
+        }],
+        legendaItems: STATUS_GRAFIEK.map(s => ({ label: s.label, kleur: s.kleur, aantal: telling[s.key] ?? 0 })),
+      } : null)
+
+      // Bar data
+      const maanden = laatste6Maanden()
+      const somPerMaand = {}
+      maanden.forEach(m => { somPerMaand[m.key] = 0 })
+      ;(offRes.data ?? []).forEach(o => {
+        const maand = o.aangemaakt_op?.slice(0, 7)
+        if (maand && somPerMaand[maand] !== undefined) {
+          somPerMaand[maand] += berekenTotaalIncl(o)
+        }
+      })
+      const heeftOmzetData = Object.values(somPerMaand).some(v => v > 0)
+      setOmzetData(heeftOmzetData ? {
+        labels: maanden.map(m => m.label),
+        datasets: [{
+          label: 'Omzet incl. BTW',
+          data: maanden.map(m => Math.round(somPerMaand[m.key])),
+          backgroundColor: '#e94560',
+          borderRadius: 6,
+          borderSkipped: false,
+        }],
+      } : null)
+
+      setLadenGrafi(false)
+    })
   }, [])
 
   const naam = instellingen.eigenaar_naam
@@ -414,6 +508,86 @@ export default function Dashboard() {
             </tbody>
           </table>
         )}
+      </div>
+
+      {/* ── Grafieken ─────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        {/* Donut — projecten per status */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <p className="text-sm font-semibold text-gray-800 mb-4">Projecten per status</p>
+          {ladenGrafi ? (
+            <div className="flex items-center justify-center h-48">
+              <div className="w-32 h-32 rounded-full border-4 border-gray-100 border-t-gray-200 animate-spin" />
+            </div>
+          ) : !statusData ? (
+            <div className="flex items-center justify-center h-48">
+              <p className="text-sm text-gray-400">Nog geen data beschikbaar</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-5">
+              <div style={{ width: 180, height: 180 }}>
+                <Doughnut
+                  data={statusData}
+                  options={{
+                    cutout: '62%',
+                    plugins: { legend: { display: false }, tooltip: {
+                      callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` }
+                    }},
+                  }}
+                />
+              </div>
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                {statusData.legendaItems.map(item => (
+                  <div key={item.label} className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: item.kleur }} />
+                    {item.label} ({item.aantal})
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bar — omzet per maand */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-gray-800">Goedgekeurde offertes per maand</p>
+            <p className="text-xs text-gray-400 mt-0.5">laatste 6 maanden</p>
+          </div>
+          {ladenGrafi ? (
+            <div className="flex items-end justify-center gap-2 h-48 pb-4">
+              {[60,80,40,90,55,70].map((h, i) => (
+                <div key={i} className="w-8 bg-gray-100 rounded animate-pulse" style={{ height: `${h}%` }} />
+              ))}
+            </div>
+          ) : !omzetData ? (
+            <div className="flex items-center justify-center h-48">
+              <p className="text-sm text-gray-400">Nog geen data beschikbaar</p>
+            </div>
+          ) : (
+            <div style={{ height: 200 }}>
+              <Bar
+                data={omzetData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false }, tooltip: {
+                    callbacks: { label: ctx => ` € ${fmt(ctx.parsed.y)}` }
+                  }},
+                  scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: {
+                      grid: { color: '#f3f4f6' },
+                      ticks: { font: { size: 11 }, callback: v => `€ ${fmt(v)}` },
+                      beginAtZero: true,
+                    },
+                  },
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Open bugmeldingen ──────────────────────────────────────────────── */}

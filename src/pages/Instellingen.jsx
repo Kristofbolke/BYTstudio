@@ -137,8 +137,6 @@ export default function Instellingen() {
     if (data) {
       setInstId(data.id)
       setInst({ ...LEGE_INST, ...data })
-    } else if (error) {
-      console.error('Instellingen laden mislukt:', error.message)
     }
     setLaden(false)
   }

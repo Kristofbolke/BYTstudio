@@ -1,23 +1,49 @@
-// src/components/Banner.jsx
-// Reclamebanner bovenaan BYT Studio — aan/uit via schakelaar
-
+// src/components/Banner.jsx — Reclamebanner bovenaan de app, data uit Supabase
 import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+
+const STANDAARD = {
+  zichtbaar: true,
+  titel: 'Welkom bij Build Your Tools',
+  subtitel: 'Slimme apps voor slimme bedrijven',
+}
 
 export default function Banner() {
-  const [zichtbaar, setZichtbaar] = useState(true)
-  const [titel, setTitel] = useState('Welkom bij Build Your Tools')
-  const [subtitel, setSubtitel] = useState('Slimme apps voor slimme bedrijven')
+  const [data, setData] = useState(null) // null = nog aan het laden
 
   useEffect(() => {
-    const opgeslagen = localStorage.getItem('byt_banner_zichtbaar')
-    if (opgeslagen !== null) setZichtbaar(opgeslagen === 'true')
-    const t = localStorage.getItem('byt_banner_titel')
-    const s = localStorage.getItem('byt_banner_subtitel')
-    if (t) setTitel(t)
-    if (s) setSubtitel(s)
+    // Initiële load uit Supabase
+    supabase
+      .from('instellingen')
+      .select('banner_zichtbaar, banner_titel, banner_subtitel')
+      .limit(1)
+      .single()
+      .then(({ data: rij }) => {
+        if (rij) {
+          setData({
+            zichtbaar: rij.banner_zichtbaar ?? STANDAARD.zichtbaar,
+            titel: rij.banner_titel ?? STANDAARD.titel,
+            subtitel: rij.banner_subtitel ?? STANDAARD.subtitel,
+          })
+        } else {
+          setData(STANDAARD)
+        }
+      })
+
+    // Luister naar live updates vanuit Instellingen-pagina
+    function onUpdate(e) {
+      setData({
+        zichtbaar: e.detail.zichtbaar ?? STANDAARD.zichtbaar,
+        titel: e.detail.titel ?? STANDAARD.titel,
+        subtitel: e.detail.subtitel ?? STANDAARD.subtitel,
+      })
+    }
+    window.addEventListener('byt-banner-update', onUpdate)
+    return () => window.removeEventListener('byt-banner-update', onUpdate)
   }, [])
 
-  if (!zichtbaar) return null
+  // Nog aan het laden of bewust verborgen
+  if (!data || !data.zichtbaar) return null
 
   return (
     <div style={{
@@ -39,7 +65,7 @@ export default function Banner() {
         letterSpacing: '-0.01em',
         lineHeight: 1.2,
       }}>
-        {titel}
+        {data.titel}
       </div>
       <div style={{
         fontSize: '14px',
@@ -47,7 +73,7 @@ export default function Banner() {
         fontFamily: "'Inter', system-ui, sans-serif",
         fontWeight: 400,
       }}>
-        {subtitel}
+        {data.subtitel}
       </div>
     </div>
   )

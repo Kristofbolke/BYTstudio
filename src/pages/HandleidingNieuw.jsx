@@ -81,6 +81,7 @@ function ToolbarKnop({ onClick, title, children }) {
 
 // ── Hoofd component ───────────────────────────────────────────────────────────
 export default function HandleidingNieuw() {
+  useEffect(() => { document.title = 'Nieuwe handleiding — BYT Studio' }, [])
   const navigate       = useNavigate()
   const [searchParams] = useSearchParams()
   const editorRef      = useRef(null)

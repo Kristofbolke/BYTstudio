@@ -31,6 +31,7 @@ function Spinner({ kleur = '#185FA5' }) {
 
 // ── Hoofd component ───────────────────────────────────────────────────────────
 export default function Studio() {
+  useEffect(() => { document.title = 'Studio — BYT Studio' }, [])
   const [projecten,   setProjecten]   = useState([])
   const [projectId,   setProjectId]   = useState('')
   const [project,     setProject]     = useState(null)

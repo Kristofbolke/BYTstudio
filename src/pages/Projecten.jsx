@@ -216,6 +216,7 @@ function KanbanKolom({ status, projecten, onKaartKlik }) {
 
 // ── Hoofdcomponent ────────────────────────────────────────────────────────────
 export default function Projecten() {
+  useEffect(() => { document.title = 'Projecten — BYT Studio' }, [])
   const navigate = useNavigate()
   const [projecten, setProjecten] = useState([])
   const [loading, setLoading] = useState(true)

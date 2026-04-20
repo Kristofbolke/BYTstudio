@@ -329,6 +329,7 @@ function BevestigVerwijder({ naam, onBevestig, onAnnuleer, loading }) {
 // ── Hoofdpagina ────────────────────────────────────────────────────────────
 
 export default function Offertes() {
+  useEffect(() => { document.title = 'Offertes — BYT Studio' }, [])
   const navigate = useNavigate()
   const [offertes, setOffertes] = useState([])
   const [klanten, setKlanten] = useState([])

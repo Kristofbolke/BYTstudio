@@ -151,6 +151,7 @@ function ItemRij({ item, idx, uurtarief, onChange, onVerwijder }) {
 
 // ── Hoofdcomponent ────────────────────────────────────────────────────────────
 export default function OfferteNieuw() {
+  useEffect(() => { document.title = 'Nieuwe offerte — BYT Studio' }, [])
   const navigate      = useNavigate()
   const [params]      = useSearchParams()
   const initKlantId   = params.get('klant_id') ?? ''

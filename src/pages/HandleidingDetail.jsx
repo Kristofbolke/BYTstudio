@@ -202,6 +202,7 @@ export default function HandleidingDetail() {
       .then(async ({ data }) => {
         if (!data) { setLaden(false); return }
         setHandleiding(data)
+        document.title = `${data.type === 'technisch' ? 'Technische handleiding' : 'Gebruikershandleiding'} — BYT Studio`
         setInhoud(data.inhoud_markdown ?? '')
         setOpgeslagenInhoud(data.inhoud_markdown ?? '')
         // Laad huisstijl voor printkleur

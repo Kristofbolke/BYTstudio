@@ -1897,6 +1897,7 @@ export default function ProjectDetail() {
       .single()
     if (error || !data) { setFout('Project niet gevonden.'); setLoading(false); return }
     setProject(data)
+    document.title = `${data.naam} — BYT Studio`
     setLoading(false)
   }
 

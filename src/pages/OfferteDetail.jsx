@@ -367,6 +367,7 @@ export default function OfferteDetail() {
     ]) => {
       if (error || !o) { setFout('Offerte niet gevonden.'); setLoading(false); return }
       setOfferte(o)
+      document.title = `${o.offerte_nummer ?? 'Offerte'} — BYT Studio`
       setKlantDetail(o.klanten ?? null)
       setInstelling(inst ?? null)
       setForm({

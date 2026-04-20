@@ -688,6 +688,7 @@ function KlantFiche({ klant, onSluit, onBewerken, onVerwijderen }) {
 
 // ── Hoofdcomponent ────────────────────────────────────────────────────────────
 export default function Klanten() {
+  useEffect(() => { document.title = 'Klanten — BYT Studio' }, [])
   const [klanten, setKlanten] = useState([])
   const [loading, setLoading] = useState(true)
   const [zoekterm, setZoekterm] = useState('')

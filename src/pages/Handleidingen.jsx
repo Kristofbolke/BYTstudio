@@ -56,6 +56,7 @@ function exporteerPDF(h) {
 
 // ── Hoofd component ───────────────────────────────────────────────────────────
 export default function Handleidingen() {
+  useEffect(() => { document.title = 'Handleidingen — BYT Studio' }, [])
   const navigate = useNavigate()
 
   const [handleidingen, setHandleidingen] = useState([])

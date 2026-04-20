@@ -93,6 +93,7 @@ const inputKlasse = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-s
 const textareaKlasse = `${inputKlasse} resize-none`
 
 export default function Instellingen() {
+  useEffect(() => { document.title = 'Instellingen — BYT Studio' }, [])
   const navigate = useNavigate()
   const { herlaad } = useInstellingen()
   const [inst, setInst] = useState(LEGE_INST)

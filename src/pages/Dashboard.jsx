@@ -286,7 +286,7 @@ export default function Dashboard() {
       ;(offRes.data ?? []).forEach(o => { const k = o.aangemaakt_op?.slice(0, 7); if (k && som[k] !== undefined) som[k] += berekenTotaalIncl(o) })
       setOmzetData(Object.values(som).some(v => v > 0) ? {
         labels: maanden.map(m => m.label),
-        datasets: [{ label: 'Omzet incl. BTW', data: maanden.map(m => Math.round(som[m.key])), backgroundColor: '#e94560', borderRadius: 6, borderSkipped: false }],
+        datasets: [{ label: 'Omzet incl. BTW', data: maanden.map(m => Math.round(som[m.key])), backgroundColor: '#78C833', borderRadius: 6, borderSkipped: false }],
       } : null)
     } catch { setFoutGrafi(true) }
     setLadenGrafi(false)
@@ -354,7 +354,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
             {[
               { label: 'Eerste klant toevoegen', icon: UserPlus,  to: '/klanten',      kleur: '#3b82f6', bg: '#eff6ff' },
-              { label: 'Instellingen invullen',   icon: Settings,  to: '/instellingen', kleur: '#e94560', bg: '#fff1f3' },
+              { label: 'Instellingen invullen',   icon: Settings,  to: '/instellingen', kleur: '#78C833', bg: '#f0fdf4' },
               { label: 'Studio verkennen',        icon: Wrench,    to: '/studio',       kleur: '#8b5cf6', bg: '#faf5ff' },
             ].map(({ label, icon: Icon, to, kleur, bg }) => (
               <button key={to} onClick={() => navigate(to)}
@@ -423,7 +423,7 @@ export default function Dashboard() {
             { label: 'Instellingen',       to: '/instellingen',        icon: Settings   },
           ].map(({ label, to, icon: Icon }) => (
             <button key={label} onClick={() => navigate(to)}
-              className="flex flex-col items-center gap-2 px-3 py-4 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:border-[#e94560] hover:text-[#e94560] hover:bg-[#e94560]/5 transition-colors cursor-pointer">
+              className="flex flex-col items-center gap-2 px-3 py-4 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:border-[#78C833] hover:text-[#78C833] hover:bg-[#78C833]/5 transition-colors cursor-pointer">
               <Icon size={18} />
               <span className="text-center leading-tight">{label}</span>
             </button>
@@ -492,7 +492,7 @@ export default function Dashboard() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
           <p className="text-sm font-semibold text-gray-800">Recente projecten</p>
-          <Link to="/projecten" className="text-xs text-[#e94560] hover:underline font-medium">Alle projecten →</Link>
+          <Link to="/projecten" className="text-xs text-[#78C833] hover:underline font-medium">Alle projecten →</Link>
         </div>
         {ladenRecente ? <TabelSkeleton rijen={4} />
           : foutRecente ? <FoutBlok onHerlaad={laadRecenteProjecten} />
@@ -519,7 +519,7 @@ export default function Dashboard() {
                 {recenteProj.map(p => (
                   <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="px-6 py-3 font-medium text-gray-800">
-                      <Link to={`/projecten/${p.id}`} className="hover:text-[#e94560] transition-colors">{p.naam}</Link>
+                      <Link to={`/projecten/${p.id}`} className="hover:text-[#78C833] transition-colors">{p.naam}</Link>
                     </td>
                     <td className="px-3 py-3 text-gray-500">{p.klanten?.naam ?? '—'}</td>
                     <td className="px-3 py-3"><StatusBadge status={p.status} map={PROJECT_STATUSSEN} /></td>
@@ -528,7 +528,7 @@ export default function Dashboard() {
                     </td>
                     <td className="px-6 py-3 text-right">
                       <Link to={`/projecten/${p.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#e94560] hover:text-[#e94560] transition-colors">
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#78C833] hover:text-[#78C833] transition-colors">
                         <ExternalLink size={11} /> Open
                       </Link>
                     </td>
@@ -543,7 +543,7 @@ export default function Dashboard() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
           <p className="text-sm font-semibold text-gray-800">Openstaande offertes</p>
-          <Link to="/offertes" className="text-xs text-[#e94560] hover:underline font-medium">Alle offertes →</Link>
+          <Link to="/offertes" className="text-xs text-[#78C833] hover:underline font-medium">Alle offertes →</Link>
         </div>
         {ladenOpenOff ? <TabelSkeleton rijen={3} />
           : foutOpenOff ? <FoutBlok onHerlaad={laadOpenOffertes} />
@@ -574,7 +574,7 @@ export default function Dashboard() {
                   return (
                     <tr key={o.id} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-6 py-3 font-mono text-xs font-semibold text-gray-700">
-                        <Link to={`/offertes/${o.id}`} className="hover:text-[#e94560] transition-colors">{o.nummer ?? '—'}</Link>
+                        <Link to={`/offertes/${o.id}`} className="hover:text-[#78C833] transition-colors">{o.nummer ?? '—'}</Link>
                       </td>
                       <td className="px-3 py-3 text-gray-500">{o.klanten?.naam ?? '—'}</td>
                       <td className="px-3 py-3 text-gray-500">{o.projecten?.naam ?? '—'}</td>
@@ -668,7 +668,7 @@ export default function Dashboard() {
             <Bug size={14} className="text-gray-400" />
             <p className="text-sm font-semibold text-gray-800">Recente meldingen</p>
           </div>
-          <button onClick={() => navigate('/projecten')} className="text-xs text-[#e94560] hover:underline font-medium">
+          <button onClick={() => navigate('/projecten')} className="text-xs text-[#78C833] hover:underline font-medium">
             Alle meldingen bekijken →
           </button>
         </div>
@@ -701,7 +701,7 @@ export default function Dashboard() {
                         <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ color: ernst.kleur, background: ernst.bg }}>{ernst.label}</span>
                       </td>
                       <td className="px-3 py-3">
-                        {m.projecten ? <Link to={`/projecten/${m.projecten.id}`} className="text-gray-700 font-medium hover:text-[#e94560] transition-colors">{m.projecten.naam}</Link> : <span className="text-gray-400">—</span>}
+                        {m.projecten ? <Link to={`/projecten/${m.projecten.id}`} className="text-gray-700 font-medium hover:text-[#78C833] transition-colors">{m.projecten.naam}</Link> : <span className="text-gray-400">—</span>}
                       </td>
                       <td className="px-3 py-3 text-gray-500">{m.onderdeel ?? '—'}</td>
                       <td className="px-3 py-3 text-xs text-gray-400 whitespace-nowrap">
@@ -713,7 +713,7 @@ export default function Dashboard() {
                       <td className="px-6 py-3 text-right">
                         {m.projecten && (
                           <Link to={`/projecten/${m.projecten.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#e94560] hover:text-[#e94560] transition-colors">
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#78C833] hover:text-[#78C833] transition-colors">
                             <ExternalLink size={11} /> Bekijk
                           </Link>
                         )}

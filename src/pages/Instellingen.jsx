@@ -53,8 +53,8 @@ function SectieKaart({ icon: Icon, titel, subtitel, children, onOpslaan, laden, 
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-6 py-5 border-b border-gray-50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#e94560]/10 flex items-center justify-center">
-            <Icon size={16} className="text-[#e94560]" />
+          <div className="w-8 h-8 rounded-lg bg-[#78C833]/10 flex items-center justify-center">
+            <Icon size={16} className="text-[#78C833]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">{titel}</p>
@@ -69,7 +69,7 @@ function SectieKaart({ icon: Icon, titel, subtitel, children, onOpslaan, laden, 
             onClick={onOpslaan}
             disabled={laden}
             className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-opacity"
-            style={{ background: '#e94560' }}
+            style={{ background: '#78C833' }}
           >
             {laden ? 'Opslaan...' : opslaanLabel}
           </button>
@@ -89,7 +89,7 @@ function Veld({ label, children }) {
   )
 }
 
-const inputKlasse = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#e94560]/20 focus:border-[#e94560] transition-colors"
+const inputKlasse = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] transition-colors"
 const textareaKlasse = `${inputKlasse} resize-none`
 
 export default function Instellingen() {
@@ -345,8 +345,8 @@ export default function Instellingen() {
                     onClick={() => setInst(prev => ({ ...prev, btw_percentage: v }))}
                     className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
                       inst.btw_percentage === v
-                        ? 'bg-[#e94560] text-white border-[#e94560]'
-                        : 'bg-white text-gray-500 border-gray-200 hover:border-[#e94560] hover:text-[#e94560]'
+                        ? 'bg-[#78C833] text-white border-[#78C833]'
+                        : 'bg-white text-gray-500 border-gray-200 hover:border-[#78C833] hover:text-[#78C833]'
                     }`}
                   >
                     {v}%
@@ -454,7 +454,7 @@ export default function Instellingen() {
                 }
               }}
               style={{ width: 40, height: 22, flexShrink: 0 }}
-              className={`relative rounded-full transition-colors ${inst.banner_zichtbaar ? 'bg-[#e94560]' : 'bg-gray-200'}`}
+              className={`relative rounded-full transition-colors ${inst.banner_zichtbaar ? 'bg-[#78C833]' : 'bg-gray-200'}`}
             >
               <span
                 className="absolute top-0.5 left-0.5 bg-white rounded-full shadow"
@@ -528,7 +528,7 @@ export default function Instellingen() {
               </div>
               <button
                 onClick={stuurResetLink}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:border-[#e94560] hover:text-[#e94560] transition-colors"
+                className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:border-[#78C833] hover:text-[#78C833] transition-colors"
               >
                 Wachtwoord wijzigen
               </button>
@@ -585,7 +585,7 @@ export default function Instellingen() {
               <button
                 onClick={exporteerKlanten}
                 disabled={exporterenKlanten}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-[#e94560] hover:text-[#e94560] disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-[#78C833] hover:text-[#78C833] disabled:opacity-50 transition-colors"
               >
                 <Download size={14} />
                 {exporterenKlanten ? 'Exporteren...' : 'Exporteer alle klanten als CSV'}
@@ -593,7 +593,7 @@ export default function Instellingen() {
               <button
                 onClick={exporteerProjecten}
                 disabled={exporterenProjecten}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-[#e94560] hover:text-[#e94560] disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-[#78C833] hover:text-[#78C833] disabled:opacity-50 transition-colors"
               >
                 <Download size={14} />
                 {exporterenProjecten ? 'Exporteren...' : 'Exporteer alle projecten als CSV'}

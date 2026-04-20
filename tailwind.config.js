@@ -5,9 +5,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        sidebar: '#0f172a',
-        accent:  '#e94560',
-        surface: '#f8fafc',
+        sidebar: '#0a0a0a',
+        accent:  '#78C833',
+        surface: '#f4f4f5',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

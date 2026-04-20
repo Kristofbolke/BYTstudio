@@ -115,7 +115,7 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
     onOpgeslagen()
   }
 
-  const inputCls = "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#e94560]/30 focus:border-[#e94560]"
+  const inputCls = "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/30 focus:border-[#78C833]"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)' }}>
@@ -136,7 +136,7 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
           {/* Klant, project, nummer, status */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Klant <span className="text-[#e94560]">*</span></label>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Klant <span className="text-[#78C833]">*</span></label>
               <select value={form.klant_id} onChange={e => stelIn('klant_id', e.target.value)} className={inputCls + ' bg-white'}>
                 <option value="">— Kies klant —</option>
                 {klanten.map(k => <option key={k.id} value={k.id}>{k.bedrijfsnaam || k.naam}</option>)}
@@ -175,7 +175,7 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
               <p className="text-sm font-semibold text-gray-700">Regelitems</p>
               <button type="button" onClick={voegItemToe}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white hover:opacity-90 transition"
-                style={{ background: '#e94560' }}>
+                style={{ background: '#78C833' }}>
                 <Plus size={12} /> Regel toevoegen
               </button>
             </div>
@@ -200,18 +200,18 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
                     value={item.omschrijving}
                     onChange={e => updateItem(idx, 'omschrijving', e.target.value)}
                     placeholder="Omschrijving..."
-                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#e94560]/30 focus:border-[#e94560] bg-white"
+                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/30 focus:border-[#78C833] bg-white"
                   />
                   <input
                     type="number" min="0" step="0.5"
                     value={item.hoeveelheid}
                     onChange={e => updateItem(idx, 'hoeveelheid', e.target.value)}
-                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#e94560]/30 focus:border-[#e94560] bg-white"
+                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#78C833]/30 focus:border-[#78C833] bg-white"
                   />
                   <select
                     value={item.eenheid}
                     onChange={e => updateItem(idx, 'eenheid', e.target.value)}
-                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#e94560]/30 focus:border-[#e94560] bg-white"
+                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/30 focus:border-[#78C833] bg-white"
                   >
                     {EENHEDEN.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
@@ -221,7 +221,7 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
                       type="number" min="0" step="0.01"
                       value={item.eenheidsprijs}
                       onChange={e => updateItem(idx, 'eenheidsprijs', e.target.value)}
-                      className="w-full pl-5 pr-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#e94560]/30 focus:border-[#e94560] bg-white"
+                      className="w-full pl-5 pr-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/30 focus:border-[#78C833] bg-white"
                     />
                   </div>
                   <p className="text-sm font-semibold text-gray-800 text-right pr-1">
@@ -281,7 +281,7 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
               </div>
               <div className="flex justify-between font-bold text-gray-900 border-t border-gray-200 pt-2 text-base">
                 <span>Totaal incl. BTW</span>
-                <span style={{ color: '#e94560' }}>€ {fmt(totalen.incl)}</span>
+                <span style={{ color: '#78C833' }}>€ {fmt(totalen.incl)}</span>
               </div>
             </div>
           </div>
@@ -297,7 +297,7 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
           </button>
           <button onClick={handleOpslaan} disabled={loading}
             className="px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 hover:opacity-90 transition"
-            style={{ background: '#e94560' }}>
+            style={{ background: '#78C833' }}>
             {loading ? 'Opslaan...' : isBewerken ? 'Wijzigingen opslaan' : 'Offerte aanmaken'}
           </button>
         </div>
@@ -402,7 +402,7 @@ export default function Offertes() {
         <button
           onClick={() => { setModalOfferte({}); setModalOpen(true) }}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition"
-          style={{ background: '#e94560' }}
+          style={{ background: '#78C833' }}
         >
           <Plus size={15} /> Nieuwe offerte
         </button>
@@ -429,7 +429,7 @@ export default function Offertes() {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={zoekterm} onChange={e => setZoekterm(e.target.value)}
             placeholder="Zoek op nummer, klant, project..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#e94560]/30 focus:border-[#e94560] bg-white" />
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/30 focus:border-[#78C833] bg-white" />
         </div>
         {gefilterd.length > 0 && (
           <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 px-4 py-2.5 rounded-xl">
@@ -445,7 +445,7 @@ export default function Offertes() {
         {loading ? (
           <div className="py-16 text-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin mx-auto"
-              style={{ borderColor: '#e94560', borderTopColor: 'transparent' }} />
+              style={{ borderColor: '#78C833', borderTopColor: 'transparent' }} />
           </div>
         ) : gefilterd.length === 0 ? (
           <div className="px-6 py-12 text-center">
@@ -517,7 +517,7 @@ export default function Offertes() {
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => { setModalOfferte(o); setModalOpen(true) }}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-[#e94560] hover:bg-gray-100 transition"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-[#78C833] hover:bg-gray-100 transition"
                           title="Bewerken"
                         >
                           <Pencil size={14} />

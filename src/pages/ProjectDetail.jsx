@@ -333,7 +333,7 @@ function googleFontsLink(fontTitel, fontTekst, gewichtTitel, grootsteTekst) {
 function TabHuisstijl({ projectId }) {
   const leeg = {
     primaire_kleur:   '#185FA5',
-    secundaire_kleur: '#e94560',
+    secundaire_kleur: '#78C833',
     accent_kleur:     '#f8fafc',
     font_titel:       'Poppins',
     font_titel_eigen: '',

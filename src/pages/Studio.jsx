@@ -9,6 +9,7 @@ import PromptTemplates      from '../components/studio/PromptTemplates'
 import AppModules           from '../components/studio/AppModules'
 import BlokkensBuilder      from '../components/studio/BlokkensBuilder'
 import Projectdocumentatie  from '../components/studio/Projectdocumentatie'
+import AiCheck             from '../components/studio/AiCheck'
 
 // ── Tabs definitie ────────────────────────────────────────────────────────────
 const TABS = [
@@ -17,6 +18,7 @@ const TABS = [
   { key: 'modules',        label: 'App-modules',          emoji: '🧩' },
   { key: 'blokken',        label: 'Blokken-builder',      emoji: '🏗️' },
   { key: 'documentatie',   label: 'Projectdocumentatie',  emoji: '📄' },
+  { key: 'aicheck',        label: 'AI-suggestiecheck',    emoji: '✨' },
 ]
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
@@ -166,6 +168,7 @@ export default function Studio() {
                 {actieveTab === 'modules'      && <AppModules          project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'blokken'      && <BlokkensBuilder     project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'documentatie' && <Projectdocumentatie project={project} huisstijl={huisstijl} />}
+                {actieveTab === 'aicheck'     && <AiCheck            project={project} huisstijl={huisstijl} />}
               </>
             )}
           </div>

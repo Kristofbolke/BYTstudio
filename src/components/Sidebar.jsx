@@ -1,20 +1,23 @@
-// Sidebar.jsx — Navigatiesidebar met BYT Studio branding en actieve statussen
+// Sidebar.jsx — Premium BYT-branded navigatiesidebar
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FolderKanban, Layers,
-  FileText, BookOpen, Settings, LogOut
+  FileText, BookOpen, Settings, LogOut,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const navItems = [
-  { to: '/dashboard',     label: 'Dashboard',      icon: LayoutDashboard },
-  { to: '/klanten',       label: 'Klanten',         icon: Users },
-  { to: '/projecten',     label: 'Projecten',       icon: FolderKanban },
-  { to: '/studio',        label: 'Studio',          icon: Layers },
-  { to: '/offertes',      label: 'Offertes',        icon: FileText },
-  { to: '/handleidingen', label: 'Handleidingen',   icon: BookOpen },
-  { to: '/instellingen',  label: 'Instellingen',    icon: Settings },
+  { to: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
+  { to: '/klanten',       label: 'Klanten',        icon: Users },
+  { to: '/projecten',     label: 'Projecten',      icon: FolderKanban },
+  { to: '/studio',        label: 'Studio',         icon: Layers },
+  { to: '/offertes',      label: 'Offertes',       icon: FileText },
+  { to: '/handleidingen', label: 'Handleidingen',  icon: BookOpen },
+  { to: '/instellingen',  label: 'Instellingen',   icon: Settings },
 ]
+
+// BYT brand green
+const BYT_GREEN = '#78C833'
 
 export default function Sidebar() {
   const navigate = useNavigate()
@@ -25,58 +28,90 @@ export default function Sidebar() {
   }
 
   return (
-    <aside
-      className="w-60 flex-shrink-0 flex flex-col h-screen"
-      style={{ background: '#0f172a' }}
-    >
-      {/* Branding */}
-      <div className="px-5 py-5 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: '#e94560' }}
+    <aside className="w-64 flex-shrink-0 flex flex-col h-screen" style={{ background: '#0a0a0a' }}>
+
+      {/* ── Logo gebied ─────────────────────────────────────────────────────── */}
+      <div className="px-4 pt-5 pb-4">
+        {/* Wit logo-kader */}
+        <div className="rounded-xl overflow-hidden bg-white px-3 py-2.5 shadow-lg">
+          <img
+            src="/logo-byt.png"
+            alt="Build Your Tools"
+            className="w-full object-contain"
+            style={{ height: 48 }}
+          />
+        </div>
+
+        {/* Studio badge */}
+        <div className="flex items-center justify-center gap-1.5 mt-3">
+          <span style={{ color: BYT_GREEN, fontSize: 11, fontWeight: 700, opacity: 0.6 }}>&lt;</span>
+          <span
+            className="text-xs font-bold tracking-[0.2em] uppercase"
+            style={{ color: BYT_GREEN }}
           >
-            <span className="text-white font-black text-sm">B</span>
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm leading-none">BYT Studio</p>
-            <p className="text-xs mt-0.5" style={{ color: '#475569' }}>Build Your Tools</p>
-          </div>
+            Studio
+          </span>
+          <span style={{ color: BYT_GREEN, fontSize: 11, fontWeight: 700, opacity: 0.6 }}>&gt;</span>
         </div>
       </div>
 
-      {/* Navigatie */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      {/* ── Divider ─────────────────────────────────────────────────────────── */}
+      <div className="mx-4 mb-3" style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
+
+      {/* ── Navigatie ───────────────────────────────────────────────────────── */}
+      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto py-1">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                isActive
-                  ? 'bg-white/10 text-white'
-                  : 'hover:bg-white/5 hover:text-white'
-              }`
-            }
-            style={({ isActive }) => ({ color: isActive ? '#ffffff' : '#94a3b8' })}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group relative"
+            style={({ isActive }) => ({
+              color: isActive ? BYT_GREEN : '#6b7280',
+              background: isActive ? `${BYT_GREEN}12` : 'transparent',
+              borderLeft: isActive ? `3px solid ${BYT_GREEN}` : '3px solid transparent',
+            })}
           >
-            <Icon size={16} strokeWidth={1.75} />
-            {label}
+            {({ isActive }) => (
+              <>
+                <Icon
+                  size={16}
+                  strokeWidth={isActive ? 2 : 1.75}
+                  style={{ color: isActive ? BYT_GREEN : '#6b7280', flexShrink: 0 }}
+                  className="transition-colors"
+                />
+                <span className="transition-colors group-hover:text-white"
+                  style={{ color: 'inherit' }}>
+                  {label}
+                </span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* Uitloggen */}
-      <div className="px-3 py-4 border-t border-white/5">
+      {/* ── Versie indicator ────────────────────────────────────────────────── */}
+      <div className="mx-4 mb-3 px-3 py-2 rounded-lg flex items-center gap-2"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse"
+          style={{ background: BYT_GREEN }} />
+        <span className="text-xs" style={{ color: '#4b5563' }}>BYT Studio</span>
+        <span className="text-xs ml-auto" style={{ color: '#374151' }}>v2.0</span>
+      </div>
+
+      {/* ── Uitloggen ───────────────────────────────────────────────────────── */}
+      <div className="px-3 pb-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-all duration-150 hover:bg-white/5 hover:text-white"
-          style={{ color: '#94a3b8' }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-all duration-150 group"
+          style={{ color: '#4b5563' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#4b5563'; e.currentTarget.style.background = 'transparent' }}
         >
           <LogOut size={16} strokeWidth={1.75} />
           Uitloggen
         </button>
       </div>
+
     </aside>
   )
 }

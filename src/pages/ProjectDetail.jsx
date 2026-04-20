@@ -7,8 +7,9 @@ import { statusCfg, StatusBadge, STATUSSEN } from './Projecten'
 import {
   ChevronLeft, ExternalLink, Trash2, Save, Plus, X,
   CheckCircle, AlertTriangle, FileText, Palette, BookOpen,
-  Bug, Info, FolderKanban, ChevronDown, Zap, Edit3, FileDown, Clock,
+  Bug, Info, FolderKanban, ChevronDown, Zap, Edit3, FileDown, Clock, Lightbulb,
 } from 'lucide-react'
+import AICheck from '../components/AICheck'
 
 // ── Hulpfuncties ─────────────────────────────────────────────────────────────
 function formatDatum(iso) {
@@ -1877,6 +1878,7 @@ const TABS = [
   { key: 'handleidingen', label: 'Handleidingen',  icon: BookOpen },
   { key: 'meldingen',     label: 'Meldingen',      icon: Bug },
   { key: 'info',          label: 'Info',           icon: Info },
+  { key: 'aicheck',       label: 'AI-check',       icon: Lightbulb },
 ]
 
 // ── Hoofdcomponent ────────────────────────────────────────────────────────────
@@ -1885,6 +1887,8 @@ export default function ProjectDetail() {
   const navigate = useNavigate()
   const [project, setProject] = useState(null)
   const [klanten, setKlanten] = useState([])
+  const [huisstijl, setHuisstijl] = useState(null)
+  const [aiCheckOngelezen, setAiCheckOngelezen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [actieveTab, setActieveTab] = useState('overzicht')
   const [fout, setFout] = useState('')
@@ -1905,6 +1909,11 @@ export default function ProjectDetail() {
     laadProject()
     supabase.from('klanten').select('id, naam, bedrijfsnaam').order('naam')
       .then(({ data }) => setKlanten(data ?? []))
+    supabase.from('huisstijlen').select('*').eq('project_id', id).maybeSingle()
+      .then(({ data }) => setHuisstijl(data ?? null))
+    supabase.from('ai_checks').select('id', { count: 'exact', head: true })
+      .eq('project_id', id).eq('gelezen', false)
+      .then(({ count }) => setAiCheckOngelezen((count ?? 0) > 0))
   }, [id])
 
   if (loading) return (
@@ -1956,7 +1965,10 @@ export default function ProjectDetail() {
             return (
               <button
                 key={t.key}
-                onClick={() => setActieveTab(t.key)}
+                onClick={() => {
+                  setActieveTab(t.key)
+                  if (t.key === 'aicheck') setAiCheckOngelezen(false)
+                }}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   actief
                     ? 'border-blue-500 text-gray-900'
@@ -1965,6 +1977,9 @@ export default function ProjectDetail() {
               >
                 <Icon size={14} style={{ color: actief ? '#185FA5' : undefined }} />
                 {t.label}
+                {t.key === 'aicheck' && aiCheckOngelezen && (
+                  <span className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
+                )}
               </button>
             )
           })}
@@ -1979,6 +1994,15 @@ export default function ProjectDetail() {
         {actieveTab === 'handleidingen' && <TabHandleidingen project={project} />}
         {actieveTab === 'meldingen'     && <TabMeldingen     projectId={project.id} />}
         {actieveTab === 'info'          && <TabInfo          project={project} onVerwijderd={() => {}} />}
+        {actieveTab === 'aicheck'       && (
+          <AICheck
+            projectId={project.id}
+            projectNaam={project.naam}
+            sector={huisstijl?.sector || 'Algemeen'}
+            features={project.features_json?.modules ?? []}
+            huisstijl={huisstijl}
+          />
+        )}
       </div>
     </div>
   )

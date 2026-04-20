@@ -52,8 +52,19 @@ export default function App() {
   // Laadscherm tijdens sessiecheck
   if (session === undefined) {
     return (
-      <div className="flex items-center justify-center h-screen" style={{ background: '#0f172a' }}>
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#e94560', borderTopColor: 'transparent' }} />
+      <div className="flex flex-col items-center justify-center h-screen gap-6" style={{ background: '#0a0a0a' }}>
+        <div className="bg-white rounded-2xl px-6 py-4 shadow-2xl">
+          <img src="/logo-byt.png" alt="Build Your Tools" style={{ height: 52, objectFit: 'contain' }} />
+        </div>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: '#78C833', borderTopColor: 'transparent' }}
+          />
+          <span className="text-xs font-medium tracking-widest uppercase" style={{ color: '#78C833' }}>
+            Laden
+          </span>
+        </div>
       </div>
     )
   }

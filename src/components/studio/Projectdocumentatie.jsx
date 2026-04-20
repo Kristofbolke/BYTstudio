@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { MODULES_DATA } from './modulesData'
+import AICheck from '../AICheck'
 import {
   Copy, Check, ChevronDown, ChevronRight,
   ExternalLink, FileText, Zap, BookOpen, Edit3,
@@ -586,6 +587,29 @@ Doelgroep: developer die het project overneemt of onderhoudt.`
           </>
         )}
       </Sectie>
+
+      {/* ── AI-suggestiecheck ──────────────────────────────────────────────── */}
+      <div className="rounded-xl border border-purple-100 bg-purple-50/30 overflow-hidden">
+        <div className="px-5 py-4 border-b border-purple-100">
+          <p className="text-sm font-semibold text-gray-800">AI-suggestiecheck</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Laat Claude de app analyseren en verbeteringsuggesties geven
+          </p>
+        </div>
+        {!project ? (
+          <div className="px-5 py-8 text-center text-sm text-gray-400">
+            Selecteer een project bovenaan om een AI-check uit te voeren.
+          </div>
+        ) : (
+          <AICheck
+            projectId={project.id}
+            projectNaam={project.naam}
+            sector={huisstijl?.sector || 'Algemeen'}
+            features={project.features_json?.modules ?? []}
+            huisstijl={huisstijl}
+          />
+        )}
+      </div>
 
     </div>
   )

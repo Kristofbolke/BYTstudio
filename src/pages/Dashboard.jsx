@@ -186,6 +186,10 @@ export default function Dashboard() {
   const [ladenMeld,         setLadenMeld]          = useState(true)
   const [foutMeld,          setFoutMeld]           = useState(false)
 
+  const [aiChecks,          setAiChecks]           = useState([])
+  const [ladenAiChecks,     setLadenAiChecks]      = useState(true)
+  const [foutAiChecks,      setFoutAiChecks]       = useState(false)
+
   const [legeApp,           setLegeApp]            = useState(false)
 
   // ── Laad-functies per sectie ───────────────────────────────────────────
@@ -301,6 +305,20 @@ export default function Dashboard() {
     setLadenMeld(false)
   }, [])
 
+  const laadAiChecks = useCallback(async () => {
+    setLadenAiChecks(true); setFoutAiChecks(false)
+    try {
+      const { data, error } = await supabase
+        .from('ai_checks')
+        .select('id, aangemaakt_op, suggesties_json, project_id, projecten(id, naam)')
+        .order('aangemaakt_op', { ascending: false })
+        .limit(3)
+      if (error) throw error
+      setAiChecks(data ?? [])
+    } catch { setFoutAiChecks(true) }
+    setLadenAiChecks(false)
+  }, [])
+
   // ── Alles laden + lege-app check ──────────────────────────────────────
   const laadAlles = useCallback(async () => {
     const [aantalKlanten, aantalProjecten] = await Promise.all([
@@ -311,9 +329,10 @@ export default function Dashboard() {
       laadOpenOffertes(),
       laadGrafieken(),
       laadMeldingen(),
+      laadAiChecks(),
     ])
     setLegeApp(aantalKlanten === 0 && aantalProjecten === 0)
-  }, [laadKlanten, laadProjectenKaarten, laadOfferteKaart, laadRecenteProjecten, laadOpenOffertes, laadGrafieken, laadMeldingen])
+  }, [laadKlanten, laadProjectenKaarten, laadOfferteKaart, laadRecenteProjecten, laadOpenOffertes, laadGrafieken, laadMeldingen, laadAiChecks])
 
   // ── Auto-refresh elke 5 minuten ────────────────────────────────────────
   useEffect(() => {
@@ -410,6 +429,63 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* ── Laatste AI-checks ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">✨</span>
+            <p className="text-sm font-semibold text-gray-800">Laatste AI-checks</p>
+          </div>
+        </div>
+        {ladenAiChecks ? (
+          <div className="px-6 py-3 space-y-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex gap-4 items-center">
+                <div className="h-4 w-32 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 bg-gray-100 rounded animate-pulse flex-1" />
+                <div className="h-6 w-16 bg-gray-100 rounded-lg animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : foutAiChecks ? (
+          <FoutBlok onHerlaad={laadAiChecks} />
+        ) : aiChecks.length === 0 ? (
+          <div className="px-6 py-8 text-center space-y-3">
+            <p className="text-sm text-gray-400">Nog geen AI-checks uitgevoerd.</p>
+            <button
+              onClick={() => navigate('/projecten')}
+              className="px-4 py-2 rounded-lg text-white text-sm font-medium"
+              style={{ background: '#7c3aed' }}
+            >
+              Eerste check starten
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {aiChecks.map(c => {
+              const aantalSuggesties = (c.suggesties_json?.suggesties ?? []).length
+              const datum = new Date(c.aangemaakt_op).toLocaleDateString('nl-BE', {
+                day: 'numeric', month: 'short', year: 'numeric',
+              })
+              return (
+                <div key={c.id} className="flex items-center justify-between px-6 py-3 hover:bg-gray-50/60 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{c.projecten?.naam ?? '—'}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{datum} · {aantalSuggesties} suggesties</p>
+                  </div>
+                  <Link
+                    to={`/projecten/${c.projecten?.id}`}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-purple-600 border border-purple-200 hover:bg-purple-50 transition-colors"
+                  >
+                    <ExternalLink size={11} /> Bekijk
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Recente projecten ──────────────────────────────────────────────── */}

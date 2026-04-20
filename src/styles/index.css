@@ -9,17 +9,22 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #f8fafc;
+  background-color: #f4f4f5;
   margin: 0;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #1e293b;
-}
-::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
+/* Sidebar scrollbar — donker */
+aside ::-webkit-scrollbar { width: 4px; }
+aside ::-webkit-scrollbar-track { background: transparent; }
+aside ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+
+/* Main content scrollbar — licht */
+main ::-webkit-scrollbar { width: 6px; }
+main ::-webkit-scrollbar-track { background: #f4f4f5; }
+main ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+main ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Kaarten krijgen subtielere schaduw */
+.bg-white {
+  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }

@@ -7,6 +7,9 @@ import {
   ChevronDown, Printer, Mail, Receipt, AlertTriangle,
 } from 'lucide-react'
 import '../styles/print.css'
+import OfferteBuilder, {
+  berekenBlok, berekenAlles, vlakItemsVoorFactuur,
+} from '../components/OfferteBuilder'
 
 // ── Constanten ───────────────────────────────────────────────────────────────
 const STATUSSEN = [
@@ -18,6 +21,9 @@ const STATUSSEN = [
 const EENHEDEN = ['uur', 'dag', 'stuk', 'forfait', 'maand', 'km', '%']
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+function isV2(items_json) {
+  return !Array.isArray(items_json) && items_json?._v === 2
+}
 function fmt(n) { return Number(n).toFixed(2).replace('.', ',') }
 
 function berekenItem(i) {
@@ -135,8 +141,208 @@ function TotaalBlok({ items, btw, marge }) {
   )
 }
 
-// ── Print layout ─────────────────────────────────────────────────────────────
+// ── Print layout v2 (builder blokken) ────────────────────────────────────────
+function PrintLayoutV2({ offerte, form, instelling, klant, primairKleur }) {
+  const ur = form.items_json.uurtarief ?? form.uurtarief ?? 75
+  const blokken = (form.items_json.blokken ?? []).filter(b => b.actief)
+  const { excl, btw: btwTotaal, incl } = berekenAlles(form.items_json.blokken ?? [], ur)
+  const accent = primairKleur || '#185FA5'
+  const fmtPrint = n => Number(n ?? 0).toFixed(2).replace('.', ',')
+
+  const bedrijfAdresRegels = [
+    instelling?.adres,
+    [instelling?.postcode, instelling?.gemeente].filter(Boolean).join(' '),
+  ].filter(Boolean)
+
+  return (
+    <div className="offerte-print" style={{ '--hs-primair': accent }}>
+      <div className="op-header-balk" />
+      <div className="op-header">
+        <div>
+          <div className="op-bedrijf-naam">{instelling?.bedrijfsnaam || 'Build Your Tools'}</div>
+          <div className="op-bedrijf-details">
+            {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
+            {instelling?.btw_nummer && <div>BTW: {instelling.btw_nummer}</div>}
+            {instelling?.email     && <div>{instelling.email}</div>}
+          </div>
+        </div>
+        <div className="op-offerte-blok">
+          <div className="op-offerte-label">OFFERTE</div>
+          <div className="op-offerte-meta">
+            <div><strong>{form.offerte_nummer}</strong></div>
+            <div>Datum: {new Date(offerte.aangemaakt_op).toLocaleDateString('nl-BE')}</div>
+            {form.geldig_tot && <div>Geldig tot: {new Date(form.geldig_tot).toLocaleDateString('nl-BE')}</div>}
+          </div>
+        </div>
+      </div>
+
+      <hr className="op-divider" />
+
+      <div className="op-partijen">
+        <div className="op-partij">
+          <div className="op-partij-label">Van</div>
+          <div className="op-partij-content">
+            <div className="naam">{instelling?.bedrijfsnaam || 'Build Your Tools'}</div>
+            {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
+            {instelling?.btw_nummer && <div className="grijs">BTW: {instelling.btw_nummer}</div>}
+          </div>
+        </div>
+        <div className="op-partij">
+          <div className="op-partij-label">Aan</div>
+          <div className="op-partij-content">
+            {klant ? (
+              <>
+                <div className="naam">{klant.bedrijfsnaam || klant.naam}</div>
+                {klant.adres && <div>{klant.adres}</div>}
+                {klant.btw_nummer && <div className="grijs">BTW: {klant.btw_nummer}</div>}
+              </>
+            ) : <div className="grijs">— Geen klant —</div>}
+          </div>
+        </div>
+      </div>
+
+      {offerte.projecten?.naam && (
+        <div className="op-betreft"><strong>Betreft:</strong> {offerte.projecten.naam}</div>
+      )}
+
+      {/* Eén tabel per actief blok */}
+      {blokken.map(blok => {
+        const t = berekenBlok(blok, ur)
+        const actieveItems = blok.type === 'support'
+          ? blok.pakketten?.filter(p => p.actief) ?? []
+          : blok.items?.filter(i => i.actief) ?? []
+
+        const urenSub = blok.type === 'ontwikkeling'
+          ? actieveItems.filter(i => i.modus === 'uren').reduce((s, i) => s + (Number(i.waarde) || 0) * ur, 0)
+          : 0
+
+        return (
+          <div key={blok.id} style={{ marginBottom: '5mm' }}>
+            <div style={{
+              fontSize: '9pt', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+              color: accent, borderBottom: `1px solid ${accent}`, paddingBottom: '1mm', marginBottom: '2mm',
+            }}>
+              {blok.label}
+            </div>
+            <table className="op-tabel">
+              <thead>
+                <tr>
+                  <th style={{ width: '55%' }}>Omschrijving</th>
+                  <th style={{ width: '15%', textAlign: 'right' }}>Eenheid</th>
+                  <th style={{ width: '10%', textAlign: 'right' }}>Aantal</th>
+                  <th style={{ width: '20%', textAlign: 'right' }}>Bedrag</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blok.type === 'ontwikkeling' && actieveItems.map(item => {
+                  const naam = item.isAndere && item.detail ? item.detail : item.label
+                  let eenhStr = '', aantalStr = '', bedragStr = ''
+                  if (item.modus === 'uren') {
+                    eenhStr = `€ ${fmtPrint(ur)}/u`; aantalStr = `${item.waarde}u`
+                    bedragStr = fmtPrint((Number(item.waarde) || 0) * ur)
+                  } else if (item.modus === 'percentage') {
+                    eenhStr = '% dev-uren'; aantalStr = `${item.waarde}%`
+                    bedragStr = fmtPrint((Number(item.waarde) || 0) / 100 * urenSub)
+                  } else {
+                    eenhStr = `€ ${fmtPrint(item.eenheidsprijs)}/stuk`; aantalStr = String(item.waarde)
+                    bedragStr = fmtPrint((Number(item.waarde) || 0) * (Number(item.eenheidsprijs) || 0))
+                  }
+                  return (
+                    <tr key={item.id}>
+                      <td>{naam}{item.detail && !item.isAndere ? <span style={{ color: '#888', fontSize: '8pt' }}> — {item.detail}</span> : null}</td>
+                      <td style={{ textAlign: 'right' }}>{eenhStr}</td>
+                      <td style={{ textAlign: 'right' }}>{aantalStr}</td>
+                      <td style={{ textAlign: 'right' }}>€ {bedragStr}</td>
+                    </tr>
+                  )
+                })}
+                {blok.type === 'abonnement' && actieveItems.map(item => {
+                  const naam = item.isAndere && item.detail ? item.detail : item.label
+                  const beschr = item.detail && !item.isAndere ? `${naam} (${item.detail})` : naam
+                  return (
+                    <tr key={item.id}>
+                      <td>{beschr}</td>
+                      <td style={{ textAlign: 'right' }}>per maand</td>
+                      <td style={{ textAlign: 'right' }}>1</td>
+                      <td style={{ textAlign: 'right' }}>€ {fmtPrint(item.prijs)}</td>
+                    </tr>
+                  )
+                })}
+                {blok.type === 'support' && actieveItems.map(p => (
+                  <tr key={p.id}>
+                    <td>Support {p.label} — {p.omschrijving}</td>
+                    <td style={{ textAlign: 'right' }}>per maand</td>
+                    <td style={{ textAlign: 'right' }}>1</td>
+                    <td style={{ textAlign: 'right' }}>€ {fmtPrint(p.prijs)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="rij-subtotaal">
+                  <td colSpan="3">Subtotaal excl. BTW</td>
+                  <td>€ {fmtPrint(t.subtotaal)}</td>
+                </tr>
+                <tr className="rij-btw">
+                  <td colSpan="3">BTW ({blok.btw}%)</td>
+                  <td>€ {fmtPrint(t.btwBedrag)}</td>
+                </tr>
+                <tr className="rij-totaal">
+                  <td colSpan="3">Totaal {blok.label}</td>
+                  <td>€ {fmtPrint(t.totaal)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )
+      })}
+
+      {/* Eindtotaal */}
+      {blokken.length > 1 && (
+        <table className="op-tabel" style={{ marginTop: '4mm' }}>
+          <tfoot>
+            <tr className="rij-subtotaal">
+              <td colSpan="3"><strong>Totaal excl. BTW</strong></td>
+              <td>€ {fmtPrint(excl)}</td>
+            </tr>
+            <tr className="rij-btw">
+              <td colSpan="3">BTW</td>
+              <td>€ {fmtPrint(btwTotaal)}</td>
+            </tr>
+            <tr className="rij-totaal">
+              <td colSpan="3"><strong>Totaal te betalen</strong></td>
+              <td>€ {fmtPrint(incl)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      )}
+
+      <div className="op-handtekening">
+        <div className="op-handtekening-blok">
+          <div className="op-handtekening-lijn" />
+          <div className="op-handtekening-label">Handtekening opdrachtgever — "Voor akkoord"</div>
+        </div>
+        <div className="op-handtekening-blok">
+          <div className="op-handtekening-lijn" />
+          <div className="op-handtekening-label">Datum</div>
+        </div>
+      </div>
+
+      <div className="op-voettekst">
+        <div className="op-voettekst-titel">Betalingsvoorwaarden</div>
+        Betalingstermijn: 30 dagen na factuurdatum. Bij laattijdige betaling is van rechtswege een
+        nalatigheidsintrest van 10% per jaar verschuldigd, alsook een forfaitaire schadevergoeding van €40.
+        {instelling?.iban && <span> — IBAN: {instelling.iban}{instelling.bic ? ` — BIC: ${instelling.bic}` : ''}</span>}
+      </div>
+    </div>
+  )
+}
+
+// ── Print layout v1 (flat items) ─────────────────────────────────────────────
 function PrintLayout({ offerte, form, instelling, klant, primairKleur }) {
+  if (isV2(form.items_json)) {
+    return <PrintLayoutV2 offerte={offerte} form={form} instelling={instelling} klant={klant} primairKleur={primairKleur} />
+  }
+
   const t = berekenTotalen(form.items_json, form.btw_percentage, form.marge_percentage)
 
   // Bedrijfsadres samengesteld
@@ -372,6 +578,7 @@ export default function OfferteDetail() {
       document.title = `${o.offerte_nummer ?? 'Offerte'} — BYT Studio`
       setKlantDetail(o.klanten ?? null)
       setInstelling(inst ?? null)
+      const rawItems = o.items_json
       setForm({
         offerte_nummer:   o.offerte_nummer   ?? '',
         klant_id:         o.klant_id         ?? '',
@@ -381,9 +588,12 @@ export default function OfferteDetail() {
         btw_percentage:   o.btw_percentage   ?? 21,
         marge_percentage: o.marge_percentage ?? 0,
         notities:         o.notities         ?? '',
-        items_json: Array.isArray(o.items_json)
-          ? o.items_json
-          : [{ omschrijving: '', hoeveelheid: 1, eenheid: 'uur', eenheidsprijs: 0 }],
+        uurtarief:        isV2(rawItems) ? (rawItems.uurtarief ?? o.uurtarief ?? 75) : (o.uurtarief ?? 75),
+        items_json: isV2(rawItems)
+          ? rawItems
+          : Array.isArray(rawItems)
+            ? rawItems
+            : [{ omschrijving: '', hoeveelheid: 1, eenheid: 'uur', eenheidsprijs: 0 }],
       })
       setKlanten(k ?? [])
       setProjecten(p ?? [])
@@ -430,16 +640,22 @@ export default function OfferteDetail() {
   async function handleOpslaan(e) {
     e.preventDefault()
     setOpslaan(true); setFout(''); setOk('')
+
+    const opslaanItems = isV2(form.items_json)
+      ? { ...form.items_json, uurtarief: Number(form.uurtarief) }
+      : form.items_json
+
     const { error } = await supabase.from('offertes').update({
       offerte_nummer:   form.offerte_nummer,
       klant_id:         form.klant_id   || null,
       project_id:       form.project_id || null,
       status:           form.status,
       geldig_tot:       form.geldig_tot || null,
-      btw_percentage:   Number(form.btw_percentage),
-      marge_percentage: Number(form.marge_percentage),
+      uurtarief:        Number(form.uurtarief),
+      btw_percentage:   isV2(form.items_json) ? 21 : Number(form.btw_percentage),
+      marge_percentage: isV2(form.items_json) ? 0  : Number(form.marge_percentage),
       notities:         form.notities || null,
-      items_json:       form.items_json,
+      items_json:       opslaanItems,
       bijgewerkt_op:    new Date().toISOString(),
     }).eq('id', id)
     setOpslaan(false)
@@ -467,8 +683,24 @@ export default function OfferteDetail() {
     vervalDate.setDate(vervalDate.getDate() + (instelling?.betalingstermijn ?? 30))
     const vervalDatum = vervalDate.toISOString().split('T')[0]
 
-    // Totalen (offerte kan marge hebben)
-    const t = berekenTotalen(form.items_json, form.btw_percentage, form.marge_percentage)
+    // Totalen — v1 of v2
+    let factuurItems, subtotaal, btwBedrag, totaalIncl, hoofdBtw
+    if (isV2(form.items_json)) {
+      const ur = form.items_json.uurtarief ?? form.uurtarief ?? 75
+      factuurItems = vlakItemsVoorFactuur(form.items_json.blokken, ur)
+      const calc   = berekenAlles(form.items_json.blokken, ur)
+      subtotaal    = calc.excl
+      btwBedrag    = calc.btw
+      totaalIncl   = calc.incl
+      hoofdBtw     = form.items_json.blokken.find(b => b.actief)?.btw ?? 21
+    } else {
+      const t  = berekenTotalen(form.items_json, form.btw_percentage, form.marge_percentage)
+      factuurItems = form.items_json
+      subtotaal    = t.excl
+      btwBedrag    = t.btwB
+      totaalIncl   = t.incl
+      hoofdBtw     = Number(form.btw_percentage)
+    }
 
     // Maak factuur aan
     const { data: factuurData, error: factuurFout } = await supabase.from('facturen').insert({
@@ -479,11 +711,11 @@ export default function OfferteDetail() {
       status:         'verstuurd',
       factuur_datum:  vandaag,
       verval_datum:   vervalDatum,
-      items_json:     form.items_json,
-      btw_percentage: Number(form.btw_percentage),
-      subtotaal:      t.excl,
-      btw_bedrag:     t.btwB,
-      totaal_incl:    t.incl,
+      items_json:     factuurItems,
+      btw_percentage: hoofdBtw,
+      subtotaal,
+      btw_bedrag:     btwBedrag,
+      totaal_incl:    totaalIncl,
       betaald_bedrag: 0,
       notities:       form.notities || null,
     }).select('id').single()
@@ -721,36 +953,87 @@ export default function OfferteDetail() {
             </div>
           </div>
 
-          {/* Regelitems */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Regelitems</p>
-            <RegelItems
-              items={form.items_json}
-              onChange={items => stelIn('items_json', items)}
-            />
-          </div>
+          {/* Offerteblokken (v2) of Regelitems (v1) */}
+          {isV2(form.items_json) ? (
+            <>
+              {/* Uurtarief voor v2 */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Uurtarief</p>
+                <div className="flex items-end gap-4">
+                  <div>
+                    <label className={lbl}>Uurtarief (€)</label>
+                    <div className="relative w-36">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                      <input type="number" min="0" step="1" value={form.uurtarief}
+                        onChange={e => stelIn('uurtarief', Number(e.target.value))}
+                        className={inp + ' pl-7'} />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 pb-3">Gebruikt voor uren-items en procentuele berekeningen.</p>
+                </div>
+              </div>
 
-          {/* BTW + Marge + Totaal */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Berekening</p>
-            <div className="flex gap-4 max-w-xs">
-              <div className="flex-1">
-                <label className={lbl}>BTW %</label>
-                <input type="number" min="0" max="100" value={form.btw_percentage}
-                  onChange={e => stelIn('btw_percentage', e.target.value)} className={inp} />
+              {/* Builder blokken */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Offerteblokken</p>
+                <OfferteBuilder
+                  blokken={form.items_json.blokken}
+                  uurtarief={form.uurtarief}
+                  onChange={nieuweBlokken => stelIn('items_json', {
+                    ...form.items_json,
+                    blokken: nieuweBlokken,
+                    uurtarief: Number(form.uurtarief),
+                  })}
+                />
               </div>
-              <div className="flex-1">
-                <label className={lbl}>Marge %</label>
-                <input type="number" min="0" max="100" value={form.marge_percentage}
-                  onChange={e => stelIn('marge_percentage', e.target.value)} className={inp} />
+
+              {/* V2 totaaloverzicht */}
+              {(() => {
+                const { excl, btw, incl } = berekenAlles(form.items_json.blokken, form.uurtarief)
+                const fmtBE = n => Number(n ?? 0).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                return (
+                  <div className="bg-gray-50 rounded-xl px-5 py-4 space-y-2 text-sm max-w-xs ml-auto">
+                    <div className="flex justify-between text-gray-500"><span>Excl. BTW</span><span>€ {fmtBE(excl)}</span></div>
+                    <div className="flex justify-between text-gray-500"><span>BTW</span><span>€ {fmtBE(btw)}</span></div>
+                    <div className="flex justify-between text-gray-900 font-bold text-base border-t border-gray-300 pt-2">
+                      <span>Totaal incl. BTW</span><span>€ {fmtBE(incl)}</span>
+                    </div>
+                  </div>
+                )
+              })()}
+            </>
+          ) : (
+            <>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Regelitems</p>
+                <RegelItems
+                  items={form.items_json}
+                  onChange={items => stelIn('items_json', items)}
+                />
               </div>
-            </div>
-            <TotaalBlok
-              items={form.items_json}
-              btw={form.btw_percentage}
-              marge={form.marge_percentage}
-            />
-          </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Berekening</p>
+                <div className="flex gap-4 max-w-xs">
+                  <div className="flex-1">
+                    <label className={lbl}>BTW %</label>
+                    <input type="number" min="0" max="100" value={form.btw_percentage}
+                      onChange={e => stelIn('btw_percentage', e.target.value)} className={inp} />
+                  </div>
+                  <div className="flex-1">
+                    <label className={lbl}>Marge %</label>
+                    <input type="number" min="0" max="100" value={form.marge_percentage}
+                      onChange={e => stelIn('marge_percentage', e.target.value)} className={inp} />
+                  </div>
+                </div>
+                <TotaalBlok
+                  items={form.items_json}
+                  btw={form.btw_percentage}
+                  marge={form.marge_percentage}
+                />
+              </div>
+            </>
+          )}
 
           {/* Notities */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">

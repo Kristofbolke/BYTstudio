@@ -82,6 +82,42 @@ Alle tabellen hebben RLS ingeschakeld. Ingelogde gebruikers hebben volledige toe
 | `BlokkensBuilder` | Drag-and-drop blokkenstructuur, opgeslagen in `projecten.blokken_json` |
 | `Projectdocumentatie` | 5 secties: mappenstructuur, externe diensten, prijsraming, volgende stappen, handleidingen |
 
+## OfferteBuilder (src/components/OfferteBuilder.jsx)
+
+Gestructureerde offerte builder met 3 blokken. Geëxporteerde functies:
+
+| Export | Beschrijving |
+|---|---|
+| `DEFAULT_BLOKKEN` | Startwaarden voor de 3 blokken (deep clone bij gebruik) |
+| `berekenBlok(blok, uurtarief)` | Berekent subtotaal, BTW en totaal van één blok |
+| `berekenAlles(blokken, uurtarief)` | Sommeert alle actieve blokken → `{ excl, btw, incl }` |
+| `vlakItemsVoorFactuur(blokken, uurtarief)` | Converteert v2-blokken naar platte factuuritems |
+| `default OfferteBuilder` | React component: `{ blokken, uurtarief, onChange }` |
+
+### Blokken
+
+| id | type | Inhoud |
+|---|---|---|
+| `ontwikkeling` | `ontwikkeling` | 8 categorieën; modus: `uren` (× uurtarief), `percentage` (van uren-subtotaal), `stuk` (qty × prijs) |
+| `abonnement` | `abonnement` | 6 categorieën; prijs per maand + vrij tekstveld (servicenaam) |
+| `support` | `support` | 3 radio-pakketten (Basis / Standaard / Pro); één actief tegelijk |
+
+Elk blok heeft: `actief` (toggle), `btw` (%), en een eigen subtotaalweergave.
+
+### items_json formaat (v2)
+
+```json
+{
+  "_v": 2,
+  "uurtarief": 85,
+  "blokken": [ /* DEFAULT_BLOKKEN structuur */ ]
+}
+```
+
+Detectie: `!Array.isArray(items_json) && items_json?._v === 2`
+
+v1-offertes (platte array) blijven ongewijzigd werken — `OfferteDetail` en `OfferteNieuw` branchen op versie.
+
 ## features_json formaat
 
 ```json
@@ -126,12 +162,13 @@ Recovery password werkt via de Supabase e-mailtemplate (check Supabase Dashboard
 - [x] Klanten — overzicht + detailpagina (KlantDetail)
 - [x] Projecten — overzicht + detailpagina met tabbladen (Overzicht, Offertes, Facturatie, Studio, Handleidingen)
 - [x] Studio — FeatureConfigurator, PromptTemplates, AppModules, BlokkensBuilder, Projectdocumentatie
-- [x] Offertes — overzicht, nieuw, detail met PDF-print en offerte→factuur conversie
+- [x] Offertes — overzicht, nieuw, detail met PDF-print en offerte→factuur conversie; v2 gestructureerde builder (OfferteBuilder.jsx) met 3 blokken
 - [x] Facturen — volledig met PDF-print, betaling registreren, herinneringen, creditnota, offerte→factuur conversie
 - [x] Handleidingen — overzicht, nieuw, detail met PDF-print
 - [x] Instellingen — IBAN, BIC, BTW-nummer, betalingstermijn, bedrijfsnaam via `useInstellingen()` context
 - [x] Sidebar — vervallen facturen badge (rood), BYT-branding
 - [x] Deployment evaluatie geslaagd — `✓ built in 6.08s` (2026-04-21)
+- [x] OfferteBuilder v2 — gestructureerde offerte builder met 3 blokken en backward compat (2026-04-21)
 
 ### Deployment checklist
 

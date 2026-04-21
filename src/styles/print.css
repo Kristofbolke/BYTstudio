@@ -317,6 +317,434 @@
 
 
 /* ═══════════════════════════════════════════════════════════════
+   FACTUUR PRINT STIJLEN
+   Geïmporteerd in FactuurDetail.jsx
+   --fp-primair: BYT groen (#78C833) standaard
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Verberg op scherm */
+.factuur-print-content {
+  display: none;
+}
+
+@media print {
+
+  /* Paginaformaat */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 22mm 15mm;
+  }
+
+  /* Paginanummer onderaan elke pagina */
+  @page {
+    @bottom-center {
+      content: "Pagina " counter(page) " van " counter(pages);
+      font-size: 7.5pt;
+      color: #9ca3af;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+  }
+
+  /* Verberg alle UI-chrome */
+  body > *,
+  #root > * {
+    display: none !important;
+  }
+
+  /* Toon enkel factuur-printblok */
+  .factuur-print-content {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    color: #1a1a1a;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Forceer kleurenafdruk voor alle factuur-elementen */
+  .factuur-print-content * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Header: twee kolommen ────────────────────────────────── */
+  .fp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6mm;
+    gap: 15mm;
+  }
+
+  .fp-bedrijf-blok {
+    flex: 1;
+  }
+
+  .fp-logo {
+    max-height: 14mm;
+    max-width: 50mm;
+    object-fit: contain;
+    margin-bottom: 3mm;
+    display: block;
+  }
+
+  .fp-bedrijf-naam {
+    font-size: 15pt;
+    font-weight: 700;
+    color: var(--fp-primair, #78C833) !important;
+    line-height: 1.2;
+    margin-bottom: 1.5mm;
+  }
+
+  .fp-bedrijf-details {
+    font-size: 8pt;
+    color: #555 !important;
+    line-height: 1.8;
+  }
+
+  .fp-bedrijf-details strong {
+    color: #1a1a1a !important;
+    font-weight: 600;
+  }
+
+  .fp-factuur-blok {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .fp-factuur-titel {
+    font-size: 26pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--fp-primair, #78C833) !important;
+    line-height: 1;
+    margin-bottom: 3mm;
+  }
+
+  .fp-factuur-meta {
+    font-size: 9pt;
+    color: #555 !important;
+    line-height: 1.8;
+  }
+
+  .fp-factuur-meta strong {
+    color: #1a1a1a !important;
+  }
+
+  /* ── Primaire kleurlijn onder header ─────────────────────── */
+  .fp-divider-primair {
+    border: none;
+    border-top: 3px solid var(--fp-primair, #78C833);
+    margin: 0 0 6mm 0;
+  }
+
+  /* ── Klantenkader (grijs) ────────────────────────────────── */
+  .fp-klant-kader {
+    background: #f5f5f5 !important;
+    border-left: 3px solid var(--fp-primair, #78C833);
+    padding: 3.5mm 5mm;
+    margin-bottom: 5mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .fp-klant-label {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888 !important;
+    margin-bottom: 1.5mm;
+  }
+
+  .fp-klant-naam {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1a1a1a !important;
+    margin-bottom: 0.5mm;
+  }
+
+  .fp-klant-details {
+    font-size: 8.5pt;
+    color: #555 !important;
+    line-height: 1.7;
+  }
+
+  /* ── Project sectie ──────────────────────────────────────── */
+  .fp-project {
+    font-size: 9pt;
+    color: #555 !important;
+    margin-bottom: 5mm;
+    line-height: 1.7;
+  }
+
+  .fp-project strong {
+    color: #1a1a1a !important;
+  }
+
+  /* ── Itemtabel ───────────────────────────────────────────── */
+  .fp-tabel {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5mm;
+    font-size: 9pt;
+  }
+
+  .fp-tabel thead tr {
+    background: var(--fp-primair, #78C833) !important;
+  }
+
+  .fp-tabel thead th {
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2.5mm 3mm;
+    text-align: left;
+  }
+
+  .fp-tabel thead th.rechts {
+    text-align: right;
+  }
+
+  .fp-tabel thead th.center {
+    text-align: center;
+  }
+
+  /* Geen page-break in tabelrijen */
+  .fp-tabel tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .fp-tabel tbody tr:nth-child(even) {
+    background: #f9f9f9 !important;
+  }
+
+  .fp-tabel tbody td {
+    padding: 2mm 3mm;
+    border-bottom: 1px solid #ebebeb;
+    color: #1a1a1a !important;
+    vertical-align: top;
+    font-size: 9pt;
+  }
+
+  .fp-tabel tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .fp-tabel tbody td.rechts {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .fp-tabel tbody td.center {
+    text-align: center;
+  }
+
+  .fp-tabel tbody td.nr {
+    color: #888 !important;
+    font-size: 8pt;
+    width: 8mm;
+  }
+
+  .fp-tabel tbody td.omschrijving {
+    width: 45%;
+  }
+
+  /* ── Totalen sectie (rechts uitgelijnd) ──────────────────── */
+  .fp-totalen-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 5mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .fp-totalen-kader {
+    background: #f5f5f5 !important;
+    border: 1px solid #e0e0e0;
+    border-radius: 3pt;
+    padding: 4mm 5mm;
+    min-width: 75mm;
+  }
+
+  .fp-totalen-rij {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10mm;
+    font-size: 9pt;
+    color: #555 !important;
+    padding: 0.8mm 0;
+  }
+
+  .fp-totalen-rij .label {
+    color: #555 !important;
+    white-space: nowrap;
+  }
+
+  .fp-totalen-rij .bedrag {
+    color: #1a1a1a !important;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .fp-totalen-lijn {
+    border: none;
+    border-top: 1px solid #d0d0d0;
+    margin: 2mm 0;
+  }
+
+  .fp-totalen-lijn-dik {
+    border: none;
+    border-top: 2px solid var(--fp-primair, #78C833);
+    margin: 2.5mm 0;
+  }
+
+  .fp-totalen-rij.hoofdtotaal {
+    font-size: 11pt;
+    font-weight: 700;
+  }
+
+  .fp-totalen-rij.hoofdtotaal .label {
+    color: #1a1a1a !important;
+  }
+
+  .fp-totalen-rij.hoofdtotaal .bedrag {
+    color: var(--fp-primair, #78C833) !important;
+  }
+
+  .fp-totalen-rij.betaald .bedrag {
+    color: #16a34a !important;
+  }
+
+  .fp-totalen-rij.saldo {
+    font-size: 10.5pt;
+    font-weight: 700;
+  }
+
+  .fp-totalen-rij.saldo .label {
+    color: #1a1a1a !important;
+  }
+
+  .fp-totalen-rij.saldo .bedrag {
+    color: #dc2626 !important;
+  }
+
+  /* ── Betalingsinformatie (groen kader) ───────────────────── */
+  .fp-betaling-kader {
+    background: #f0fae5 !important;
+    border: 1.5px solid var(--fp-primair, #78C833);
+    border-radius: 3pt;
+    padding: 4mm 5mm;
+    margin-bottom: 6mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .fp-betaling-titel {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--fp-primair, #78C833) !important;
+    margin-bottom: 2mm;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .fp-betaling-rij {
+    display: flex;
+    gap: 4mm;
+    font-size: 9pt;
+    color: #1a1a1a !important;
+    line-height: 1.8;
+  }
+
+  .fp-betaling-rij .sleutel {
+    font-weight: 600;
+    color: #555 !important;
+    min-width: 22mm;
+    flex-shrink: 0;
+  }
+
+  .fp-betaling-rij .waarde {
+    color: #1a1a1a !important;
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+  }
+
+  .fp-betaling-vervaldatum {
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #1a1a1a !important;
+    margin-bottom: 2.5mm;
+  }
+
+  /* ── Wettelijke voettekst ────────────────────────────────── */
+  .fp-voettekst {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #e0e0e0;
+    padding: 3mm 5mm 2mm 5mm;
+    font-size: 7pt;
+    color: #999 !important;
+    background: #fff !important;
+    line-height: 1.5;
+  }
+
+  .fp-voettekst-tekst {
+    display: block;
+    margin-bottom: 1mm;
+  }
+
+  /* ── Notities sectie ─────────────────────────────────────── */
+  .fp-notities {
+    font-size: 8.5pt;
+    color: #555 !important;
+    margin-bottom: 5mm;
+    padding: 3mm 4mm;
+    border-left: 2px solid #e0e0e0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .fp-notities-label {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888 !important;
+    margin-bottom: 1mm;
+  }
+
+  /* ── Creditnota badge ────────────────────────────────────── */
+  .fp-creditnota-badge {
+    display: inline-block;
+    background: #f1f5f9 !important;
+    border: 1px solid #94a3b8;
+    color: #475569 !important;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 1mm 3mm;
+    border-radius: 2pt;
+    margin-bottom: 2mm;
+    letter-spacing: 0.05em;
+  }
+
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
    HANDLEIDING PRINT STIJLEN
    Geïmporteerd in HandleidingDetail.jsx
    --hs-primair wordt via inline style op .handleiding-print-content gezet

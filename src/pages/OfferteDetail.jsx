@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {
   ChevronLeft, Save, Trash2, CheckCircle,
-  ChevronDown, Printer, Mail,
+  ChevronDown, Printer, Mail, Receipt, AlertTriangle,
 } from 'lucide-react'
 import '../styles/print.css'
 
@@ -344,9 +344,11 @@ export default function OfferteDetail() {
   const [fout, setFout]                     = useState('')
   const [ok, setOk]                         = useState('')
   const [opslaan, setOpslaan]               = useState(false)
-  const [bevestigVerwijder, setBevestigVerwijder] = useState(false)
-  const [statusLaden, setStatusLaden]       = useState(false)
-  const [form, setForm]                     = useState(null)
+  const [bevestigVerwijder, setBevestigVerwijder]   = useState(false)
+  const [bevestigFactuur,   setBevestigFactuur]     = useState(false)
+  const [bezigFactuur,      setBezigFactuur]         = useState(false)
+  const [statusLaden,       setStatusLaden]           = useState(false)
+  const [form,              setForm]                  = useState(null)
 
   // ── Data laden ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -447,6 +449,60 @@ export default function OfferteDetail() {
     setTimeout(() => setOk(''), 3000)
   }
 
+  // ── Omzetten naar factuur ────────────────────────────────────────────────────
+  async function zetOmNaarFactuur() {
+    setBezigFactuur(true); setFout('')
+    const jaar = new Date().getFullYear()
+    const vandaag = new Date().toISOString().split('T')[0]
+
+    // Genereer factuurnummer via COUNT
+    const { count } = await supabase.from('facturen')
+      .select('id', { count: 'exact', head: true })
+      .gte('factuur_datum', `${jaar}-01-01`)
+    const volg = String((count ?? 0) + 1).padStart(3, '0')
+    const factuurNummer = `FACT-${jaar}-${volg}`
+
+    // Vervaldatum
+    const vervalDate = new Date()
+    vervalDate.setDate(vervalDate.getDate() + (instelling?.betalingstermijn ?? 30))
+    const vervalDatum = vervalDate.toISOString().split('T')[0]
+
+    // Totalen (offerte kan marge hebben)
+    const t = berekenTotalen(form.items_json, form.btw_percentage, form.marge_percentage)
+
+    // Maak factuur aan
+    const { data: factuurData, error: factuurFout } = await supabase.from('facturen').insert({
+      project_id:     form.project_id || null,
+      klant_id:       form.klant_id   || null,
+      offerte_id:     id,
+      factuur_nummer: factuurNummer,
+      status:         'verstuurd',
+      factuur_datum:  vandaag,
+      verval_datum:   vervalDatum,
+      items_json:     form.items_json,
+      btw_percentage: Number(form.btw_percentage),
+      subtotaal:      t.excl,
+      btw_bedrag:     t.btwB,
+      totaal_incl:    t.incl,
+      betaald_bedrag: 0,
+      notities:       form.notities || null,
+    }).select('id').single()
+
+    if (factuurFout) {
+      setFout('Factuur aanmaken mislukt: ' + factuurFout.message)
+      setBezigFactuur(false); setBevestigFactuur(false)
+      return
+    }
+
+    // Update offerte naar gefactureerd
+    await supabase.from('offertes').update({
+      status: 'gefactureerd',
+      bijgewerkt_op: new Date().toISOString(),
+    }).eq('id', id)
+
+    navigate(`/facturen/${factuurData.id}`)
+  }
+
   // ── Verwijderen ─────────────────────────────────────────────────────────────
   async function handleVerwijder() {
     await supabase.from('offertes').delete().eq('id', id)
@@ -512,6 +568,60 @@ export default function OfferteDetail() {
             style={{ height: 4, background: huisstijlKleur }}
             title={`Projectkleur: ${huisstijlKleur}`}
           />
+        )}
+
+        {/* ── Zet om naar factuur — prominente banner bij goedgekeurd ── */}
+        {form.status === 'goedgekeurd' && (
+          <div className="mb-5 flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border-2"
+            style={{ background: '#f0fae5', borderColor: '#78C833' }}>
+            <div>
+              <p className="text-sm font-bold text-gray-800">Deze offerte is goedgekeurd</p>
+              <p className="text-xs text-gray-500 mt-0.5">Je kan nu een factuur aanmaken op basis van deze offerte.</p>
+            </div>
+            <button
+              onClick={() => setBevestigFactuur(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold whitespace-nowrap hover:opacity-90 transition-opacity flex-shrink-0"
+              style={{ background: '#78C833' }}>
+              <Receipt size={15} />
+              Zet om naar factuur
+            </button>
+          </div>
+        )}
+
+        {/* ── Bevestigingsdialog ── */}
+        {bevestigFactuur && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: '#f0fae5' }}>
+                  <Receipt size={18} style={{ color: '#78C833' }} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Omzetten naar factuur</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Offerte {form.offerte_nummer}</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600">
+                Wil je een factuur aanmaken op basis van deze offerte?
+                De offerte krijgt status <strong>Gefactureerd</strong> en je wordt doorgestuurd naar de nieuwe factuur.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setBevestigFactuur(false)} disabled={bezigFactuur}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50">
+                  Annuleer
+                </button>
+                <button onClick={zetOmNaarFactuur} disabled={bezigFactuur}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                  style={{ background: '#78C833' }}>
+                  {bezigFactuur
+                    ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Aanmaken...</>
+                    : <><Receipt size={14} /> Factuur aanmaken</>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Breadcrumb */}

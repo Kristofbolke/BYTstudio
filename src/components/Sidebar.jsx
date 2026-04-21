@@ -1,8 +1,9 @@
 // Sidebar.jsx — Premium BYT-branded navigatiesidebar
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, FolderKanban, Layers,
-  FileText, BookOpen, Settings, LogOut,
+  FileText, BookOpen, Settings, LogOut, Receipt,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -12,6 +13,7 @@ const navItems = [
   { to: '/projecten',     label: 'Projecten',      icon: FolderKanban },
   { to: '/studio',        label: 'Studio',         icon: Layers },
   { to: '/offertes',      label: 'Offertes',       icon: FileText },
+  { to: '/facturen',      label: 'Facturen',       icon: Receipt },
   { to: '/handleidingen', label: 'Handleidingen',  icon: BookOpen },
   { to: '/instellingen',  label: 'Instellingen',   icon: Settings },
 ]
@@ -21,6 +23,14 @@ const BYT_GREEN = '#78C833'
 
 export default function Sidebar() {
   const navigate = useNavigate()
+  const [vervallenCount, setVervallenCount] = useState(0)
+
+  useEffect(() => {
+    supabase.from('facturen')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'vervallen')
+      .then(({ count }) => setVervallenCount(count ?? 0))
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -79,10 +89,17 @@ export default function Sidebar() {
                   style={{ color: isActive ? BYT_GREEN : '#6b7280', flexShrink: 0 }}
                   className="transition-colors"
                 />
-                <span className="transition-colors group-hover:text-white"
+                <span className="transition-colors group-hover:text-white flex-1"
                   style={{ color: 'inherit' }}>
                   {label}
                 </span>
+                {/* Vervallen badge voor Facturen */}
+                {to === '/facturen' && vervallenCount > 0 && (
+                  <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex-shrink-0"
+                    style={{ background: '#dc2626' }}>
+                    {vervallenCount > 99 ? '99+' : vervallenCount}
+                  </span>
+                )}
               </>
             )}
           </NavLink>

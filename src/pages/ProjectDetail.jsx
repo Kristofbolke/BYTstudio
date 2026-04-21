@@ -8,6 +8,7 @@ import {
   ChevronLeft, ExternalLink, Trash2, Save, Plus, X,
   CheckCircle, AlertTriangle, FileText, Palette, BookOpen,
   Bug, Info, FolderKanban, ChevronDown, Zap, Edit3, FileDown, Clock, Lightbulb,
+  Receipt,
 } from 'lucide-react'
 import AICheck from '../components/AICheck'
 
@@ -1206,8 +1207,10 @@ function OfferteStatusBadge({ status }) {
 
 function TabOffertes({ projectId, klantId }) {
   const navigate = useNavigate()
-  const [offertes, setOffertes] = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [offertes,      setOffertes]      = useState([])
+  const [loading,       setLoading]       = useState(true)
+  const [bezigFactuur,  setBezigFactuur]  = useState(null) // offerte.id of null
+  const [bevestigOffId, setBevestigOffId] = useState(null) // offerte.id om te bevestigen
 
   useEffect(() => {
     supabase
@@ -1217,6 +1220,55 @@ function TabOffertes({ projectId, klantId }) {
       .order('aangemaakt_op', { ascending: false })
       .then(({ data }) => { setOffertes(data ?? []); setLoading(false) })
   }, [projectId])
+
+  async function zetOmNaarFactuur(offerte) {
+    setBezigFactuur(offerte.id); setBevestigOffId(null)
+    const jaar    = new Date().getFullYear()
+    const vandaag = new Date().toISOString().split('T')[0]
+
+    const { count } = await supabase.from('facturen')
+      .select('id', { count: 'exact', head: true })
+      .gte('factuur_datum', `${jaar}-01-01`)
+    const volg = String((count ?? 0) + 1).padStart(3, '0')
+    const factuurNummer = `FACT-${jaar}-${volg}`
+
+    const vervalDate = new Date()
+    vervalDate.setDate(vervalDate.getDate() + 30)
+    const vervalDatum = vervalDate.toISOString().split('T')[0]
+
+    const items = Array.isArray(offerte.items_json) ? offerte.items_json : []
+    const sub   = items.reduce((s, i) => s + (Number(i.hoeveelheid) || 0) * (Number(i.eenheidsprijs) || 0), 0)
+    const mrgB  = sub * ((Number(offerte.marge_percentage) || 0) / 100)
+    const excl  = sub + mrgB
+    const btwB  = excl * ((Number(offerte.btw_percentage) || 21) / 100)
+    const incl  = excl + btwB
+
+    const { data: factuurData, error } = await supabase.from('facturen').insert({
+      project_id:     projectId,
+      klant_id:       offerte.klant_id || klantId || null,
+      offerte_id:     offerte.id,
+      factuur_nummer: factuurNummer,
+      status:         'verstuurd',
+      factuur_datum:  vandaag,
+      verval_datum:   vervalDatum,
+      items_json:     offerte.items_json,
+      btw_percentage: Number(offerte.btw_percentage) || 21,
+      subtotaal:      excl,
+      btw_bedrag:     btwB,
+      totaal_incl:    incl,
+      betaald_bedrag: 0,
+      notities:       offerte.notities || null,
+    }).select('id').single()
+
+    if (error) { setBezigFactuur(null); return }
+
+    await supabase.from('offertes').update({
+      status: 'gefactureerd',
+      bijgewerkt_op: new Date().toISOString(),
+    }).eq('id', offerte.id)
+
+    navigate(`/facturen/${factuurData.id}`)
+  }
 
   function nieuweOffertUrl() {
     const params = new URLSearchParams({ project_id: projectId })
@@ -1274,7 +1326,7 @@ function TabOffertes({ projectId, klantId }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
-              {['Offertenummer','Datum','Geldig tot','Status','Totaal incl. BTW',''].map((h, i) => (
+              {['Offertenummer','Datum','Geldig tot','Status','Totaal incl. BTW','',''].map((h, i) => (
                 <th key={i}
                   className={`px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide ${i >= 4 ? 'text-right' : 'text-left'}`}>
                   {h}
@@ -1304,11 +1356,10 @@ function TabOffertes({ projectId, klantId }) {
                   <td className="px-4 py-3 text-right font-medium text-gray-800 tabular-nums">
                     {fmtEuro(totaal)}
                   </td>
-                  {/* PDF-knop: stopt row-click via stopPropagation */}
-                  <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                  {/* PDF-knop */}
+                  <td className="px-2 py-3 text-right" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => {
-                        // Open detail in nieuw tabblad en print
                         const win = window.open(`/offertes/${o.id}`, '_blank')
                         if (win) win.addEventListener('load', () => win.print())
                       }}
@@ -1316,6 +1367,31 @@ function TabOffertes({ projectId, klantId }) {
                       className="opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300">
                       PDF
                     </button>
+                  </td>
+                  {/* → Factuur knop (enkel bij goedgekeurd) */}
+                  <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                    {o.status === 'goedgekeurd' && (
+                      bevestigOffId === o.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => setBevestigOffId(null)}
+                            className="px-2 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:bg-gray-100">
+                            ✕
+                          </button>
+                          <button onClick={() => zetOmNaarFactuur(o)} disabled={bezigFactuur === o.id}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-white disabled:opacity-60"
+                            style={{ background: '#78C833' }}>
+                            {bezigFactuur === o.id ? '...' : '✓ Bevestig'}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setBevestigOffId(o.id)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors"
+                          style={{ color: '#78C833', borderColor: '#78C833', background: '#f0fae5' }}>
+                          → Factuur
+                        </button>
+                      )
+                    )}
                   </td>
                 </tr>
               )
@@ -1870,11 +1946,312 @@ function TabInfo({ project, onVerwijderd }) {
   )
 }
 
+// ── Tab: Facturatie ──────────────────────────────────────────────────────────
+const FACTUUR_STATUS = {
+  concept:              { label: 'Concept',              kleur: '#64748b', bg: '#f1f5f9' },
+  verstuurd:            { label: 'Verstuurd',            kleur: '#2563eb', bg: '#dbeafe' },
+  gedeeltelijk_betaald: { label: 'Gedeeltelijk betaald', kleur: '#d97706', bg: '#fef9ee' },
+  betaald:              { label: 'Betaald',              kleur: '#16a34a', bg: '#dcfce7' },
+  vervallen:            { label: 'Vervallen',            kleur: '#dc2626', bg: '#fee2e2' },
+}
+
+function FactuurStatusBadge({ status }) {
+  const cfg = FACTUUR_STATUS[status] ?? FACTUUR_STATUS.concept
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap"
+      style={{ background: cfg.bg, color: cfg.kleur }}>
+      {cfg.label}
+    </span>
+  )
+}
+
+function TabFacturatie({ projectId, klantId }) {
+  const navigate = useNavigate()
+  const [facturen,  setFacturen]  = useState([])
+  const [offertes,  setOffertes]  = useState([])
+  const [loading,   setLoading]   = useState(true)
+
+  const vandaagStr = new Date().toISOString().split('T')[0]
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from('facturen').select('*').eq('project_id', projectId).order('factuur_datum', { ascending: true }),
+      supabase.from('offertes').select('id, status, aangemaakt_op, bijgewerkt_op').eq('project_id', projectId).order('aangemaakt_op', { ascending: true }),
+    ]).then(([{ data: f }, { data: o }]) => {
+      setFacturen(f ?? [])
+      setOffertes(o ?? [])
+      setLoading(false)
+    })
+  }, [projectId])
+
+  if (loading) return <Spinner />
+
+  // ── Financiële samenvatting ───────────────────────────────────────────────
+  const totaalGefactureerd = facturen
+    .filter(f => !f.is_creditnota)
+    .reduce((s, f) => s + Number(f.totaal_incl ?? 0), 0)
+  const totaalBetaald = facturen.reduce((s, f) => s + Number(f.betaald_bedrag ?? 0), 0)
+  const totaalOpenstaand = Math.max(0, totaalGefactureerd - totaalBetaald)
+
+  // ── URL helpers ─────────────────────────────────────────────────────────
+  function nieuweFactuurUrl(extra = {}) {
+    const p = new URLSearchParams({ project_id: projectId })
+    if (klantId) p.set('klant_id', klantId)
+    Object.entries(extra).forEach(([k, v]) => p.set(k, v))
+    return `/facturen/nieuw?${p.toString()}`
+  }
+
+  // ── Betalingstimeline opbouwen ───────────────────────────────────────────
+  function bouwTimeline() {
+    const stappen = []
+
+    // Offerte goedgekeurd
+    const goedgekeurde = offertes.find(o => o.status === 'goedgekeurd' || o.status === 'gefactureerd')
+    stappen.push({
+      label:     'Offerte goedgekeurd',
+      datum:     goedgekeurde?.bijgewerkt_op ?? null,
+      voltooid:  !!goedgekeurde,
+      kleur:     '#185FA5',
+    })
+
+    // Voorschot gefactureerd
+    const voorschot = facturen.find(f => f.is_voorschot)
+    stappen.push({
+      label:    'Voorschot gefactureerd',
+      datum:    voorschot?.factuur_datum ?? null,
+      voltooid: !!voorschot,
+      kleur:    '#d97706',
+    })
+
+    // Voorschot betaald
+    stappen.push({
+      label:    'Voorschot betaald',
+      datum:    voorschot?.betaaldatum ?? null,
+      voltooid: !!voorschot?.betaaldatum,
+      kleur:    '#16a34a',
+    })
+
+    // Eindfactuur verstuurd (niet-voorschot, niet-creditnota)
+    const eindfactuur = facturen.find(f => !f.is_voorschot && !f.is_creditnota)
+    stappen.push({
+      label:    'Eindfactuur verstuurd',
+      datum:    eindfactuur?.factuur_datum ?? null,
+      voltooid: !!eindfactuur,
+      kleur:    '#2563eb',
+    })
+
+    // Eindfactuur betaald
+    stappen.push({
+      label:    'Eindfactuur betaald',
+      datum:    eindfactuur?.betaaldatum ?? null,
+      voltooid: !!eindfactuur?.betaaldatum,
+      kleur:    '#16a34a',
+    })
+
+    return stappen
+  }
+
+  const tijdlijn = bouwTimeline()
+
+  // ── Lege staat ────────────────────────────────────────────────────────────
+  if (facturen.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <Receipt size={40} className="text-gray-200" />
+        <p className="text-sm text-gray-400 font-medium">Nog geen facturen voor dit project.</p>
+        <button
+          onClick={() => navigate(nieuweFactuurUrl())}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+          style={{ background: '#78C833' }}>
+          <Plus size={14} /> Eerste factuur aanmaken
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+
+      {/* ── Actieknopen ───────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-gray-500">
+          {facturen.length} factuur{facturen.length !== 1 ? 'en' : ''}
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate(nieuweFactuurUrl({ type: 'voorschot' }))}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+            <Receipt size={13} /> Voorschotfactuur (30%)
+          </button>
+          <button
+            onClick={() => navigate(nieuweFactuurUrl())}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
+            style={{ background: '#78C833' }}>
+            <Plus size={14} /> Nieuwe factuur
+          </button>
+        </div>
+      </div>
+
+      {/* ── Financiële kaarten ────────────────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Gefactureerd */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Gefactureerd</p>
+          <p className="text-2xl font-bold text-gray-900">{fmtEuro(totaalGefactureerd)}</p>
+          <p className="text-xs text-gray-400 mt-1">{facturen.filter(f => !f.is_creditnota).length} factuur{facturen.filter(f => !f.is_creditnota).length !== 1 ? 'en' : ''}</p>
+        </div>
+
+        {/* Betaald */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Betaald</p>
+          <p className="text-2xl font-bold" style={{ color: '#16a34a' }}>{fmtEuro(totaalBetaald)}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {totaalGefactureerd > 0
+              ? `${Math.round((totaalBetaald / totaalGefactureerd) * 100)}% van totaal`
+              : '—'}
+          </p>
+        </div>
+
+        {/* Openstaand */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Openstaand</p>
+          <p className="text-2xl font-bold" style={{ color: totaalOpenstaand > 0 ? '#dc2626' : '#16a34a' }}>
+            {fmtEuro(totaalOpenstaand)}
+          </p>
+          <p className="text-xs mt-1" style={{ color: totaalOpenstaand > 0 ? '#dc2626' : '#9ca3af' }}>
+            {totaalOpenstaand > 0 ? 'Te innen' : 'Volledig betaald'}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Factuurlijst ──────────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              {['Nummer','Type','Datum','Vervaldatum','Totaal incl. BTW','Betaald','Status',''].map((h, i) => (
+                <th key={i}
+                  className={`px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide ${i >= 4 ? 'text-right' : 'text-left'} last:text-center`}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {facturen.map(f => {
+              const isVervallen = f.verval_datum && f.verval_datum < vandaagStr && f.status === 'verstuurd'
+              const volledigBetaald = Number(f.betaald_bedrag ?? 0) >= Number(f.totaal_incl ?? 0) - 0.01
+              return (
+                <tr key={f.id}
+                  onClick={() => navigate(`/facturen/${f.id}`)}
+                  className="hover:bg-green-50/30 cursor-pointer transition-colors group">
+                  {/* Nummer */}
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800 group-hover:text-[#78C833]">
+                    {f.factuur_nummer}
+                  </td>
+                  {/* Type badge */}
+                  <td className="px-4 py-3">
+                    {f.is_creditnota ? (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">Creditnota</span>
+                    ) : f.is_voorschot ? (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Voorschot</span>
+                    ) : (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">Factuur</span>
+                    )}
+                  </td>
+                  {/* Factuurdatum */}
+                  <td className="px-4 py-3 text-gray-500 tabular-nums text-xs">
+                    {f.factuur_datum
+                      ? new Date(f.factuur_datum).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                      : '—'}
+                  </td>
+                  {/* Vervaldatum */}
+                  <td className="px-4 py-3 tabular-nums text-xs">
+                    {f.verval_datum ? (
+                      <span style={{ color: isVervallen ? '#dc2626' : '#6b7280', fontWeight: isVervallen ? 600 : 400 }}>
+                        {new Date(f.verval_datum).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        {isVervallen && ' ⚠'}
+                      </span>
+                    ) : '—'}
+                  </td>
+                  {/* Totaal */}
+                  <td className="px-4 py-3 text-right font-semibold text-gray-800 tabular-nums">
+                    {f.is_creditnota
+                      ? <span className="text-gray-400">{fmtEuro(f.totaal_incl)}</span>
+                      : fmtEuro(f.totaal_incl)}
+                  </td>
+                  {/* Betaald */}
+                  <td className="px-4 py-3 text-right tabular-nums text-xs"
+                    style={{ color: volledigBetaald ? '#16a34a' : '#6b7280', fontWeight: volledigBetaald ? 600 : 400 }}>
+                    {fmtEuro(f.betaald_bedrag)}
+                  </td>
+                  {/* Status */}
+                  <td className="px-4 py-3 text-right">
+                    <FactuurStatusBadge status={f.status} />
+                  </td>
+                  {/* Open link */}
+                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => navigate(`/facturen/${f.id}`)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-100">
+                      Open
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── Betalingstimeline ─────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5">Betalingstimeline</p>
+        <div className="relative">
+          {/* Verticale verbindingslijn */}
+          <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-gray-100" />
+
+          <div className="space-y-4">
+            {tijdlijn.map((stap, i) => (
+              <div key={i} className="flex items-start gap-4 relative">
+                {/* Icoon */}
+                <div className="flex-shrink-0 relative z-10">
+                  {stap.voltooid ? (
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ background: stap.kleur }}>
+                      <CheckCircle size={12} className="text-white" strokeWidth={3} />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full border-2 border-gray-200 bg-white" />
+                  )}
+                </div>
+
+                {/* Label + datum */}
+                <div className="flex-1 min-w-0 pb-1">
+                  <p className={`text-sm font-medium ${stap.voltooid ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {stap.label}
+                  </p>
+                  {stap.datum && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(stap.datum).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Tabs definitie ────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'overzicht',     label: 'Overzicht',     icon: FolderKanban },
   { key: 'huisstijl',     label: 'Huisstijl',     icon: Palette },
   { key: 'offertes',      label: 'Offertes',       icon: FileText },
+  { key: 'facturatie',    label: 'Facturatie',     icon: Receipt },
   { key: 'handleidingen', label: 'Handleidingen',  icon: BookOpen },
   { key: 'meldingen',     label: 'Meldingen',      icon: Bug },
   { key: 'info',          label: 'Info',           icon: Info },
@@ -1991,6 +2368,7 @@ export default function ProjectDetail() {
         {actieveTab === 'overzicht'     && <TabOverzicht     project={project} klanten={klanten} onBijgewerkt={laadProject} />}
         {actieveTab === 'huisstijl'     && <TabHuisstijl     projectId={project.id} />}
         {actieveTab === 'offertes'      && <TabOffertes      projectId={project.id} klantId={project.klant_id} />}
+        {actieveTab === 'facturatie'    && <TabFacturatie    projectId={project.id} klantId={project.klant_id} />}
         {actieveTab === 'handleidingen' && <TabHandleidingen project={project} />}
         {actieveTab === 'meldingen'     && <TabMeldingen     projectId={project.id} />}
         {actieveTab === 'info'          && <TabInfo          project={project} onVerwijderd={() => {}} />}

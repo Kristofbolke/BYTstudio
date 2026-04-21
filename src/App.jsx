@@ -18,6 +18,9 @@ import Handleidingen from './pages/Handleidingen'
 import HandleidingDetail from './pages/HandleidingDetail'
 import HandleidingNieuw from './pages/HandleidingNieuw'
 import Instellingen from './pages/Instellingen'
+import Facturen from './pages/Facturen'
+import FactuurNieuw from './pages/FactuurNieuw'
+import FactuurDetail from './pages/FactuurDetail'
 
 function ProtectedLayout({ children }) {
   return (
@@ -95,6 +98,9 @@ export default function App() {
         <Route path="/handleidingen"          element={<Handleidingen />} />
         <Route path="/handleidingen/nieuw"    element={<HandleidingNieuw />} />
         <Route path="/handleidingen/:id"      element={<HandleidingDetail />} />
+        <Route path="/facturen"           element={<Facturen />} />
+        <Route path="/facturen/nieuw"    element={<FactuurNieuw />} />
+        <Route path="/facturen/:id"      element={<FactuurDetail />} />
         <Route path="/instellingen"      element={<Instellingen />} />
         <Route path="*"              element={<Navigate to="/dashboard" replace />} />
       </Routes>

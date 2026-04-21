@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import {
   Users, FolderKanban, FileText, CheckCircle, ArrowRight, Bug, ExternalLink,
   UserPlus, FolderPlus, FilePlus, Wrench, BookOpen, Settings, RefreshCw,
+  Receipt, AlertTriangle,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
@@ -190,6 +191,14 @@ export default function Dashboard() {
   const [ladenAiChecks,     setLadenAiChecks]      = useState(true)
   const [foutAiChecks,      setFoutAiChecks]       = useState(false)
 
+  const [factuurKaarten,    setFactuurKaarten]     = useState({
+    openstaand: { laden: true, fout: false, aantal: 0, som: 0 },
+    vervallen:  { laden: true, fout: false, aantal: 0, som: 0 },
+  })
+  const [factuurVandaag,    setFactuurVandaag]     = useState([])
+  const [ladenFVandaag,     setLadenFVandaag]      = useState(true)
+  const [foutFVandaag,      setFoutFVandaag]       = useState(false)
+
   const [legeApp,           setLegeApp]            = useState(false)
 
   // ── Laad-functies per sectie ───────────────────────────────────────────
@@ -319,6 +328,47 @@ export default function Dashboard() {
     setLadenAiChecks(false)
   }, [])
 
+  const laadFactuurKaarten = useCallback(async () => {
+    setFactuurKaarten(p => ({
+      openstaand: { ...p.openstaand, laden: true, fout: false },
+      vervallen:  { ...p.vervallen,  laden: true, fout: false },
+    }))
+    try {
+      const [open, vervallen] = await Promise.all([
+        supabase.from('facturen').select('totaal_incl, betaald_bedrag').in('status', ['verstuurd', 'gedeeltelijk_betaald']),
+        supabase.from('facturen').select('totaal_incl, betaald_bedrag').eq('status', 'vervallen'),
+      ])
+      if (open.error) throw open.error
+      const openLijst = open.data ?? []
+      const openSom   = openLijst.reduce((s, f) => s + Number(f.totaal_incl) - Number(f.betaald_bedrag), 0)
+      const vervLijst = vervallen.data ?? []
+      const vervSom   = vervLijst.reduce((s, f) => s + Number(f.totaal_incl) - Number(f.betaald_bedrag), 0)
+      setFactuurKaarten({
+        openstaand: { laden: false, fout: false, aantal: openLijst.length, som: openSom },
+        vervallen:  { laden: false, fout: false, aantal: vervLijst.length,  som: vervSom },
+      })
+    } catch {
+      setFactuurKaarten(p => ({
+        openstaand: { ...p.openstaand, laden: false, fout: true },
+        vervallen:  { ...p.vervallen,  laden: false, fout: true },
+      }))
+    }
+  }, [])
+
+  const laadFactuurVandaag = useCallback(async () => {
+    setLadenFVandaag(true); setFoutFVandaag(false)
+    try {
+      const vandaag = new Date().toISOString().split('T')[0]
+      const { data, error } = await supabase.from('facturen')
+        .select('id, factuur_nummer, totaal_incl, betaald_bedrag, klanten(naam, bedrijfsnaam)')
+        .eq('verval_datum', vandaag)
+        .eq('status', 'verstuurd')
+      if (error) throw error
+      setFactuurVandaag(data ?? [])
+    } catch { setFoutFVandaag(true) }
+    setLadenFVandaag(false)
+  }, [])
+
   // ── Alles laden + lege-app check ──────────────────────────────────────
   const laadAlles = useCallback(async () => {
     const [aantalKlanten, aantalProjecten] = await Promise.all([
@@ -330,9 +380,11 @@ export default function Dashboard() {
       laadGrafieken(),
       laadMeldingen(),
       laadAiChecks(),
+      laadFactuurKaarten(),
+      laadFactuurVandaag(),
     ])
     setLegeApp(aantalKlanten === 0 && aantalProjecten === 0)
-  }, [laadKlanten, laadProjectenKaarten, laadOfferteKaart, laadRecenteProjecten, laadOpenOffertes, laadGrafieken, laadMeldingen, laadAiChecks])
+  }, [laadKlanten, laadProjectenKaarten, laadOfferteKaart, laadRecenteProjecten, laadOpenOffertes, laadGrafieken, laadMeldingen, laadAiChecks, laadFactuurKaarten, laadFactuurVandaag])
 
   // ── Auto-refresh elke 5 minuten ────────────────────────────────────────
   useEffect(() => {
@@ -343,6 +395,7 @@ export default function Dashboard() {
 
   const naam = instellingen.eigenaar_naam ? `, ${instellingen.eigenaar_naam.split(' ')[0]}` : ''
   const { klanten, projecten, offertes, afgel } = kaarten
+  const fmtBedrag = (n) => Number(n ?? 0).toLocaleString('nl-BE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
   // ── Lege app staat ─────────────────────────────────────────────────────
   if (!klanten.laden && !projecten.laden && legeApp) {
@@ -387,7 +440,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Statistiekenrij ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatKaart label="Klanten" getal={klanten.totaal}
           subtekst={`+ ${klanten.dezeMaand} deze maand`}
           kleur="#3b82f6" bg="#3b82f615" icon={Users}
@@ -398,11 +451,20 @@ export default function Dashboard() {
           kleur="#8b5cf6" bg="#8b5cf615" icon={FolderKanban}
           laden={projecten.laden} fout={projecten.fout} onHerlaad={laadProjectenKaarten}
           onClick={() => navigate('/projecten')} />
-        <StatKaart label="Openstaande offertes" getal={offertes.open}
-          subtekst={`Totale waarde: € ${fmt(offertes.waarde)}`}
-          kleur="#f59e0b" bg="#f59e0b15" icon={FileText}
-          laden={offertes.laden} fout={offertes.fout} onHerlaad={laadOfferteKaart}
-          onClick={() => navigate('/offertes')} />
+        <StatKaart label="Openstaande facturen"
+          getal={factuurKaarten.openstaand.aantal}
+          subtekst={`€ ${fmtBedrag(factuurKaarten.openstaand.som)} openstaand`}
+          kleur="#f59e0b" bg="#f59e0b15" icon={Receipt}
+          laden={factuurKaarten.openstaand.laden} fout={factuurKaarten.openstaand.fout}
+          onHerlaad={laadFactuurKaarten}
+          onClick={() => navigate('/facturen')} />
+        <StatKaart label="Vervallen facturen"
+          getal={factuurKaarten.vervallen.aantal}
+          subtekst={factuurKaarten.vervallen.aantal > 0 ? `€ ${fmtBedrag(factuurKaarten.vervallen.som)} te innen` : 'Geen vervallen facturen'}
+          kleur="#dc2626" bg="#dc262615" icon={AlertTriangle}
+          laden={factuurKaarten.vervallen.laden} fout={factuurKaarten.vervallen.fout}
+          onHerlaad={laadFactuurKaarten}
+          onClick={() => navigate('/facturen')} />
         <StatKaart label="Afgeleverde projecten" getal={afgel.totaal}
           subtekst={`${afgel.onderhoud} in onderhoud`}
           kleur="#10b981" bg="#10b98115" icon={CheckCircle}
@@ -487,6 +549,51 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* ── Facturen die vandaag vervallen ─────────────────────────────────── */}
+      {(ladenFVandaag || factuurVandaag.length > 0) && (
+        <div className="bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-red-50" style={{ background: '#fff8f8' }}>
+            <AlertTriangle size={14} className="text-red-500 flex-shrink-0" />
+            <p className="text-sm font-semibold text-red-700">Facturen die vandaag vervallen</p>
+          </div>
+          {ladenFVandaag ? (
+            <div className="px-6 py-3 space-y-2">
+              {[1,2].map(i => (
+                <div key={i} className="flex gap-4 items-center">
+                  <div className="h-4 w-28 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-4 bg-gray-100 rounded animate-pulse flex-1" />
+                  <div className="h-4 w-16 bg-gray-100 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : foutFVandaag ? (
+            <FoutBlok onHerlaad={laadFactuurVandaag} />
+          ) : (
+            <div className="divide-y divide-red-50">
+              {factuurVandaag.map(f => {
+                const openSaldo = Number(f.totaal_incl) - Number(f.betaald_bedrag ?? 0)
+                const klantNm = f.klanten?.bedrijfsnaam || f.klanten?.naam || '—'
+                return (
+                  <div key={f.id} className="flex items-center justify-between px-6 py-3 hover:bg-red-50/40 transition-colors">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{f.factuur_nummer}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{klantNm}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-red-600">€ {fmtBedrag(openSaldo)}</span>
+                      <Link to={`/facturen/${f.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors">
+                        <ExternalLink size={11} /> Open
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Recente projecten ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

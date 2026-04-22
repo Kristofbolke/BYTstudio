@@ -424,18 +424,18 @@ export default function Instellingen() {
           </div>
         </SectieKaart>
 
-        {/* 3. Banner instellingen */}
+        {/* 3. App-header instellingen */}
         <SectieKaart
           icon={Megaphone}
-          titel="Banner instellingen"
-          subtitel="De reclamebanner bovenaan de app."
+          titel="App-header"
+          subtitel="Geanimeerde header bovenaan de app met BYT-logo."
           onOpslaan={() => slaOp(
             ['banner_zichtbaar','banner_titel','banner_subtitel'],
-            setLadenBanner, setBerichtBanner, 'Banner-instellingen opgeslagen.'
+            setLadenBanner, setBerichtBanner, 'Header-instellingen opgeslagen.'
           )}
           laden={ladenBanner}
           bericht={berichtBanner}
-          opslaanLabel="Banner-instellingen opslaan"
+          opslaanLabel="Header-instellingen opslaan"
         >
           {/* Toggle — auto-opslaan bij wijziging */}
           <div className="flex items-center gap-3">
@@ -463,42 +463,57 @@ export default function Instellingen() {
                 }}
               />
             </button>
-            <span className="text-sm text-gray-600">Banner tonen</span>
+            <span className="text-sm text-gray-600">Header tonen</span>
           </div>
 
-          <Veld label="Bannertitel">
+          <Veld label="Koptekst">
             <input
               className={inputKlasse}
               value={inst.banner_titel}
               onChange={stel('banner_titel')}
-              placeholder="Welkom bij Build Your Tools"
+              placeholder="BYT Studio"
             />
           </Veld>
-          <Veld label="Bannerondertitel">
+          <Veld label="Ondertitel (optioneel)">
             <input
               className={inputKlasse}
               value={inst.banner_subtitel}
               onChange={stel('banner_subtitel')}
-              placeholder="Slimme apps voor slimme bedrijven"
+              placeholder="Interne tool"
             />
           </Veld>
 
-          {/* Live preview — altijd zichtbaar */}
+          {/* Live preview */}
           <div>
             <p className="text-xs font-medium text-gray-500 mb-1.5">Live preview</p>
             <div
-              className="rounded-xl flex flex-col items-center justify-center gap-0.5 transition-opacity"
-              style={{ background: '#185FA5', height: 70, opacity: inst.banner_zichtbaar ? 1 : 0.35 }}
+              className="rounded-xl flex items-center justify-center gap-4 transition-opacity overflow-hidden"
+              style={{ background: '#0a0a0a', height: 68, opacity: inst.banner_zichtbaar ? 1 : 0.35, border: '1px solid rgba(120,200,51,0.18)' }}
             >
-              <p className="text-white font-bold text-sm leading-tight">
-                {inst.banner_titel || 'Welkom bij Build Your Tools'}
-              </p>
-              <p className="text-white/80 text-xs">
-                {inst.banner_subtitel || 'Slimme apps voor slimme bedrijven'}
-              </p>
+              {/* Logo animatie preview */}
+              <div className="flex items-center gap-2">
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 16, color: '#78C833', letterSpacing: '-1px' }}>{'</'}</span>
+                <div className="flex gap-1">
+                  {['#78C833','#185FA5','#f97316','#a855f7'].map((k,i) => (
+                    <div key={i} style={{ width: 8, height: 8, borderRadius: 2, background: k }} />
+                  ))}
+                </div>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 16, color: '#78C833', letterSpacing: '-1px' }}>{'/>'}</span>
+              </div>
+              <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.1)' }} />
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
+                  {inst.banner_titel || 'BYT Studio'}
+                </p>
+                {inst.banner_subtitel && (
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
+                    {inst.banner_subtitel}
+                  </p>
+                )}
+              </div>
             </div>
             {!inst.banner_zichtbaar && (
-              <p className="text-xs text-gray-400 mt-1.5 text-center">Banner is uitgeschakeld</p>
+              <p className="text-xs text-gray-400 mt-1.5 text-center">Header is uitgeschakeld</p>
             )}
           </div>
         </SectieKaart>

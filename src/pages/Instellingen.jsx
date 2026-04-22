@@ -492,13 +492,13 @@ export default function Instellingen() {
             >
               {/* Logo animatie preview */}
               <div className="flex items-center gap-2">
-                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 16, color: '#78C833', letterSpacing: '-1px' }}>{'</'}</span>
-                <div className="flex gap-1">
-                  {['#78C833','#185FA5','#f97316','#a855f7'].map((k,i) => (
-                    <div key={i} style={{ width: 8, height: 8, borderRadius: 2, background: k }} />
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 18, color: '#78C833' }}>{'<'}</span>
+                <div className="flex gap-1.5">
+                  {['#7ed957','#ff0000','#ff751f'].map((k,i) => (
+                    <div key={i} style={{ width: 9, height: 9, borderRadius: 2, background: k }} />
                   ))}
                 </div>
-                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 16, color: '#78C833', letterSpacing: '-1px' }}>{'/>'}</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 18, color: '#78C833' }}>{'>'}</span>
               </div>
               <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.1)' }} />
               <div>

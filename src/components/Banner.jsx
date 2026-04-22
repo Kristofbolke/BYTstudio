@@ -1,25 +1,31 @@
-// src/components/Banner.jsx — Geanimeerde app-header met BYT-logo animatie
+// src/components/Banner.jsx — Geanimeerde app-header met BYT-logo blokjes
 import { useState, useEffect } from 'react'
 import { useInstellingen } from '../context/InstellingenContext'
 
 const BYT_GREEN = '#78C833'
-const BLOKKEN = [
-  { kleur: '#78C833' }, // groen
-  { kleur: '#185FA5' }, // blauw
-  { kleur: '#f97316' }, // oranje
-  { kleur: '#a855f7' }, // paars
-]
+
+// Kleuren uit het BYT-logo
+const BLOKKEN = ['#7ed957', '#ff0000', '#ff751f']
 
 export default function Banner() {
   const { instellingen, laden } = useInstellingen()
   const [actief, setActief] = useState(false)
 
+  // Dubbel requestAnimationFrame: zorgt dat browser de begin-state heeft gepaint
+  // vóór de animatie start — anders is er geen "from"-frame voor de CSS transition
   useEffect(() => {
-    const t = setTimeout(() => setActief(true), 60)
-    return () => clearTimeout(t)
+    let raf1, raf2
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        setActief(true)
+      })
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
   }, [])
 
-  // Verberg tijdens laden of wanneer uitgeschakeld
   if (laden) return null
   if (!instellingen.banner_zichtbaar) return null
 
@@ -31,7 +37,7 @@ export default function Banner() {
       width: '100%',
       height: '68px',
       background: '#0a0a0a',
-      borderBottom: `1px solid rgba(120,200,51,0.18)`,
+      borderBottom: '1px solid rgba(126,217,87,0.18)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -41,80 +47,76 @@ export default function Banner() {
       userSelect: 'none',
     }}>
 
-      {/* Geanimeerd logo */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-      }}>
+      {/* Geanimeerd logo: < blokjes > */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
 
-        {/* Links: </ */}
+        {/* < links */}
         <span style={{
-          fontFamily: "'Courier New', 'Courier', monospace",
+          fontFamily: "'Courier New', monospace",
           fontWeight: 700,
-          fontSize: '18px',
+          fontSize: '22px',
           color: BYT_GREEN,
-          letterSpacing: '-1px',
-          transform: actief ? 'translateX(0)' : 'translateX(14px)',
+          transform: actief ? 'translateX(0)' : 'translateX(18px)',
           opacity: actief ? 1 : 0,
-          transition: 'transform 0.55s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.35s ease',
+          transition: 'transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.4s ease',
           lineHeight: 1,
+          display: 'block',
         }}>
-          {'</'}
+          {'<'}
         </span>
 
-        {/* Gekleurde blokjes */}
-        <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-          {BLOKKEN.map((b, i) => (
+        {/* Gekleurde blokjes uit het logo */}
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {BLOKKEN.map((kleur, i) => (
             <div
               key={i}
               style={{
-                width: '9px',
-                height: '9px',
+                width: '11px',
+                height: '11px',
                 borderRadius: '2px',
-                background: b.kleur,
-                transform: actief ? 'scale(1) translateY(0)' : 'scale(0) translateY(4px)',
+                background: kleur,
+                transform: actief ? 'scale(1)' : 'scale(0)',
                 opacity: actief ? 1 : 0,
                 transition: [
-                  `transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.18 + i * 0.07}s`,
-                  `opacity 0.3s ease ${0.18 + i * 0.07}s`,
+                  `transform 0.45s cubic-bezier(0.34, 1.6, 0.64, 1) ${0.15 + i * 0.08}s`,
+                  `opacity 0.3s ease ${0.15 + i * 0.08}s`,
                 ].join(', '),
               }}
             />
           ))}
         </div>
 
-        {/* Rechts: /> */}
+        {/* > rechts */}
         <span style={{
-          fontFamily: "'Courier New', 'Courier', monospace",
+          fontFamily: "'Courier New', monospace",
           fontWeight: 700,
-          fontSize: '18px',
+          fontSize: '22px',
           color: BYT_GREEN,
-          letterSpacing: '-1px',
-          transform: actief ? 'translateX(0)' : 'translateX(-14px)',
+          transform: actief ? 'translateX(0)' : 'translateX(-18px)',
           opacity: actief ? 1 : 0,
-          transition: 'transform 0.55s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.35s ease',
+          transition: 'transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.4s ease',
           lineHeight: 1,
+          display: 'block',
         }}>
-          {'/>'}
+          {'>'}
         </span>
       </div>
 
       {/* Scheidingslijn */}
       <div style={{
         width: '1px',
-        height: '30px',
-        background: 'rgba(255,255,255,0.1)',
+        height: '28px',
+        background: 'rgba(255,255,255,0.12)',
         flexShrink: 0,
         opacity: actief ? 1 : 0,
-        transition: 'opacity 0.4s ease 0.4s',
+        transition: 'opacity 0.5s ease 0.4s',
       }} />
 
       {/* Tekst */}
       <div style={{
         opacity: actief ? 1 : 0,
-        transform: actief ? 'translateY(0)' : 'translateY(5px)',
-        transition: 'opacity 0.5s ease 0.38s, transform 0.5s ease 0.38s',
+        transform: actief ? 'translateY(0)' : 'translateY(6px)',
+        transition: 'opacity 0.5s ease 0.35s, transform 0.5s ease 0.35s',
       }}>
         <div style={{
           fontSize: '14px',

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, FolderKanban, Layers,
-  FileText, BookOpen, Settings, LogOut, Receipt,
+  FileText, BookOpen, Settings, LogOut, Receipt, Package,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/klanten',       label: 'Klanten',        icon: Users },
   { to: '/projecten',     label: 'Projecten',      icon: FolderKanban },
   { to: '/studio',        label: 'Studio',         icon: Layers },
+  { to: '/boilerplates',  label: 'Boilerplates',   icon: Package },
   { to: '/offertes',      label: 'Offertes',       icon: FileText },
   { to: '/facturen',      label: 'Facturen',       icon: Receipt },
   { to: '/handleidingen', label: 'Handleidingen',  icon: BookOpen },

@@ -21,6 +21,9 @@ import Instellingen from './pages/Instellingen'
 import Facturen from './pages/Facturen'
 import FactuurNieuw from './pages/FactuurNieuw'
 import FactuurDetail from './pages/FactuurDetail'
+import Boilerplates from './pages/Boilerplates'
+import BoilerplateDetail from './pages/BoilerplateDetail'
+import AdresConfigurator from './pages/AdresConfigurator'
 
 function ProtectedLayout({ children }) {
   return (
@@ -101,6 +104,9 @@ export default function App() {
         <Route path="/facturen"           element={<Facturen />} />
         <Route path="/facturen/nieuw"    element={<FactuurNieuw />} />
         <Route path="/facturen/:id"      element={<FactuurDetail />} />
+        <Route path="/boilerplates"                         element={<Boilerplates />} />
+        <Route path="/boilerplates/:id"                  element={<BoilerplateDetail />} />
+        <Route path="/projecten/:id/adres-configurator"  element={<AdresConfigurator />} />
         <Route path="/instellingen"      element={<Instellingen />} />
         <Route path="*"              element={<Navigate to="/dashboard" replace />} />
       </Routes>

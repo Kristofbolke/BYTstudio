@@ -13,6 +13,7 @@ const paginaConfig = {
   '/studio':        { label: 'Studio',         subtitel: 'Configureer klant-apps' },
   '/offertes':      { label: 'Offertes',       subtitel: 'Offertes en facturatie' },
   '/handleidingen': { label: 'Handleidingen',  subtitel: 'Technische documentatie' },
+  '/boilerplates':  { label: 'Boilerplates',   subtitel: 'Herbruikbare componenten en scaffolds' },
   '/instellingen':  { label: 'Instellingen',   subtitel: 'App-configuratie' },
 }
 

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { useInstellingen } from '../context/InstellingenContext'
-import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2 } from 'lucide-react'
+import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2, Package, Plus, X, Edit3 } from 'lucide-react'
 
 const LEGE_INST = {
   eigenaar_naam: '',
@@ -91,6 +91,403 @@ function Veld({ label, children }) {
 
 const inputKlasse = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] transition-colors"
 const textareaKlasse = `${inputKlasse} resize-none`
+
+const TYPE_KLEUREN_BP = {
+  component:    { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  configurator: { bg: '#faf5ff', text: '#7e22ce', border: '#e9d5ff' },
+  scaffold:     { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
+  service:      { bg: '#f0fdfa', text: '#0f766e', border: '#99f6e4' },
+}
+
+const LEEG_BP_FORM = {
+  naam: '', type: 'component', categorie: '', beschrijving: '', versie: '1.0',
+  github_url: '', bestand_pad: '', aanpassingsprompt_template: '',
+  actief: true, tags_json: [], afhankelijkheden_json: [],
+}
+
+function SectieBoilerplates() {
+  const [boilerplates, setBoilerplates] = useState([])
+  const [koppelingTelling, setKoppelingTelling] = useState({})
+  const [aantalProjecten, setAantalProjecten] = useState(0)
+  const [laden, setLaden] = useState(true)
+  const [formulier, setFormulier] = useState(null)
+  const [tagInvoer, setTagInvoer] = useState('')
+  const [depInvoer, setDepInvoer] = useState('')
+  const [opslaanLaden, setOpslaanLaden] = useState(false)
+  const [bericht, setBericht] = useState('')
+  const [verwijderBevestig, setVerwijderBevestig] = useState(null)
+
+  useEffect(() => { laad() }, [])
+
+  async function laad() {
+    setLaden(true)
+    const [{ data: bps }, { data: koppels }] = await Promise.all([
+      supabase.from('boilerplates').select('*').order('naam'),
+      supabase.from('project_boilerplates').select('boilerplate_id, project_id'),
+    ])
+    setBoilerplates(bps ?? [])
+    const telling = {}
+    ;(koppels ?? []).forEach(k => { telling[k.boilerplate_id] = (telling[k.boilerplate_id] ?? 0) + 1 })
+    setKoppelingTelling(telling)
+    setAantalProjecten(new Set((koppels ?? []).map(k => k.project_id)).size)
+    setLaden(false)
+  }
+
+  const meestGebruikt = boilerplates.reduce((best, bp) =>
+    (koppelingTelling[bp.id] ?? 0) > (koppelingTelling[best?.id] ?? 0) ? bp : best
+  , null)
+
+  function stelF(veld) {
+    return e => setFormulier(prev => ({ ...prev, [veld]: e.target.value }))
+  }
+
+  function voegTagToe() {
+    const t = tagInvoer.trim()
+    if (!t || (formulier.tags_json ?? []).includes(t)) return
+    setFormulier(prev => ({ ...prev, tags_json: [...(prev.tags_json ?? []), t] }))
+    setTagInvoer('')
+  }
+
+  function voegDepToe() {
+    const d = depInvoer.trim()
+    if (!d || (formulier.afhankelijkheden_json ?? []).includes(d)) return
+    setFormulier(prev => ({ ...prev, afhankelijkheden_json: [...(prev.afhankelijkheden_json ?? []), d] }))
+    setDepInvoer('')
+  }
+
+  async function slaOpBP() {
+    if (!formulier?.naam?.trim()) { setBericht('Fout: naam is verplicht.'); return }
+    setOpslaanLaden(true)
+    setBericht('')
+    const payload = {
+      naam: formulier.naam.trim(),
+      type: formulier.type,
+      categorie: formulier.categorie || null,
+      beschrijving: formulier.beschrijving || null,
+      versie: formulier.versie || '1.0',
+      github_url: formulier.github_url || null,
+      bestand_pad: formulier.bestand_pad || null,
+      aanpassingsprompt_template: formulier.aanpassingsprompt_template || null,
+      actief: !!formulier.actief,
+      tags_json: formulier.tags_json ?? [],
+      afhankelijkheden_json: formulier.afhankelijkheden_json ?? [],
+      bijgewerkt_op: new Date().toISOString(),
+    }
+    let error
+    if (formulier.id) {
+      ;({ error } = await supabase.from('boilerplates').update(payload).eq('id', formulier.id))
+    } else {
+      ;({ error } = await supabase.from('boilerplates').insert(payload))
+    }
+    if (error) setBericht('Fout: ' + error.message)
+    else { await laad(); setFormulier(null); setBericht('') }
+    setOpslaanLaden(false)
+  }
+
+  async function verwijder(id) {
+    const { error } = await supabase.from('boilerplates').delete().eq('id', id)
+    if (!error) { setVerwijderBevestig(null); await laad() }
+  }
+
+  async function toggleActief(bp) {
+    await supabase.from('boilerplates').update({ actief: !bp.actief }).eq('id', bp.id)
+    setBoilerplates(prev => prev.map(b => b.id === bp.id ? { ...b, actief: !b.actief } : b))
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-gray-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#78C833]/10 flex items-center justify-center">
+              <Package size={16} className="text-[#78C833]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Boilerplate Bibliotheek</p>
+              <p className="text-xs text-gray-400 mt-0.5">Beheer herbruikbare componenten en scaffolds.</p>
+            </div>
+          </div>
+          {!formulier && (
+            <button
+              onClick={() => { setFormulier({ ...LEEG_BP_FORM }); setBericht('') }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white"
+              style={{ background: '#78C833' }}
+            >
+              <Plus size={14} />
+              Nieuwe boilerplate
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="px-6 py-5 space-y-5">
+        {/* Statistieken */}
+        {!laden && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-2xl font-bold text-gray-800">{boilerplates.length}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Totaal boilerplates</p>
+            </div>
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-sm font-semibold text-gray-800 truncate">{meestGebruikt ? meestGebruikt.naam : '—'}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Meest gebruikt</p>
+            </div>
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="text-2xl font-bold text-gray-800">{aantalProjecten}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Gekoppelde projecten</p>
+            </div>
+          </div>
+        )}
+
+        {/* Inline formulier */}
+        {formulier && (
+          <div className="border border-gray-200 rounded-xl p-4 space-y-4 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-700">
+                {formulier.id ? 'Boilerplate bewerken' : 'Nieuwe boilerplate'}
+              </p>
+              <button onClick={() => { setFormulier(null); setBericht('') }} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <Veld label="Naam *">
+                  <input className={inputKlasse} value={formulier.naam} onChange={stelF('naam')} placeholder="Adres & Contact Configurator" />
+                </Veld>
+              </div>
+              <Veld label="Type">
+                <select className={inputKlasse} value={formulier.type} onChange={stelF('type')}>
+                  <option value="component">component</option>
+                  <option value="configurator">configurator</option>
+                  <option value="scaffold">scaffold</option>
+                  <option value="service">service</option>
+                </select>
+              </Veld>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Veld label="Categorie">
+                <input className={inputKlasse} value={formulier.categorie} onChange={stelF('categorie')} placeholder="ui, api, auth..." />
+              </Veld>
+              <Veld label="Versie">
+                <input className={inputKlasse} value={formulier.versie} onChange={stelF('versie')} placeholder="1.0" />
+              </Veld>
+            </div>
+
+            <Veld label="Beschrijving">
+              <textarea className={`${inputKlasse} resize-none`} rows={2} value={formulier.beschrijving} onChange={stelF('beschrijving')} placeholder="Korte omschrijving van de boilerplate..." />
+            </Veld>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Veld label="GitHub URL">
+                <input className={inputKlasse} value={formulier.github_url} onChange={stelF('github_url')} placeholder="https://github.com/..." />
+              </Veld>
+              <Veld label="Bestandspad">
+                <input className={inputKlasse} value={formulier.bestand_pad} onChange={stelF('bestand_pad')} placeholder="src/components/..." />
+              </Veld>
+            </div>
+
+            <Veld label="Aanpassingsprompt template">
+              <textarea className={`${inputKlasse} resize-none`} rows={3} value={formulier.aanpassingsprompt_template} onChange={stelF('aanpassingsprompt_template')} placeholder="Gebruik [KLANT_NAAM] en [AANPASSINGEN] als variabelen..." />
+            </Veld>
+
+            <Veld label="Tags">
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {(formulier.tags_json ?? []).map(tag => (
+                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#78C833]/10 text-[#78C833] text-xs font-medium">
+                    {tag}
+                    <button type="button" onClick={() => setFormulier(p => ({ ...p, tags_json: p.tags_json.filter(t => t !== tag) }))} className="hover:text-red-500">
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className={`${inputKlasse} flex-1`}
+                  value={tagInvoer}
+                  onChange={e => setTagInvoer(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); voegTagToe() } }}
+                  placeholder="tag toevoegen (Enter)"
+                />
+                <button type="button" onClick={voegTagToe} className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:border-[#78C833] hover:text-[#78C833] transition-colors">
+                  <Plus size={14} />
+                </button>
+              </div>
+            </Veld>
+
+            <Veld label="Afhankelijkheden (npm-packages)">
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {(formulier.afhankelijkheden_json ?? []).map(dep => (
+                  <span key={dep} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">
+                    {dep}
+                    <button type="button" onClick={() => setFormulier(p => ({ ...p, afhankelijkheden_json: p.afhankelijkheden_json.filter(d => d !== dep) }))} className="hover:text-red-500">
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className={`${inputKlasse} flex-1`}
+                  value={depInvoer}
+                  onChange={e => setDepInvoer(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); voegDepToe() } }}
+                  placeholder="package-naam (Enter)"
+                />
+                <button type="button" onClick={voegDepToe} className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:border-[#78C833] hover:text-[#78C833] transition-colors">
+                  <Plus size={14} />
+                </button>
+              </div>
+            </Veld>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setFormulier(p => ({ ...p, actief: !p.actief }))}
+                style={{ width: 40, height: 22, flexShrink: 0 }}
+                className={`relative rounded-full transition-colors ${formulier.actief ? 'bg-[#78C833]' : 'bg-gray-200'}`}
+              >
+                <span
+                  className="absolute top-0.5 left-0.5 bg-white rounded-full shadow"
+                  style={{ width: 18, height: 18, transform: formulier.actief ? 'translateX(18px)' : 'translateX(0)', transition: 'transform 0.15s' }}
+                />
+              </button>
+              <span className="text-sm text-gray-600">Actief (zichtbaar in projecten)</span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={slaOpBP}
+                disabled={opslaanLaden}
+                className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-opacity"
+                style={{ background: '#78C833' }}
+              >
+                {opslaanLaden ? 'Opslaan...' : formulier.id ? 'Wijzigingen opslaan' : 'Boilerplate aanmaken'}
+              </button>
+              <button
+                onClick={() => { setFormulier(null); setBericht('') }}
+                className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:border-gray-300 transition-colors"
+              >
+                Annuleren
+              </button>
+              {bericht && <Bericht tekst={bericht} />}
+            </div>
+          </div>
+        )}
+
+        {/* Tabel */}
+        {laden ? (
+          <p className="text-sm text-gray-400">Laden...</p>
+        ) : boilerplates.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">
+            Nog geen boilerplates. Klik op "+ Nieuwe boilerplate" om te beginnen.
+          </div>
+        ) : (
+          <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">Naam</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">Type</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">Versie</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500">Gebruik</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500">Actief</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500">Acties</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {boilerplates.map(bp => {
+                  const tk = TYPE_KLEUREN_BP[bp.type] ?? TYPE_KLEUREN_BP.component
+                  const gebruik = koppelingTelling[bp.id] ?? 0
+                  return (
+                    <tr key={bp.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-800">{bp.naam}</p>
+                        {bp.beschrijving && (
+                          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{bp.beschrijving}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="px-2 py-0.5 rounded-full text-xs font-medium border"
+                          style={{ background: tk.bg, color: tk.text, borderColor: tk.border }}
+                        >
+                          {bp.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">{bp.versie ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        {gebruik > 0 ? (
+                          <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                            {gebruik}× gebruikt
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">Niet gekoppeld</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => toggleActief(bp)}
+                          style={{ width: 36, height: 20 }}
+                          className={`relative rounded-full transition-colors mx-auto block ${bp.actief ? 'bg-[#78C833]' : 'bg-gray-200'}`}
+                        >
+                          <span
+                            className="absolute top-0.5 left-0.5 bg-white rounded-full shadow"
+                            style={{ width: 16, height: 16, transform: bp.actief ? 'translateX(16px)' : 'translateX(0)', transition: 'transform 0.15s' }}
+                          />
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => {
+                              setFormulier({ ...bp, tags_json: bp.tags_json ?? [], afhankelijkheden_json: bp.afhankelijkheden_json ?? [] })
+                              setTagInvoer('')
+                              setDepInvoer('')
+                              setBericht('')
+                            }}
+                            className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-[#78C833] hover:text-[#78C833] transition-colors"
+                            title="Bewerken"
+                          >
+                            <Edit3 size={13} />
+                          </button>
+                          {gebruik === 0 ? (
+                            verwijderBevestig === bp.id ? (
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => verwijder(bp.id)} className="px-2 py-1 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition-colors">Ja</button>
+                                <button onClick={() => setVerwijderBevestig(null)} className="px-2 py-1 rounded-lg border border-gray-200 bg-white text-xs text-gray-600 hover:border-gray-300 transition-colors">Nee</button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setVerwijderBevestig(bp.id)}
+                                className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:text-red-500 transition-colors"
+                                title="Verwijderen"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )
+                          ) : (
+                            <span className="p-1.5 text-gray-300 cursor-not-allowed" title="Kan niet verwijderen: gekoppeld aan projecten">
+                              <Trash2 size={13} />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function Instellingen() {
   useEffect(() => { document.title = 'Instellingen — BYT Studio' }, [])
@@ -677,6 +1074,9 @@ export default function Instellingen() {
             </button>
           </div>
         </SectieKaart>
+
+        {/* 5. Boilerplate Bibliotheek */}
+        <SectieBoilerplates />
 
       </div>
     </PageWrapper>

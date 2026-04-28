@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 const BYT_GREEN = '#78C833'
 
-export default function Login() {
+export default function Login({ onLogin }) {
   const [email, setEmail] = useState('')
   const [wachtwoord, setWachtwoord] = useState('')
   const [loading, setLoading] = useState(false)
@@ -14,9 +14,13 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     setFout('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password: wachtwoord })
-    if (error) setFout('Ongeldig e-mailadres of wachtwoord.')
-    setLoading(false)
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: wachtwoord })
+    if (error) {
+      setFout('Ongeldig e-mailadres of wachtwoord.')
+      setLoading(false)
+    } else {
+      onLogin?.(data.user)
+    }
   }
 
   return (

@@ -8,9 +8,10 @@ import {
   ChevronLeft, ExternalLink, Trash2, Save, Plus, X,
   CheckCircle, AlertTriangle, FileText, Palette, BookOpen,
   Bug, Info, FolderKanban, ChevronDown, ChevronRight, Zap, Edit3, FileDown, Clock, Lightbulb,
-  Receipt, Package, Code2, Layers, Wrench, Copy, Tag, Search, FileCode, Settings2,
+  Receipt, Package, Code2, Layers, Wrench, Copy, Tag, Search, FileCode, Settings2, Hammer,
 } from 'lucide-react'
 import AICheck from '../components/AICheck'
+import KopieerKnop from '../components/KopieerKnop'
 
 // ── Hulpfuncties ─────────────────────────────────────────────────────────────
 function formatDatum(iso) {
@@ -2834,6 +2835,444 @@ function TabBoilerplates({ projectId, projectNaam }) {
   )
 }
 
+// ── Tab: Bouwproces ──────────────────────────────────────────────────────────
+const BASIS_SQL = `-- 001_basis.sql — Basistabel: instellingen
+-- Uitvoeren via: Supabase Dashboard → SQL Editor
+
+create table if not exists instellingen (
+  id                uuid primary key default gen_random_uuid(),
+  app_naam          text not null default 'Mijn App',
+  eigenaar_naam     text,
+  email             text,
+  telefoon          text,
+  adres             text,
+  btw_nummer        text,
+  iban              text,
+  website           text,
+  uurtarief         numeric(10, 2) default 85,
+  btw_percentage    numeric(5, 2) default 21,
+  banner_zichtbaar  boolean not null default false,
+  banner_titel      text default '',
+  banner_subtitel   text default '',
+  aangemaakt_op     timestamptz not null default now()
+);
+
+alter table instellingen enable row level security;
+
+create policy "Authenticated users hebben volledige toegang"
+  on instellingen for all to authenticated
+  using (true) with check (true);
+
+insert into instellingen (app_naam)
+values ('Mijn App')
+on conflict do nothing;`
+
+const VOORTGANG_STAPPEN = [
+  { key: 'scaffold_klaar',      label: 'Scaffold gekopieerd' },
+  { key: 'supabase_klaar',      label: 'Supabase aangemaakt' },
+  { key: 'claude_code_gestart', label: 'Claude Code gestart' },
+  { key: 'afgeleverd',          label: 'Afgeleverd op Netlify' },
+]
+const STATUS_VOLGORDE = ['gegenereerd', 'scaffold_klaar', 'supabase_klaar', 'claude_code_gestart', 'afgeleverd']
+
+function maakSlugBouw(naam) {
+  return (naam || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+}
+
+function TabBouwproces({ project, huisstijl }) {
+  const [pakket, setPakket]           = useState(null)
+  const [klant, setKlant]             = useState(null)
+  const [offerteAantal, setOfferteAantal] = useState(0)
+  const [laden, setLaden]             = useState(true)
+  const [genereren, setGenereren]     = useState(false)
+  const [genFout, setGenFout]         = useState('')
+  const [bevestigRegeneer, setBevestigRegeneer] = useState(false)
+  const [uitgebreid, setUitgebreid]   = useState({ s1: true, s2: false, s3: false, s4: false, s5: false })
+
+  useEffect(() => { laadBouwproces() }, [project.id])
+
+  async function laadBouwproces() {
+    setLaden(true)
+    const queries = [
+      supabase.from('bouwpakketten').select('*').eq('project_id', project.id).maybeSingle(),
+      supabase.from('offertes').select('id', { count: 'exact', head: true }).eq('project_id', project.id),
+    ]
+    if (project.klant_id) {
+      queries.push(supabase.from('klanten').select('*').eq('id', project.klant_id).maybeSingle())
+    }
+    const results = await Promise.all(queries)
+    setPakket(results[0].data ?? null)
+    setOfferteAantal(results[1].count ?? 0)
+    if (project.klant_id) setKlant(results[2]?.data ?? null)
+    setLaden(false)
+  }
+
+  const slug = maakSlugBouw(project.naam)
+
+  // features_json is een object { featureKey: { aangevinkt: bool, optie: string } }
+  const aangevinktFeatures = Object.entries(project.features_json ?? {})
+    .filter(([, v]) => v?.aangevinkt === true)
+    .map(([k]) => k)
+
+  const vereisten = [
+    { label: 'Klantgegevens ingevuld (naam, e-mail aanwezig)', ok: !!(klant?.naam && klant?.email) },
+    { label: 'Huisstijl ingevuld (primaire kleur aanwezig)', ok: !!(huisstijl?.primaire_kleur) },
+    { label: 'Features geselecteerd (minstens 1 feature aangevinkt)', ok: aangevinktFeatures.length > 0 },
+    { label: 'Offerte aangemaakt (minstens 1 offerte gekoppeld)', ok: offerteAantal > 0 },
+  ]
+  const alleOk = vereisten.every(v => v.ok)
+
+  function bouwInhoud() {
+    const naam = project.naam || 'Project'
+    const primairKleur = huisstijl?.primaire_kleur || '#000000'
+    const secKleur = huisstijl?.secundaire_kleur || ''
+    const font = huisstijl?.font_primair || 'Inter'
+    const logoUrl = huisstijl?.logo_url || ''
+    const sector = huisstijl?.sector || ''
+
+    const scaffoldCommando =
+      `cp -r ~/Documents/Ontwikkeling_tools/byt-boilerplates/scaffold/byt-app-template \\\n` +
+      `      ~/Documents/Ontwikkeling_tools/${slug}\n` +
+      `cd ~/Documents/Ontwikkeling_tools/${slug}\n` +
+      `npm install`
+
+    const envInhoud =
+      `# Supabase\n` +
+      `VITE_SUPABASE_URL=https://[INVULLEN].supabase.co\n` +
+      `VITE_SUPABASE_ANON_KEY=[INVULLEN]\n\n` +
+      `# App instellingen\n` +
+      `VITE_APP_NAME=${naam}\n` +
+      `VITE_APP_KLEUR=${primairKleur}`
+
+    const featLijst = aangevinktFeatures.length > 0
+      ? aangevinktFeatures.map(k => `- [x] ${k}`).join('\n')
+      : '- (geen features geselecteerd)'
+    const featNogTeBouwen = aangevinktFeatures.length > 0
+      ? aangevinktFeatures.map(k => `- [ ] ${k}`).join('\n')
+      : '- (geen features geselecteerd)'
+
+    const claudeMdInhoud =
+      `# ${naam} — Claude Code geheugen\n\n` +
+      `## Klant\n` +
+      `Naam: ${klant?.naam || '[INVULLEN]'}\n` +
+      `Bedrijf: ${klant?.bedrijfsnaam || '[INVULLEN]'}\n` +
+      `Sector: ${sector}\n` +
+      `E-mail: ${klant?.email || '[INVULLEN]'}\n` +
+      `Telefoon: ${klant?.telefoon || '[INVULLEN]'}\n\n` +
+      `## Tech stack\n` +
+      `React 18 + Vite + TypeScript\n` +
+      `Tailwind CSS\n` +
+      `Supabase (auth + database)\n` +
+      `Netlify (hosting)\n` +
+      `Taal: Nederlands\n\n` +
+      `## Huisstijl\n` +
+      `Primaire kleur: ${primairKleur}\n` +
+      `Secundaire kleur: ${secKleur}\n` +
+      `Font: ${font}\n` +
+      `Logo URL: ${logoUrl}\n\n` +
+      `## Geselecteerde features\n` +
+      `${featLijst}\n\n` +
+      `## Boilerplates beschikbaar\n` +
+      `- BYT App Startproject (scaffold) ✓ al gekopieerd\n` +
+      `- Adres & Contact Module → /byt-boilerplates/components/address-contact/\n\n` +
+      `## Wat al werkt (scaffold)\n` +
+      `- [x] Login via Supabase Auth\n` +
+      `- [x] Sidebar navigatie\n` +
+      `- [x] Dashboard placeholder\n` +
+      `- [x] Instellingen pagina\n` +
+      `- [x] Toast meldingen\n` +
+      `- [x] Bevestigingsdialoog\n` +
+      `- [x] 404 pagina\n` +
+      `- [x] Dark/light mode\n\n` +
+      `## Wat nog gebouwd moet worden\n` +
+      `${featNogTeBouwen}\n\n` +
+      `## Coding regels\n` +
+      `- Alle tekst in het Nederlands\n` +
+      `- Gebruik CSS-variabelen voor kleuren\n` +
+      `- Elke Supabase-query heeft foutafhandeling\n` +
+      `- Laadspinner tonen tijdens data ophalen\n` +
+      `- Bevestig elke module voor je verdergaat\n` +
+      `- Gebruik de bestaande supabase client uit src/lib/supabase.ts`
+
+    const netlifyVars =
+      `VITE_SUPABASE_URL=[van Supabase]\n` +
+      `VITE_SUPABASE_ANON_KEY=[van Supabase]\n` +
+      `VITE_APP_NAME=${naam}\n` +
+      `VITE_APP_KLEUR=${primairKleur}`
+
+    return { scaffoldCommando, envInhoud, claudeMdInhoud, netlifyVars }
+  }
+
+  async function doeGenereer() {
+    setGenereren(true)
+    setGenFout('')
+    const inhoud = bouwInhoud()
+    const { data, error } = await supabase.from('bouwpakketten').upsert({
+      ...(pakket?.id ? { id: pakket.id } : {}),
+      project_id: project.id,
+      scaffold_commando: inhoud.scaffoldCommando,
+      env_inhoud: inhoud.envInhoud,
+      claude_md_inhoud: inhoud.claudeMdInhoud,
+      netlify_variabelen: inhoud.netlifyVars,
+      sql_migraties: BASIS_SQL,
+      status: pakket?.status || 'gegenereerd',
+      bijgewerkt_op: new Date().toISOString(),
+    }, { onConflict: 'project_id' }).select().single()
+    setGenereren(false)
+    setBevestigRegeneer(false)
+    if (error) {
+      setGenFout('Opslaan mislukt: ' + error.message)
+    } else if (data) {
+      setPakket(data)
+    }
+  }
+
+  async function updateVoortgang(stapKey) {
+    if (!pakket) return
+    const nieuweStatus = pakket.status === stapKey ? 'gegenereerd' : stapKey
+    const { error } = await supabase.from('bouwpakketten')
+      .update({ status: nieuweStatus, bijgewerkt_op: new Date().toISOString() })
+      .eq('id', pakket.id)
+    if (!error) setPakket(p => ({ ...p, status: nieuweStatus }))
+  }
+
+  if (laden) return <Spinner />
+
+  const currentStatusIdx = pakket ? STATUS_VOLGORDE.indexOf(pakket.status) : -1
+
+  const secties = [
+    {
+      key: 's1',
+      stap: 'Stap 1 — Scaffold kopiëren',
+      sub: 'Voer dit uit in Terminal',
+      inhoud: pakket?.scaffold_commando,
+    },
+    {
+      key: 's2',
+      stap: 'Stap 2 — .env bestand aanmaken',
+      sub: 'Kopieer dit naar een nieuw .env bestand in de projectmap',
+      inhoud: pakket?.env_inhoud,
+      extra: (
+        <p className="text-xs text-gray-500 mt-2">
+          Vervang [INVULLEN] door de waarden uit je nieuwe Supabase project.<br />
+          Ga naar supabase.com → nieuw project → Settings → API
+        </p>
+      ),
+    },
+    {
+      key: 's3',
+      stap: 'Stap 3 — CLAUDE.md invullen',
+      sub: 'Hernoem CLAUDE.md.template naar CLAUDE.md en vervang de inhoud',
+      inhoud: pakket?.claude_md_inhoud,
+    },
+    {
+      key: 's4',
+      stap: 'Stap 4 — Supabase instellen',
+      sub: 'Maak een nieuw Supabase project aan en voer deze SQL uit in SQL Editor',
+      inhoud: pakket?.sql_migraties,
+      extra: (
+        <ol className="text-xs text-gray-500 mt-2 space-y-0.5 list-decimal list-inside">
+          <li>Ga naar supabase.com → New project</li>
+          <li>Naam: <span className="font-mono">{slug}</span></li>
+          <li>Regio: Frankfurt</li>
+          <li>Na aanmaken: SQL Editor → plak bovenstaande SQL → Run</li>
+          <li>Kopieer URL en anon key naar .env</li>
+        </ol>
+      ),
+    },
+    {
+      key: 's5',
+      stap: 'Stap 5 — Deployen op Netlify',
+      sub: 'Voeg deze variabelen toe in Netlify → Site settings → Environment variables',
+      inhoud: pakket?.netlify_variabelen,
+      extra: (
+        <>
+          <table className="w-full text-xs mt-2 border-collapse">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-1.5 pr-4 text-gray-500 font-semibold">Variabele</th>
+                <th className="text-left py-1.5 text-gray-500 font-semibold">Waarde</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono">
+              {[
+                ['VITE_SUPABASE_URL', '[van Supabase]'],
+                ['VITE_SUPABASE_ANON_KEY', '[van Supabase]'],
+                ['VITE_APP_NAME', project.naam || ''],
+                ['VITE_APP_KLEUR', huisstijl?.primaire_kleur || ''],
+              ].map(([k, v]) => (
+                <tr key={k} className="border-b border-gray-100">
+                  <td className="py-1.5 pr-4 text-gray-700">{k}</td>
+                  <td className="py-1.5 text-gray-500">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <ol className="text-xs text-gray-500 mt-3 space-y-0.5 list-decimal list-inside">
+            <li>Ga naar netlify.com → Add new site</li>
+            <li>Import from GitHub → <span className="font-mono">{slug}</span></li>
+            <li>Build command: <span className="font-mono">npm run build</span></li>
+            <li>Publish directory: <span className="font-mono">dist</span></li>
+            <li>Voeg bovenstaande variabelen toe</li>
+            <li>Deploy site</li>
+          </ol>
+        </>
+      ),
+    },
+  ]
+
+  return (
+    <div className="max-w-3xl space-y-5">
+      {!pakket ? (
+        <>
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+            Genereer een bouwpakket op basis van de projectgegevens en geselecteerde features.
+            Je krijgt alle bestanden en commando's klaar om meteen te starten met bouwen.
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vereisten</p>
+            {vereisten.map((v, i) => (
+              <div key={i} className="flex items-center gap-3 text-sm">
+                {v.ok
+                  ? <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                  : <X size={16} className="text-red-400 flex-shrink-0" />
+                }
+                <span className={v.ok ? 'text-gray-700' : 'text-gray-500'}>{v.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={doeGenereer}
+            disabled={!alleOk || genereren}
+            title={!alleOk ? 'Vul eerst alle vereiste gegevens in' : undefined}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            style={{ background: '#185FA5' }}
+          >
+            <Hammer size={16} />
+            {genereren ? 'Genereren...' : 'Genereer bouwpakket'}
+          </button>
+          {genFout && (
+            <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{genFout}</p>
+          )}
+        </>
+      ) : (
+        <>
+          {secties.map(({ key, stap, sub, inhoud, extra }) => (
+            <div key={key} className="border border-gray-200 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setUitgebreid(u => ({ ...u, [key]: !u[key] }))}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{stap}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {inhoud && (
+                    <span onClick={e => e.stopPropagation()}>
+                      <KopieerKnop tekst={inhoud} />
+                    </span>
+                  )}
+                  {uitgebreid[key]
+                    ? <ChevronDown size={16} className="text-gray-400" />
+                    : <ChevronRight size={16} className="text-gray-400" />
+                  }
+                </div>
+              </button>
+              {uitgebreid[key] && (
+                <div className="p-4">
+                  {inhoud && (
+                    <pre className="bg-gray-900 text-green-300 text-xs rounded-lg p-4 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">
+                      {inhoud}
+                    </pre>
+                  )}
+                  {extra}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Voortgangsbalk */}
+          <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Voortgang</p>
+            <div className="flex items-start gap-0">
+              {VOORTGANG_STAPPEN.map((stap, idx) => {
+                const stapIdx = STATUS_VOLGORDE.indexOf(stap.key)
+                const voltooid = currentStatusIdx >= stapIdx
+                return (
+                  <div key={stap.key} className="flex items-center flex-1">
+                    <button
+                      onClick={() => updateVoortgang(stap.key)}
+                      className="flex flex-col items-center gap-1.5 flex-1"
+                    >
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all"
+                        style={{
+                          background: voltooid ? '#185FA5' : 'white',
+                          borderColor: voltooid ? '#185FA5' : '#d1d5db',
+                        }}
+                      >
+                        {voltooid
+                          ? <CheckCircle size={14} color="white" />
+                          : <span className="text-xs text-gray-400 font-bold">{idx + 1}</span>
+                        }
+                      </div>
+                      <span className="text-xs text-center leading-tight max-w-16"
+                        style={{ color: voltooid ? '#185FA5' : '#9ca3af' }}>
+                        {stap.label}
+                      </span>
+                    </button>
+                    {idx < VOORTGANG_STAPPEN.length - 1 && (
+                      <div className="h-0.5 flex-1 mb-5 rounded-full"
+                        style={{ background: currentStatusIdx > stapIdx ? '#185FA5' : '#e5e7eb' }} />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Regenereer */}
+          {genFout && (
+            <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{genFout}</p>
+          )}
+          {!bevestigRegeneer ? (
+            <button
+              onClick={() => setBevestigRegeneer(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 hover:border-gray-300 transition-all"
+            >
+              <Hammer size={13} />
+              Bouwpakket regenereren
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <AlertTriangle size={16} className="text-amber-500 flex-shrink-0" />
+              <p className="text-sm text-amber-800 flex-1">Het bestaande bouwpakket wordt overschreven. Zeker?</p>
+              <button onClick={doeGenereer} disabled={genereren}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-white"
+                style={{ background: '#185FA5' }}>
+                {genereren ? 'Bezig...' : 'Ja, regenereer'}
+              </button>
+              <button onClick={() => setBevestigRegeneer(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 bg-white border border-gray-200">
+                Annuleer
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ── Tabs definitie ────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'overzicht',     label: 'Overzicht',     icon: FolderKanban },
@@ -2845,6 +3284,7 @@ const TABS = [
   { key: 'boilerplates',  label: 'Boilerplates',   icon: Package },
   { key: 'info',          label: 'Info',           icon: Info },
   { key: 'aicheck',       label: 'AI-check',       icon: Lightbulb },
+  { key: 'bouwproces',    label: 'Bouwproces',     icon: Hammer },
 ]
 
 // ── Hoofdcomponent ────────────────────────────────────────────────────────────
@@ -2971,6 +3411,7 @@ export default function ProjectDetail() {
             huisstijl={huisstijl}
           />
         )}
+        {actieveTab === 'bouwproces'   && <TabBouwproces project={project} huisstijl={huisstijl} />}
       </div>
     </div>
   )

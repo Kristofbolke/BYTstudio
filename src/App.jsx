@@ -1,5 +1,5 @@
 // App.jsx — Hoofd routing en authenticatie-bewaking voor BYT Studio
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
@@ -25,91 +25,81 @@ import Boilerplates from './pages/Boilerplates'
 import BoilerplateDetail from './pages/BoilerplateDetail'
 import AdresConfigurator from './pages/AdresConfigurator'
 
-function ProtectedLayout({ children }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <Banner />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <Sidebar />
-        <main style={{ flex: 1, overflow: 'auto' }}>
-          <TopBar />
-          <div style={{ padding: '24px' }}>
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
-  )
-}
-
 export default function App() {
-  const [session, setSession] = useState(undefined)
+  const [user, setUser] = useState(undefined)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN')  setUser(session?.user ?? null)
+      if (event === 'SIGNED_OUT') setUser(null)
     })
+
     return () => subscription.unsubscribe()
   }, [])
 
-  // Laadscherm tijdens sessiecheck
-  if (session === undefined) {
+  // Laden
+  if (user === undefined) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-6" style={{ background: '#0a0a0a' }}>
-        <div className="bg-white rounded-2xl px-6 py-4 shadow-2xl">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 24, background: '#0a0a0a' }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: '12px 24px' }}>
           <img src="/logo-byt.png" alt="Build Your Tools" style={{ height: 52, objectFit: 'contain' }} />
         </div>
-        <div className="flex items-center gap-2">
-          <div
-            className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: '#78C833', borderTopColor: 'transparent' }}
-          />
-          <span className="text-xs font-medium tracking-widest uppercase" style={{ color: '#78C833' }}>
-            Laden
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #78C833', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+          <span style={{ color: '#78C833', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Laden</span>
         </div>
       </div>
     )
   }
 
-  // Niet ingelogd → naar login
-  if (!session) {
+  // Niet ingelogd
+  if (user === null) {
     return (
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login onLogin={setUser} />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     )
   }
 
-  // Ingelogd → app
+  // Ingelogd
   return (
-    <ProtectedLayout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard"     element={<Dashboard />} />
-        <Route path="/klanten"       element={<Klanten />} />
-        <Route path="/projecten"     element={<Projecten />} />
-        <Route path="/projecten/:id" element={<ProjectDetail />} />
-        <Route path="/studio"        element={<Studio />} />
-        <Route path="/offertes"      element={<Offertes />} />
-        <Route path="/offertes/nieuw" element={<OfferteNieuw />} />
-        <Route path="/offertes/:id"  element={<OfferteDetail />} />
-        <Route path="/handleidingen"          element={<Handleidingen />} />
-        <Route path="/handleidingen/nieuw"    element={<HandleidingNieuw />} />
-        <Route path="/handleidingen/:id"      element={<HandleidingDetail />} />
-        <Route path="/facturen"           element={<Facturen />} />
-        <Route path="/facturen/nieuw"    element={<FactuurNieuw />} />
-        <Route path="/facturen/:id"      element={<FactuurDetail />} />
-        <Route path="/boilerplates"                         element={<Boilerplates />} />
-        <Route path="/boilerplates/:id"                  element={<BoilerplateDetail />} />
-        <Route path="/projecten/:id/adres-configurator"  element={<AdresConfigurator />} />
-        <Route path="/instellingen"      element={<Instellingen />} />
-        <Route path="*"              element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </ProtectedLayout>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar user={user} onLogout={() => setUser(null)} />
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        <Banner />
+        <TopBar />
+        <main style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{ padding: '24px' }}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard"     element={<Dashboard />} />
+              <Route path="/klanten"       element={<Klanten />} />
+              <Route path="/projecten"     element={<Projecten />} />
+              <Route path="/projecten/:id" element={<ProjectDetail />} />
+              <Route path="/studio"        element={<Studio />} />
+              <Route path="/offertes"      element={<Offertes />} />
+              <Route path="/offertes/nieuw" element={<OfferteNieuw />} />
+              <Route path="/offertes/:id"  element={<OfferteDetail />} />
+              <Route path="/handleidingen"       element={<Handleidingen />} />
+              <Route path="/handleidingen/nieuw" element={<HandleidingNieuw />} />
+              <Route path="/handleidingen/:id"   element={<HandleidingDetail />} />
+              <Route path="/facturen"      element={<Facturen />} />
+              <Route path="/facturen/nieuw" element={<FactuurNieuw />} />
+              <Route path="/facturen/:id"  element={<FactuurDetail />} />
+              <Route path="/boilerplates"  element={<Boilerplates />} />
+              <Route path="/boilerplates/:id" element={<BoilerplateDetail />} />
+              <Route path="/projecten/:id/adres-configurator" element={<AdresConfigurator />} />
+              <Route path="/instellingen"  element={<Instellingen />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
+    </div>
   )
 }

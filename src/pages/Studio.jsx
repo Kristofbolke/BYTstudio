@@ -1,10 +1,14 @@
 // Studio.jsx — Hart van BYT Studio: configureer klant-apps per project
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
-import { ChevronDown, Layers } from 'lucide-react'
-
+import { ChevronDown, Layers, ExternalLink, Hammer } from 'lucide-react'
+import { StatusBadge } from './Projecten'
+import BouwprocesTab        from '../components/studio/BouwprocesTab'
 import FeatureConfigurator  from '../components/studio/FeatureConfigurator'
+
+const LS_KEY = 'byt_actief_project_id'
 import PromptTemplates      from '../components/studio/PromptTemplates'
 import AppModules           from '../components/studio/AppModules'
 import BlokkensBuilder      from '../components/studio/BlokkensBuilder'
@@ -13,6 +17,7 @@ import AiCheck             from '../components/studio/AiCheck'
 
 // ── Tabs definitie ────────────────────────────────────────────────────────────
 const TABS = [
+  { key: 'bouwproces',     label: 'Bouwproces',           icon: Hammer },
   { key: 'features',       label: 'Feature-configurator', emoji: '⚙️' },
   { key: 'prompts',        label: 'Prompt-templates',     emoji: '💬' },
   { key: 'modules',        label: 'App-modules',          emoji: '🧩' },
@@ -34,20 +39,28 @@ function Spinner({ kleur = '#185FA5' }) {
 // ── Hoofd component ───────────────────────────────────────────────────────────
 export default function Studio() {
   useEffect(() => { document.title = 'Studio — BYT Studio' }, [])
+  const navigate = useNavigate()
   const [projecten,   setProjecten]   = useState([])
   const [projectId,   setProjectId]   = useState('')
   const [project,     setProject]     = useState(null)
   const [huisstijl,   setHuisstijl]   = useState(null)
   const [laden,       setLaden]       = useState(false)
-  const [actieveTab,  setActieveTab]  = useState('features')
+  const [actieveTab,  setActieveTab]  = useState('bouwproces')
 
-  // ── Laad alle projecten ───────────────────────────────────────────────────
+  // ── Laad alle projecten + herstel localStorage ────────────────────────────
   useEffect(() => {
     supabase
       .from('projecten')
-      .select('id, naam, status, klanten(naam, bedrijfsnaam)')
-      .order('naam')
-      .then(({ data }) => setProjecten(data ?? []))
+      .select('id, naam, status, klant_id, features_json, klanten(naam, bedrijfsnaam)')
+      .order('bijgewerkt_op', { ascending: false })
+      .then(({ data }) => {
+        const lijst = data ?? []
+        setProjecten(lijst)
+        if (lijst.length === 0) return
+        const opgeslagen = localStorage.getItem(LS_KEY)
+        const gevonden = opgeslagen && lijst.find(p => p.id === opgeslagen)
+        setProjectId(gevonden ? opgeslagen : lijst[0].id)
+      })
   }, [])
 
   // ── Laad project + huisstijl bij selectie ─────────────────────────────────
@@ -70,6 +83,12 @@ export default function Studio() {
   // ── Helpers ───────────────────────────────────────────────────────────────
   const accentKleur = huisstijl?.primaire_kleur ?? '#185FA5'
 
+  function wisselProject(id) {
+    setProjectId(id)
+    if (id) localStorage.setItem(LS_KEY, id)
+    else localStorage.removeItem(LS_KEY)
+  }
+
   function klantNaam(p) {
     if (!p?.klanten) return ''
     return p.klanten.bedrijfsnaam || p.klanten.naam || ''
@@ -81,42 +100,60 @@ export default function Studio() {
       title="Studio"
       description="Configureer klant-apps: features, prompts, modules en documentatie."
     >
-      {/* ── Project dropdown ─────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-end gap-4">
-        <div className="flex-1 max-w-sm">
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-            Actief project
-          </label>
-          <div className="relative">
-            <select
-              value={projectId}
-              onChange={e => setProjectId(e.target.value)}
-              className="w-full px-3 py-2.5 pr-9 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 appearance-none"
-            >
-              <option value="">— Kies een project —</option>
-              {projecten.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.naam}{klantNaam(p) ? ` — ${klantNaam(p)}` : ''}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
+      {/* ── Projectselector balk ─────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 flex-wrap">
+        <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Actief project:</span>
+
+        <div className="relative flex-1 min-w-48">
+          <select
+            value={projectId}
+            onChange={e => wisselProject(e.target.value)}
+            className="w-full px-3 py-2 pr-9 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 appearance-none"
+          >
+            <option value="">— Kies een project —</option>
+            {projecten.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.naam}{klantNaam(p) ? ` — ${klantNaam(p)}` : ''}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
 
-        {/* Huisstijl-indicator */}
-        {huisstijl && (
-          <div className="flex items-center gap-2 pb-0.5">
-            {[huisstijl.primaire_kleur, huisstijl.secundaire_kleur, huisstijl.accent_kleur]
-              .filter(Boolean)
-              .map((k, i) => (
-                <div key={i} className="w-5 h-5 rounded-md border border-gray-200 shadow-sm"
-                  style={{ background: k }} />
-              ))}
-            <span className="text-xs text-gray-400 ml-1">{huisstijl.font_titel}</span>
-          </div>
+        {project && <StatusBadge status={project.status} />}
+
+        {project && (
+          <button
+            onClick={() => navigate(`/projecten/${project.id}`)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white whitespace-nowrap transition-opacity hover:opacity-90"
+            style={{ background: '#185FA5' }}
+          >
+            Bekijk project
+            <ExternalLink size={12} />
+          </button>
         )}
       </div>
+
+      {/* ── Projectcontext blok ──────────────────────────────────────────────── */}
+      {project && (
+        <div className="bg-gray-50 rounded-xl border border-gray-100 px-5 py-3 flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+          <span className="font-medium">{klantNaam(project) || '—'}</span>
+          <span className="text-gray-300">|</span>
+          <span className="text-gray-500">{huisstijl?.sector || project.sector || '—'}</span>
+          <span className="text-gray-300">|</span>
+          {huisstijl?.primaire_kleur ? (
+            <div className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0"
+                style={{ background: huisstijl.primaire_kleur }}
+              />
+              <span className="text-xs text-gray-400 font-mono">{huisstijl.primaire_kleur}</span>
+            </div>
+          ) : (
+            <span className="text-gray-400 text-xs">Geen huisstijl</span>
+          )}
+        </div>
+      )}
 
       {/* ── Geen project geselecteerd ─────────────────────────────────────── */}
       {!projectId && (
@@ -149,7 +186,7 @@ export default function Studio() {
                         : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200'
                     }`}
                   >
-                    <span>{t.emoji}</span>
+                    {t.icon ? <t.icon size={14} /> : <span>{t.emoji}</span>}
                     {t.label}
                   </button>
                 )
@@ -163,6 +200,7 @@ export default function Studio() {
               <Spinner kleur={accentKleur} />
             ) : (
               <>
+                {actieveTab === 'bouwproces'   && <BouwprocesTab       project={project} />}
                 {actieveTab === 'features'     && <FeatureConfigurator project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'prompts'      && <PromptTemplates     project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'modules'      && <AppModules          project={project} huisstijl={huisstijl} />}

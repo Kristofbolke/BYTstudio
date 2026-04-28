@@ -3360,6 +3360,17 @@ export default function ProjectDetail() {
             <p className="text-sm text-gray-400 mt-1">{klantNaam}</p>
           )}
         </div>
+        <button
+          onClick={() => {
+            localStorage.setItem('byt_actief_project_id', project.id)
+            navigate('/studio')
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white whitespace-nowrap flex-shrink-0 transition-opacity hover:opacity-90"
+          style={{ background: '#185FA5' }}
+        >
+          <Layers size={14} />
+          Open in Studio
+        </button>
       </div>
 
       {/* Tabs */}

@@ -3,27 +3,33 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
-import { ChevronDown, Layers, ExternalLink, Hammer } from 'lucide-react'
+import { ChevronDown, Layers, ExternalLink, Hammer, Package, BookOpen, Bell, Lightbulb } from 'lucide-react'
 import { StatusBadge } from './Projecten'
 import BouwprocesTab        from '../components/studio/BouwprocesTab'
+import BoilerplatesTab      from '../components/studio/BoilerplatesTab'
+import HandleidingenTab     from '../components/studio/HandleidingenTab'
+import MeldingenTab         from '../components/studio/MeldingenTab'
+import AiCheckTab           from '../components/studio/AiCheckTab'
 import FeatureConfigurator  from '../components/studio/FeatureConfigurator'
-
-const LS_KEY = 'byt_actief_project_id'
 import PromptTemplates      from '../components/studio/PromptTemplates'
 import AppModules           from '../components/studio/AppModules'
 import BlokkensBuilder      from '../components/studio/BlokkensBuilder'
 import Projectdocumentatie  from '../components/studio/Projectdocumentatie'
-import AiCheck             from '../components/studio/AiCheck'
+
+const LS_KEY = 'byt_actief_project_id'
 
 // ── Tabs definitie ────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'bouwproces',     label: 'Bouwproces',           icon: Hammer },
+  { key: 'boilerplates',   label: 'Boilerplates',         icon: Package },
+  { key: 'handleidingen',  label: 'Handleidingen',        icon: BookOpen },
+  { key: 'meldingen',      label: 'Meldingen',            icon: Bell },
+  { key: 'aicheck',        label: 'AI-check',             icon: Lightbulb },
   { key: 'features',       label: 'Feature-configurator', emoji: '⚙️' },
   { key: 'prompts',        label: 'Prompt-templates',     emoji: '💬' },
   { key: 'modules',        label: 'App-modules',          emoji: '🧩' },
   { key: 'blokken',        label: 'Blokken-builder',      emoji: '🏗️' },
   { key: 'documentatie',   label: 'Projectdocumentatie',  emoji: '📄' },
-  { key: 'aicheck',        label: 'AI-suggestiecheck',    emoji: '✨' },
 ]
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
@@ -201,12 +207,15 @@ export default function Studio() {
             ) : (
               <>
                 {actieveTab === 'bouwproces'   && <BouwprocesTab       project={project} />}
-                {actieveTab === 'features'     && <FeatureConfigurator project={project} huisstijl={huisstijl} />}
+                {actieveTab === 'boilerplates'  && <BoilerplatesTab     project={project} />}
+                {actieveTab === 'handleidingen' && <HandleidingenTab    project={project} />}
+                {actieveTab === 'meldingen'     && <MeldingenTab        project={project} />}
+                {actieveTab === 'aicheck'       && <AiCheckTab          project={project} huisstijl={huisstijl} />}
+                {actieveTab === 'features'      && <FeatureConfigurator project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'prompts'      && <PromptTemplates     project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'modules'      && <AppModules          project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'blokken'      && <BlokkensBuilder     project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'documentatie' && <Projectdocumentatie project={project} huisstijl={huisstijl} />}
-                {actieveTab === 'aicheck'     && <AiCheck            project={project} huisstijl={huisstijl} />}
               </>
             )}
           </div>

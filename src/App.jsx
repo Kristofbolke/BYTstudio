@@ -24,6 +24,7 @@ import FactuurDetail from './pages/FactuurDetail'
 import Boilerplates from './pages/Boilerplates'
 import BoilerplateDetail from './pages/BoilerplateDetail'
 import AdresConfigurator from './pages/AdresConfigurator'
+import Intake from './pages/Intake'
 
 export default function App() {
   const [user, setUser] = useState(undefined)
@@ -94,6 +95,7 @@ export default function App() {
               <Route path="/boilerplates"  element={<Boilerplates />} />
               <Route path="/boilerplates/:id" element={<BoilerplateDetail />} />
               <Route path="/projecten/:id/adres-configurator" element={<AdresConfigurator />} />
+              <Route path="/projecten/:id/intake" element={<Intake />} />
               <Route path="/instellingen"  element={<Instellingen />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

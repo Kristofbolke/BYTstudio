@@ -2,7 +2,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ChevronLeft, Save, CheckCircle, ChevronDown } from 'lucide-react'
+import { ChevronLeft, Save, CheckCircle, ChevronDown, Copy, Mail, RefreshCw, ExternalLink } from 'lucide-react'
+
+const BASE_URL = 'https://byt-studio.netlify.app'
+
+function generateToken() {
+  const arr = new Uint8Array(16)
+  crypto.getRandomValues(arr)
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('')
+}
 
 // ── Stijlen ───────────────────────────────────────────────────────────────────
 const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 bg-white'
@@ -178,12 +186,15 @@ export default function Intake() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [project,   setProject]   = useState(null)
-  const [form,      setForm]      = useState(LEEG)
-  const [intakeId,  setIntakeId]  = useState(null)
-  const [laden,     setLaden]     = useState(true)
-  const [toast,     setToast]     = useState('')
-  const [opslaan,   setOpslaan]   = useState(false)
+  const [project,            setProject]            = useState(null)
+  const [form,               setForm]               = useState(LEEG)
+  const [intakeId,           setIntakeId]           = useState(null)
+  const [laden,              setLaden]              = useState(true)
+  const [toast,              setToast]              = useState('')
+  const [opslaan,            setOpslaan]            = useState(false)
+  const [vragenlijst,        setVragenlijst]        = useState(null)
+  const [bevestigVernieuwen, setBevestigVernieuwen] = useState(false)
+  const [antwoordenOpen,     setAntwoordenOpen]     = useState(false)
 
   const sectieRefs = useRef({})
 
@@ -194,15 +205,17 @@ export default function Intake() {
 
   async function laad() {
     setLaden(true)
-    const [{ data: proj }, { data: intake }] = await Promise.all([
+    const [{ data: proj }, { data: intake }, { data: vl }] = await Promise.all([
       supabase.from('projecten').select('*, klanten(naam, bedrijfsnaam)').eq('id', id).single(),
       supabase.from('intake').select('*').eq('project_id', id).maybeSingle(),
+      supabase.from('klantenvragenlijst').select('*').eq('project_id', id).maybeSingle(),
     ])
     if (proj) setProject(proj)
     if (intake) {
       setIntakeId(intake.id)
       setForm({ ...LEEG, ...intake, features_json: intake.features_json ?? [], apparaten_json: intake.apparaten_json ?? [] })
     }
+    if (vl) setVragenlijst(vl)
     setLaden(false)
   }
 
@@ -281,6 +294,65 @@ export default function Intake() {
     setTimeout(() => navigate(`/projecten/${id}`), 2000)
   }
 
+  // ── Klantenvragenlijst beheer ──────────────────────────────────────────────
+  async function maakVragenlijst() {
+    const token = generateToken()
+    const { data, error } = await supabase
+      .from('klantenvragenlijst')
+      .insert({ project_id: id, token, status: 'aangemaakt' })
+      .select()
+      .single()
+    if (!error && data) {
+      setVragenlijst(data)
+      setToast('Vragenlijst aangemaakt ✓')
+    }
+  }
+
+  function kopieerLink() {
+    if (!vragenlijst) return
+    navigator.clipboard.writeText(`${BASE_URL}/vragenlijst/${vragenlijst.token}`)
+    setToast('Link gekopieerd ✓')
+  }
+
+  async function vernieuwToken() {
+    if (!vragenlijst) return
+    const token = generateToken()
+    const { data, error } = await supabase
+      .from('klantenvragenlijst')
+      .update({ token, status: 'aangemaakt', bijgewerkt_op: new Date().toISOString() })
+      .eq('id', vragenlijst.id)
+      .select()
+      .single()
+    if (!error && data) {
+      setVragenlijst(data)
+      setBevestigVernieuwen(false)
+      setToast('Nieuwe link gegenereerd ✓')
+    }
+  }
+
+  async function importeerVanVragenlijst() {
+    if (!vragenlijst) return
+    const problemen = [
+      ...(Array.isArray(vragenlijst.problemen_json) ? vragenlijst.problemen_json : []),
+      ...(vragenlijst.probleem_andere ? [vragenlijst.probleem_andere] : []),
+    ]
+    const functies = [
+      ...(Array.isArray(vragenlijst.functies_json) ? vragenlijst.functies_json : []),
+      ...(vragenlijst.functies_andere ? [vragenlijst.functies_andere] : []),
+    ].map(naam => ({ naam, groep: 'Geïmporteerd', prioriteit: 'must_have', geselecteerd: true }))
+
+    const updates = {}
+    if (vragenlijst.sector)         updates.sector                = vragenlijst.sector
+    if (problemen.length)           updates.probleem_omschrijving = problemen.join(', ')
+    if (functies.length)            updates.features_json         = functies
+    if (vragenlijst.budget_range)   updates.budget_range          = vragenlijst.budget_range
+    if (vragenlijst.gewenste_datum) updates.gewenste_opleverdatum = vragenlijst.gewenste_datum
+
+    setForm(f => ({ ...f, ...updates }))
+    await slaOpVeld(updates)
+    setToast('Antwoorden geïmporteerd naar intake ✓')
+  }
+
   // ── Scroll naar sectie ─────────────────────────────────────────────────────
   function scrollNaar(id) {
     sectieRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -347,11 +419,158 @@ export default function Intake() {
         </div>
       </div>
 
+      {/* ── Klantenvragenlijst kaart ────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <h3 className="text-sm font-bold text-gray-800">Klantenvragenlijst</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Stuur een korte vragenlijst naar de klant om basisinfo te verzamelen.</p>
+          </div>
+          {vragenlijst && (
+            <span
+              className="text-xs font-bold px-3 py-1.5 rounded-full flex-shrink-0"
+              style={
+                vragenlijst.status === 'ingevuld'
+                  ? { background: '#f0fdf4', color: '#16a34a' }
+                  : { background: '#fef9ee', color: '#d97706' }
+              }
+            >
+              {vragenlijst.status === 'ingevuld'
+                ? `Ingevuld op ${new Date(vragenlijst.ingevuld_op).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                : 'Wacht op klant'}
+            </span>
+          )}
+        </div>
+
+        {!vragenlijst ? (
+          /* ── Staat 1: nog niet aangemaakt ── */
+          <button
+            onClick={maakVragenlijst}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: '#185FA5' }}
+          >
+            <ExternalLink size={14} />
+            Vragenlijst aanmaken en link genereren
+          </button>
+        ) : vragenlijst.status !== 'ingevuld' ? (
+          /* ── Staat 2: wacht op klant ── */
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+              <ExternalLink size={13} className="text-gray-400 flex-shrink-0" />
+              <span className="text-xs text-gray-500 font-mono truncate flex-1">
+                {BASE_URL}/vragenlijst/{vragenlijst.token}
+              </span>
+            </div>
+
+            {!bevestigVernieuwen ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={kopieerLink}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Copy size={13} /> Kopieer link
+                </button>
+                <a
+                  href={`mailto:?subject=Vragenlijst%20voor%20jouw%20app&body=Beste%2C%0A%0AWij%20stelden%20een%20korte%20vragenlijst%20op%20om%20jouw%20project%20beter%20te%20leren%20kennen.%0A%0AVul%20ze%20hier%20in%3A%20${encodeURIComponent(`${BASE_URL}/vragenlijst/${vragenlijst.token}`)}%0A%0ABedankt!%0ATeam%20BYT`}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Mail size={13} /> Stuur via e-mail
+                </a>
+                <button
+                  onClick={() => setBevestigVernieuwen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <RefreshCw size={13} /> Nieuwe link genereren
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <p className="text-xs text-amber-800 flex-1">
+                  De oude link wordt ongeldig. Zeker een nieuwe link genereren?
+                </p>
+                <button onClick={vernieuwToken}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition-colors flex-shrink-0">
+                  Bevestig
+                </button>
+                <button onClick={() => setBevestigVernieuwen(false)}
+                  className="px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors flex-shrink-0">
+                  Annuleer
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── Staat 3: ingevuld door klant ── */
+          <div className="space-y-3">
+            {/* Klantgegevens */}
+            {(vragenlijst.klant_naam || vragenlijst.klant_email) && (
+              <div className="flex items-center gap-4 text-xs text-gray-600 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                {vragenlijst.klant_naam  && <span><span className="font-semibold text-gray-500">Naam: </span>{vragenlijst.klant_naam}</span>}
+                {vragenlijst.klant_email && <span><span className="font-semibold text-gray-500">E-mail: </span>{vragenlijst.klant_email}</span>}
+              </div>
+            )}
+
+            {/* Uitklapbare antwoorden */}
+            <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setAntwoordenOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Antwoorden bekijken
+                <ChevronDown size={15} className={`text-gray-400 transition-transform ${antwoordenOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {antwoordenOpen && (
+                <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+                  {[
+                    { label: 'Sector',           waarde: vragenlijst.sector },
+                    { label: 'Aantal medewerkers', waarde: vragenlijst.aantal_medewerkers },
+                    { label: 'Apparaten',        waarde: Array.isArray(vragenlijst.apparaten_json) && vragenlijst.apparaten_json.length ? vragenlijst.apparaten_json.join(', ') : null },
+                    { label: 'Problemen',        waarde: (() => {
+                      const p = Array.isArray(vragenlijst.problemen_json) ? vragenlijst.problemen_json : []
+                      const a = vragenlijst.probleem_andere || null
+                      const all = [...p, ...(a ? [a] : [])]
+                      return all.length ? all.join(', ') : null
+                    })() },
+                    { label: 'Gewenste functies', waarde: (() => {
+                      const f = Array.isArray(vragenlijst.functies_json) ? vragenlijst.functies_json : []
+                      const a = vragenlijst.functies_andere || null
+                      const all = [...f, ...(a ? [a] : [])]
+                      return all.length ? all.join(', ') : null
+                    })() },
+                    { label: 'Budget',           waarde: vragenlijst.budget_range },
+                    { label: 'Gewenste datum',   waarde: vragenlijst.gewenste_datum
+                      ? new Date(vragenlijst.gewenste_datum).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+                      : null },
+                    { label: 'Opmerkingen',      waarde: vragenlijst.klant_opmerkingen },
+                  ].map(({ label, waarde }) => waarde ? (
+                    <div key={label}>
+                      <p className="text-xs font-semibold text-gray-400 mb-0.5">{label}</p>
+                      <p className="text-sm text-gray-700">{waarde}</p>
+                    </div>
+                  ) : null)}
+                </div>
+              )}
+            </div>
+
+            {/* Importeer knop */}
+            <button
+              onClick={importeerVanVragenlijst}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: '#185FA5' }}
+            >
+              <CheckCircle size={14} />
+              Importeer naar intake
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* ── Voortgangsbalk ─────────────────────────────────────────────────── */}
       {(() => {
         const pct = berekenVoortgang(form)
         return (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 mb-5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-gray-500">Voortgang formulier</span>
               <span className="text-xs font-bold" style={{ color: pct === 100 ? '#16a34a' : '#185FA5' }}>

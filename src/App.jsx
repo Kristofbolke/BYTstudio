@@ -25,6 +25,7 @@ import Boilerplates from './pages/Boilerplates'
 import BoilerplateDetail from './pages/BoilerplateDetail'
 import AdresConfigurator from './pages/AdresConfigurator'
 import Intake from './pages/Intake'
+import Vragenlijst from './pages/Vragenlijst'
 
 export default function App() {
   const [user, setUser] = useState(undefined)
@@ -62,6 +63,7 @@ export default function App() {
     return (
       <Routes>
         <Route path="/login" element={<Login onLogin={setUser} />} />
+        <Route path="/vragenlijst/:token" element={<Vragenlijst />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     )
@@ -96,6 +98,7 @@ export default function App() {
               <Route path="/boilerplates/:id" element={<BoilerplateDetail />} />
               <Route path="/projecten/:id/adres-configurator" element={<AdresConfigurator />} />
               <Route path="/projecten/:id/intake" element={<Intake />} />
+              <Route path="/vragenlijst/:token" element={<Vragenlijst />} />
               <Route path="/instellingen"  element={<Instellingen />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

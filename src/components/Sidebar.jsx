@@ -48,20 +48,13 @@ export default function Sidebar({ user, onLogout }) {
       position: 'relative',
     }}>
 
-      {/* MARK — compact merkteken bovenaan de navigatie */}
-      <div style={{ padding: '16px 16px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+      {/* LOGO — bovenaan de navigatie */}
+      <div style={{ padding: '20px 16px 12px', flexShrink: 0 }}>
         <img
           src="/assets/mark/mark-tile.svg"
-          alt=""
-          style={{ width: 24, height: 24, objectFit: 'contain' }}
+          alt="BYT Studio"
+          style={{ width: 64, height: 64, objectFit: 'contain' }}
         />
-        <span style={{
-          color: BYT_GREEN, fontSize: 10, fontWeight: 600,
-          letterSpacing: '0.18em', textTransform: 'uppercase',
-          fontFamily: "'IBM Plex Mono', monospace",
-        }}>
-          Studio
-        </span>
       </div>
 
       {/* DIVIDER */}

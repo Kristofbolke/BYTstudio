@@ -9,6 +9,9 @@ export default function Login({ onLogin }) {
   const [wachtwoord, setWachtwoord] = useState('')
   const [loading, setLoading] = useState(false)
   const [fout, setFout] = useState('')
+  const [resetModus, setResetModus] = useState(false)
+  const [resetVerstuurd, setResetVerstuurd] = useState(false)
+  const [resetLaden, setResetLaden] = useState(false)
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -21,6 +24,19 @@ export default function Login({ onLogin }) {
     } else {
       onLogin?.(data.user)
     }
+  }
+
+  async function handleReset(e) {
+    e.preventDefault()
+    if (!email) { setFout('Vul eerst je e-mailadres in.'); return }
+    setResetLaden(true)
+    setFout('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/instellingen`,
+    })
+    setResetLaden(false)
+    if (error) setFout('Kon de e-mail niet versturen. Controleer het e-mailadres.')
+    else setResetVerstuurd(true)
   }
 
   return (
@@ -68,64 +84,118 @@ export default function Login({ onLogin }) {
             <p className="text-sm mt-1" style={{ color: '#4b5563' }}>Log in op BYT Studio</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest mb-2"
-                style={{ color: '#4b5563' }}>
-                E-mailadres
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                placeholder="jij@buildyourtools.be"
-                className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-700 outline-none transition-all"
-                style={{ background: '#161616', border: '1px solid #222' }}
-                onFocus={e => { e.target.style.borderColor = BYT_GREEN; e.target.style.boxShadow = `0 0 0 3px ${BYT_GREEN}18` }}
-                onBlur={e => { e.target.style.borderColor = '#222'; e.target.style.boxShadow = 'none' }}
-              />
+          {resetVerstuurd ? (
+            <div className="px-4 py-4 rounded-xl text-sm text-green-300 border text-center"
+              style={{ background: 'rgba(34,195,93,0.08)', borderColor: 'rgba(34,195,93,0.2)' }}>
+              ✓ E-mail verstuurd naar <strong>{email}</strong>.<br />
+              Controleer je inbox en volg de link om je wachtwoord in te stellen.
+              <button onClick={() => { setResetModus(false); setResetVerstuurd(false) }}
+                className="block mx-auto mt-3 text-xs underline" style={{ color: '#4b5563' }}>
+                Terug naar inloggen
+              </button>
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest mb-2"
-                style={{ color: '#4b5563' }}>
-                Wachtwoord
-              </label>
-              <input
-                type="password"
-                value={wachtwoord}
-                onChange={e => setWachtwoord(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-700 outline-none transition-all"
-                style={{ background: '#161616', border: '1px solid #222' }}
-                onFocus={e => { e.target.style.borderColor = BYT_GREEN; e.target.style.boxShadow = `0 0 0 3px ${BYT_GREEN}18` }}
-                onBlur={e => { e.target.style.borderColor = '#222'; e.target.style.boxShadow = 'none' }}
-              />
-            </div>
-
-            {fout && (
-              <div className="px-4 py-3 rounded-xl text-sm text-red-300 border"
-                style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)' }}>
-                {fout}
+          ) : resetModus ? (
+            <form onSubmit={handleReset} className="space-y-4">
+              <p className="text-sm" style={{ color: '#4b5563' }}>
+                Vul je e-mailadres in. Je ontvangt een link om een nieuw wachtwoord in te stellen.
+              </p>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#4b5563' }}>
+                  E-mailadres
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  placeholder="jij@buildyourtools.be"
+                  className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-700 outline-none transition-all"
+                  style={{ background: '#161616', border: '1px solid #222' }}
+                  onFocus={e => { e.target.style.borderColor = BYT_GREEN; e.target.style.boxShadow = `0 0 0 3px ${BYT_GREEN}18` }}
+                  onBlur={e => { e.target.style.borderColor = '#222'; e.target.style.boxShadow = 'none' }}
+                />
               </div>
-            )}
+              {fout && (
+                <div className="px-4 py-3 rounded-xl text-sm text-red-300 border"
+                  style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)' }}>
+                  {fout}
+                </div>
+              )}
+              <button type="submit" disabled={resetLaden}
+                className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all disabled:opacity-50"
+                style={{ background: `linear-gradient(135deg, ${BYT_GREEN}, #5aab1a)`, boxShadow: `0 4px 20px ${BYT_GREEN}30` }}>
+                {resetLaden ? 'Versturen...' : 'Reset-link versturen →'}
+              </button>
+              <button type="button" onClick={() => { setResetModus(false); setFout('') }}
+                className="w-full text-center text-xs mt-1" style={{ color: '#4b5563' }}>
+                ← Terug naar inloggen
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest mb-2"
+                  style={{ color: '#4b5563' }}>
+                  E-mailadres
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  placeholder="jij@buildyourtools.be"
+                  className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-700 outline-none transition-all"
+                  style={{ background: '#161616', border: '1px solid #222' }}
+                  onFocus={e => { e.target.style.borderColor = BYT_GREEN; e.target.style.boxShadow = `0 0 0 3px ${BYT_GREEN}18` }}
+                  onBlur={e => { e.target.style.borderColor = '#222'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all disabled:opacity-50 mt-2"
-              style={{
-                background: `linear-gradient(135deg, ${BYT_GREEN}, #5aab1a)`,
-                boxShadow: `0 4px 20px ${BYT_GREEN}30`,
-              }}
-              onMouseEnter={e => { if (!loading) e.target.style.opacity = '0.9' }}
-              onMouseLeave={e => { e.target.style.opacity = '1' }}
-            >
-              {loading ? 'Bezig met inloggen...' : 'Inloggen →'}
-            </button>
-          </form>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest mb-2"
+                  style={{ color: '#4b5563' }}>
+                  Wachtwoord
+                </label>
+                <input
+                  type="password"
+                  value={wachtwoord}
+                  onChange={e => setWachtwoord(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-700 outline-none transition-all"
+                  style={{ background: '#161616', border: '1px solid #222' }}
+                  onFocus={e => { e.target.style.borderColor = BYT_GREEN; e.target.style.boxShadow = `0 0 0 3px ${BYT_GREEN}18` }}
+                  onBlur={e => { e.target.style.borderColor = '#222'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+
+              {fout && (
+                <div className="px-4 py-3 rounded-xl text-sm text-red-300 border"
+                  style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)' }}>
+                  {fout}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all disabled:opacity-50 mt-2"
+                style={{
+                  background: `linear-gradient(135deg, ${BYT_GREEN}, #5aab1a)`,
+                  boxShadow: `0 4px 20px ${BYT_GREEN}30`,
+                }}
+                onMouseEnter={e => { if (!loading) e.target.style.opacity = '0.9' }}
+                onMouseLeave={e => { e.target.style.opacity = '1' }}
+              >
+                {loading ? 'Bezig met inloggen...' : 'Inloggen →'}
+              </button>
+
+              <button type="button" onClick={() => { setResetModus(true); setFout('') }}
+                className="w-full text-center text-xs mt-1" style={{ color: '#4b5563' }}>
+                Wachtwoord vergeten?
+              </button>
+            </form>
+          )}
 
           <p className="text-center text-xs mt-8" style={{ color: '#1f2937' }}>
             Build Your Tools © {new Date().getFullYear()}

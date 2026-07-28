@@ -682,8 +682,9 @@ export default function Instellingen() {
           </div>
 
           {/* Logo */}
-          <Veld label="Logo URL">
-            <input className={inputKlasse} value={inst.logo_url} onChange={stel('logo_url')} placeholder="https://... link naar je logo" />
+          <Veld label="Logo URL (wordt ook getoond in de app-header en op het loginscherm)">
+            <input className={inputKlasse} value={inst.logo_url} onChange={stel('logo_url')} placeholder="https://... link naar je logo (PNG of SVG)" />
+            <p className="text-xs text-gray-400 mt-1">Gebruik een publieke URL. Het logo verschijnt bovenaan de app en in afgedrukte documenten. Laat leeg voor het standaard BYT-logo.</p>
           </Veld>
           {inst.logo_url && (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">

@@ -881,37 +881,42 @@ export default function Instellingen() {
             />
           </Veld>
 
-          {/* Live preview */}
+          {/* Live preview — ziet er exact zo uit als de echte app-header */}
           <div>
             <p className="text-xs font-medium text-gray-500 mb-1.5">Live preview</p>
-            <div
-              className="rounded-xl flex items-center justify-center gap-4 transition-opacity overflow-hidden"
-              style={{ background: '#0B0F0E', height: 68, opacity: inst.banner_zichtbaar ? 1 : 0.35, border: '1px solid rgba(34,195,93,0.18)' }}
-            >
-              {/* Logo animatie preview */}
-              <div className="flex items-center gap-2">
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 18, color: '#22C35D' }}>{'<'}</span>
-                <div className="flex gap-1.5">
-                  {['#7ed957','#ff0000','#ff751f'].map((k,i) => (
-                    <div key={i} style={{ width: 9, height: 9, borderRadius: 2, background: k }} />
-                  ))}
-                </div>
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 18, color: '#22C35D' }}>{'>'}</span>
-              </div>
-              <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.1)' }} />
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
-                  {inst.banner_titel || 'BYT Studio'}
-                </p>
-                {inst.banner_subtitel && (
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
-                    {inst.banner_subtitel}
-                  </p>
+            {inst.banner_zichtbaar ? (
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ background: '#0B0F0E', border: '1px solid rgba(34,195,93,0.15)', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 20 }}
+              >
+                <img
+                  src={inst.logo_url || '/assets/logo/logo-reversed.svg'}
+                  alt="Logo"
+                  style={{ height: 48, objectFit: 'contain', flexShrink: 0 }}
+                  onError={e => { e.target.src = '/assets/logo/logo-reversed.svg' }}
+                />
+                {(inst.banner_titel || inst.banner_subtitel) && (
+                  <>
+                    <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
+                    <div>
+                      {inst.banner_titel && (
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Space Grotesk', system-ui, sans-serif" }}>
+                          {inst.banner_titel}
+                        </p>
+                      )}
+                      {inst.banner_subtitel && (
+                        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7BDFA3', fontFamily: "'IBM Plex Sans', system-ui, sans-serif" }}>
+                          {inst.banner_subtitel}
+                        </p>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
-            {!inst.banner_zichtbaar && (
-              <p className="text-xs text-gray-400 mt-1.5 text-center">Header is uitgeschakeld</p>
+            ) : (
+              <div className="rounded-xl flex items-center justify-center" style={{ background: '#F4F6F5', border: '1px dashed #D5DAD8', height: 56 }}>
+                <p className="text-xs text-gray-400">Header is uitgeschakeld — niet zichtbaar in de app</p>
+              </div>
             )}
           </div>
         </SectieKaart>

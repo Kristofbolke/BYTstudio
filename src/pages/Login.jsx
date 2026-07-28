@@ -49,7 +49,7 @@ export default function Login({ onLogin }) {
         {/* Logo groot */}
         <div>
           <div className="mb-8">
-            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 220, objectFit: 'contain', maxWidth: '100%' }} />
+            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 300, objectFit: 'contain', maxWidth: '100%' }} />
           </div>
           <h2 className="text-white text-3xl font-bold leading-tight mt-2">
             Intern platform<br />

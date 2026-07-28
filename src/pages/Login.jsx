@@ -49,7 +49,7 @@ export default function Login({ onLogin }) {
         {/* Logo groot */}
         <div>
           <div className="mb-8">
-            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 104, width: 208, objectFit: 'contain' }} />
+            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 220, objectFit: 'contain', maxWidth: '100%' }} />
           </div>
           <h2 className="text-white text-3xl font-bold leading-tight mt-2">
             Intern platform<br />
@@ -76,7 +76,7 @@ export default function Login({ onLogin }) {
 
           {/* Mobile logo */}
           <div className="lg:hidden mb-10 flex justify-start">
-            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 80, objectFit: 'contain' }} />
+            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 120, objectFit: 'contain', maxWidth: '100%' }} />
           </div>
 
           <div className="mb-8">

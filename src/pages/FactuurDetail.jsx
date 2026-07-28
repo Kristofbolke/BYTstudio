@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import '../styles/print.css'
 
-const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] bg-white transition-colors'
+const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] bg-white transition-colors'
 const lbl = 'block text-xs font-semibold text-gray-500 mb-1'
 
 const STATUSSEN = [
@@ -295,7 +295,7 @@ Build Your Tools`
   if (laden) return (
     <div className="flex items-center justify-center h-64">
       <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-        style={{ borderColor: '#78C833', borderTopColor: 'transparent' }} />
+        style={{ borderColor: '#22C35D', borderTopColor: 'transparent' }} />
     </div>
   )
 
@@ -361,7 +361,7 @@ Build Your Tools`
             <button key={key} onClick={() => setActief(key)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 actief === key
-                  ? 'border-[#78C833] text-[#78C833]'
+                  ? 'border-[#22C35D] text-[#22C35D]'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}>
               <Icon size={14} />
@@ -469,7 +469,7 @@ Build Your Tools`
               </div>
 
               <button onClick={voegItemToe}
-                className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-[#78C833] transition-colors">
+                className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-[#17A84B] transition-colors">
                 <Plus size={14} /> Regel toevoegen
               </button>
             </div>
@@ -494,14 +494,14 @@ Build Your Tools`
               </div>
               <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
                 <span>Totaal incl. BTW</span>
-                <span style={{ color: '#78C833' }}>€ {fmt(incl)}</span>
+                <span style={{ color: '#22C35D' }}>€ {fmt(incl)}</span>
               </div>
             </div>
 
             {gewijzigd && (
               <button onClick={slaFactuurOp} disabled={opslaan}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
-                style={{ background: '#78C833' }}>
+                style={{ background: '#22C35D' }}>
                 <Save size={14} />
                 {opslaan ? 'Opslaan...' : 'Wijzigingen opslaan'}
               </button>
@@ -541,7 +541,7 @@ Build Your Tools`
                 <div className="h-full rounded-full transition-all"
                   style={{
                     width: `${Math.min(100, (Number(factuur.betaald_bedrag) / Number(factuur.totaal_incl || 1)) * 100)}%`,
-                    background: '#78C833',
+                    background: '#22C35D',
                   }} />
               </div>
               <p className="text-xs text-gray-400 mt-1">
@@ -564,7 +564,7 @@ Build Your Tools`
                     className={inp + ' pl-7'} />
                 </div>
                 <button onClick={() => setBetBedrag(fmt(openSaldo).replace(',', '.'))}
-                  className="text-xs text-[#78C833] font-medium mt-1 hover:underline">
+                  className="text-xs text-[#22C35D] font-medium mt-1 hover:underline">
                   Volledig openstaand saldo invullen
                 </button>
               </div>
@@ -587,7 +587,7 @@ Build Your Tools`
               </div>
               <button onClick={registreerBetaling} disabled={betLaden}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
-                style={{ background: '#78C833' }}>
+                style={{ background: '#22C35D' }}>
                 <Euro size={14} />
                 {betLaden ? 'Registreren...' : 'Registreer betaling'}
               </button>
@@ -643,7 +643,7 @@ Build Your Tools`
                 <a href={mailtoHerinnering()}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-medium transition-opacity hover:opacity-90"
-                  style={{ background: '#78C833' }}>
+                  style={{ background: '#22C35D' }}>
                   <Mail size={12} />
                   Verstuur via e-mail
                 </a>
@@ -710,7 +710,7 @@ Build Your Tools`
               {factuur.klanten?.email && (
                 <a href={`mailto:${factuur.klanten.email}?subject=${encodeURIComponent(`Factuur ${factuur.factuur_nummer}`)}`}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity"
-                  style={{ background: '#78C833' }}>
+                  style={{ background: '#22C35D' }}>
                   <Send size={14} /> Verstuur
                 </a>
               )}
@@ -829,7 +829,7 @@ function PrintLayout({ factuur, items, instellingen }) {
   const intrest        = inst.nalatigheidsintrest ?? 8
   const forfait        = inst.forfait_schadevergoeding ?? 40
 
-  const primair = '#78C833'
+  const primair = '#22C35D'
 
   return (
     <div

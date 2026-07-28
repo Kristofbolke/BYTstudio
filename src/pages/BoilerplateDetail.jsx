@@ -7,7 +7,7 @@ import {
   Code2, Layers, Package, Wrench, Tag, ExternalLink,
 } from 'lucide-react'
 
-const BYT_GREEN = '#78C833'
+const BYT_GREEN = '#22C35D'
 
 const TYPES = [
   { value: 'component',    label: 'Component',    icon: Code2 },
@@ -173,7 +173,7 @@ export default function BoilerplateDetail() {
             type="button"
             onClick={() => setForm(f => ({ ...f, actief: !f.actief }))}
             style={{ width: 40, height: 22, flexShrink: 0 }}
-            className={`relative rounded-full transition-colors ${form.actief ? 'bg-[#78C833]' : 'bg-gray-200'}`}
+            className={`relative rounded-full transition-colors ${form.actief ? 'bg-[#22C35D]' : 'bg-gray-200'}`}
           >
             <span className="absolute top-0.5 left-0.5 bg-white rounded-full shadow"
               style={{ width: 18, height: 18, transform: form.actief ? 'translateX(18px)' : 'translateX(0)', transition: 'transform 0.15s' }} />

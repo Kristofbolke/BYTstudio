@@ -7,7 +7,7 @@ import {
   CheckCircle, Info, ExternalLink, X, AlertCircle,
 } from 'lucide-react'
 
-const BYT_GREEN = '#78C833'
+const BYT_GREEN = '#22C35D'
 
 // ── Badge configuratie ────────────────────────────────────────────────────────
 const BADGE_CFG = {

@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const BYT_GREEN = '#78C833'
+const BYT_GREEN = '#22C35D'
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('')
@@ -24,7 +24,7 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen flex" style={{ background: '#0B0F0E' }}>
 
       {/* Links: decoratief brand-paneel */}
       <div className="hidden lg:flex flex-col justify-between w-2/5 p-12"
@@ -32,8 +32,8 @@ export default function Login({ onLogin }) {
 
         {/* Logo groot */}
         <div>
-          <div className="bg-white rounded-2xl px-6 py-4 inline-block shadow-xl mb-8">
-            <img src="/logo-byt.png" alt="Build Your Tools" style={{ height: 60, objectFit: 'contain' }} />
+          <div className="mb-8">
+            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 104, width: 208, objectFit: 'contain' }} />
           </div>
           <h2 className="text-white text-3xl font-bold leading-tight mt-2">
             Intern platform<br />
@@ -59,10 +59,8 @@ export default function Login({ onLogin }) {
         <div className="w-full max-w-sm">
 
           {/* Mobile logo */}
-          <div className="lg:hidden mb-10 flex justify-center">
-            <div className="bg-white rounded-2xl px-5 py-3 shadow-xl">
-              <img src="/logo-byt.png" alt="Build Your Tools" style={{ height: 48, objectFit: 'contain' }} />
-            </div>
+          <div className="lg:hidden mb-10 flex justify-start">
+            <img src="/assets/logo/logo-reversed.svg" alt="Build Your Tools" style={{ height: 80, objectFit: 'contain' }} />
           </div>
 
           <div className="mb-8">

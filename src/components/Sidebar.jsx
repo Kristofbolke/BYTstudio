@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-const BYT_GREEN = '#78C833'
+const BYT_GREEN = '#22C35D'
 
 const navItems = [
   { to: '/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
@@ -39,44 +39,33 @@ export default function Sidebar({ user, onLogout }) {
 
   return (
     <aside style={{
-      width: 256,
-      background: '#0a0a0a',
+      width: 220,
+      background: '#0B0F0E',
       display: 'flex',
       flexDirection: 'column',
-      height: '100vh',
+      height: '100%',
       flexShrink: 0,
       position: 'relative',
     }}>
 
-      {/* LOGO */}
-      <div style={{ padding: '20px 16px 16px', flexShrink: 0 }}>
-        <div style={{
-          background: 'white',
-          borderRadius: 12,
-          padding: '8px 12px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      {/* MARK — compact merkteken bovenaan de navigatie */}
+      <div style={{ padding: '16px 16px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <img
+          src="/assets/mark/mark-tile.svg"
+          alt=""
+          style={{ width: 24, height: 24, objectFit: 'contain' }}
+        />
+        <span style={{
+          color: BYT_GREEN, fontSize: 10, fontWeight: 600,
+          letterSpacing: '0.18em', textTransform: 'uppercase',
+          fontFamily: "'IBM Plex Mono', monospace",
         }}>
-          <img
-            src="/logo-byt.png"
-            alt="Build Your Tools"
-            style={{ width: '100%', height: 48, objectFit: 'contain' }}
-          />
-        </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          marginTop: 12,
-        }}>
-          <span style={{ color: BYT_GREEN, fontSize: 11, fontWeight: 700, opacity: 0.6 }}>&lt;</span>
-          <span style={{ color: BYT_GREEN, fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Studio</span>
-          <span style={{ color: BYT_GREEN, fontSize: 11, fontWeight: 700, opacity: 0.6 }}>&gt;</span>
-        </div>
+          Studio
+        </span>
       </div>
 
       {/* DIVIDER */}
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 16px 12px' }} />
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 16px 8px' }} />
 
       {/* NAVIGATIE — scrollbaar */}
       <nav style={{
@@ -84,7 +73,7 @@ export default function Sidebar({ user, onLogout }) {
         overflowY: 'auto',
         padding: '4px 12px',
         minHeight: 0,
-        maxHeight: 'calc(100vh - 200px)',
+        maxHeight: 'calc(100% - 120px)',
       }}>
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink

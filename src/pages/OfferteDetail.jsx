@@ -805,7 +805,7 @@ export default function OfferteDetail() {
         {/* ── Zet om naar factuur — prominente banner bij goedgekeurd ── */}
         {form.status === 'goedgekeurd' && (
           <div className="mb-5 flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border-2"
-            style={{ background: '#f0fae5', borderColor: '#78C833' }}>
+            style={{ background: '#f0fae5', borderColor: '#22C35D' }}>
             <div>
               <p className="text-sm font-bold text-gray-800">Deze offerte is goedgekeurd</p>
               <p className="text-xs text-gray-500 mt-0.5">Je kan nu een factuur aanmaken op basis van deze offerte.</p>
@@ -813,7 +813,7 @@ export default function OfferteDetail() {
             <button
               onClick={() => setBevestigFactuur(true)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold whitespace-nowrap hover:opacity-90 transition-opacity flex-shrink-0"
-              style={{ background: '#78C833' }}>
+              style={{ background: '#22C35D' }}>
               <Receipt size={15} />
               Zet om naar factuur
             </button>
@@ -827,7 +827,7 @@ export default function OfferteDetail() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: '#f0fae5' }}>
-                  <Receipt size={18} style={{ color: '#78C833' }} />
+                  <Receipt size={18} style={{ color: '#22C35D' }} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-900">Omzetten naar factuur</p>
@@ -845,7 +845,7 @@ export default function OfferteDetail() {
                 </button>
                 <button onClick={zetOmNaarFactuur} disabled={bezigFactuur}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-                  style={{ background: '#78C833' }}>
+                  style={{ background: '#22C35D' }}>
                   {bezigFactuur
                     ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Aanmaken...</>
                     : <><Receipt size={14} /> Factuur aanmaken</>

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useInstellingen } from '../context/InstellingenContext'
 import { Plus, Trash2, ChevronLeft, Save, ChevronDown, Info, CheckCircle, AlertTriangle } from 'lucide-react'
 
-const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] bg-white transition-colors'
+const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] bg-white transition-colors'
 const lbl = 'block text-xs font-semibold text-gray-500 mb-1'
 
 const LEEG_ITEM = { omschrijving: '', hoeveelheid: 1, eenheid: 'uur', eenheidsprijs: 0, btw_percentage: 21 }
@@ -254,7 +254,7 @@ export default function FactuurNieuw() {
 
   if (initLaden) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#78C833', borderTopColor: 'transparent' }} />
+      <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#22C35D', borderTopColor: 'transparent' }} />
     </div>
   )
 
@@ -443,7 +443,7 @@ export default function FactuurNieuw() {
             </div>
 
             <button onClick={voegItemToe}
-              className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-[#78C833] transition-colors mt-2">
+              className="flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-[#17A84B] transition-colors mt-2">
               <Plus size={14} /> Regel toevoegen
             </button>
           </div>
@@ -620,7 +620,7 @@ export default function FactuurNieuw() {
             </div>
             <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
               <span>Totaal incl. BTW</span>
-              <span style={{ color: '#78C833' }}>€ {fmt(incl)}</span>
+              <span style={{ color: '#22C35D' }}>€ {fmt(incl)}</span>
             </div>
           </div>
 
@@ -635,7 +635,7 @@ export default function FactuurNieuw() {
           <div className="space-y-2">
             <button onClick={() => opslaan('verstuurd')} disabled={laden}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60 transition-opacity hover:opacity-90"
-              style={{ background: '#78C833' }}>
+              style={{ background: '#22C35D' }}>
               <Save size={14} />
               {laden ? 'Opslaan...' : 'Sla op als verstuurd'}
             </button>

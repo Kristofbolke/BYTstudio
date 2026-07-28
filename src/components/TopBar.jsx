@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { ChevronRight } from 'lucide-react'
 
-const BYT_GREEN = '#78C833'
+const BYT_GREEN = '#22C35D'
 
 const paginaConfig = {
   '/dashboard':     { label: 'Dashboard',     subtitel: 'Overzicht van je projecten' },
@@ -79,7 +79,7 @@ export default function TopBar() {
         <div className="relative">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0 shadow-sm"
-            style={{ background: `linear-gradient(135deg, ${BYT_GREEN}, #5aab1a)` }}
+            style={{ background: `linear-gradient(135deg, ${BYT_GREEN}, #17A84B)` }}
           >
             {initialen}
           </div>

@@ -193,7 +193,7 @@ export default function BoilerplatesTab({ project }) {
   if (laden) return (
     <div className="flex justify-center py-12">
       <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-        style={{ borderColor: '#78C833', borderTopColor: 'transparent' }} />
+        style={{ borderColor: '#22C35D', borderTopColor: 'transparent' }} />
     </div>
   )
 
@@ -212,7 +212,7 @@ export default function BoilerplatesTab({ project }) {
           <button
             onClick={openModal}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold transition-opacity hover:opacity-85"
-            style={{ background: '#78C833' }}
+            style={{ background: '#22C35D' }}
           >
             <Plus size={13} /> Boilerplate toevoegen
           </button>
@@ -223,11 +223,11 @@ export default function BoilerplatesTab({ project }) {
           <Link
             to={`/projecten/${projectId}/adres-configurator`}
             className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:shadow-md mb-3"
-            style={{ borderColor: '#78C833', background: '#f0fdf4' }}
+            style={{ borderColor: '#22C35D', background: '#f0fdf4' }}
           >
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: '#78C83320' }}>
-              <Settings2 size={15} style={{ color: '#78C833' }} />
+              style={{ background: '#22C35D20' }}>
+              <Settings2 size={15} style={{ color: '#22C35D' }} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-800">Open Adres Configurator</p>
@@ -259,8 +259,8 @@ export default function BoilerplatesTab({ project }) {
               <div key={k.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: '#78C83315' }}>
-                    <Icon size={14} style={{ color: '#78C833' }} />
+                    style={{ background: '#22C35D15' }}>
+                    <Icon size={14} style={{ color: '#22C35D' }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -320,7 +320,7 @@ export default function BoilerplatesTab({ project }) {
                       <button
                         onClick={() => genereerPromptVoorKoppeling(k)}
                         className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-semibold text-white"
-                        style={{ background: '#78C833' }}
+                        style={{ background: '#22C35D' }}
                       >
                         <Zap size={11} /> Genereer prompt
                       </button>
@@ -458,7 +458,7 @@ export default function BoilerplatesTab({ project }) {
                       <button key={t.key} onClick={() => setModalFilter(t.key)}
                         className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all"
                         style={modalFilter === t.key
-                          ? { background: '#78C833', color: '#fff' }
+                          ? { background: '#22C35D', color: '#fff' }
                           : { background: '#f3f4f6', color: '#6b7280' }}>
                         {t.label}
                       </button>
@@ -485,12 +485,12 @@ export default function BoilerplatesTab({ project }) {
                           opacity: al ? 0.45 : 1,
                           cursor: al ? 'not-allowed' : 'pointer',
                         }}
-                        onMouseEnter={e => { if (!al) e.currentTarget.style.borderColor = '#78C833' }}
+                        onMouseEnter={e => { if (!al) e.currentTarget.style.borderColor = '#22C35D' }}
                         onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb' }}
                       >
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                          style={{ background: '#78C83315' }}>
-                          <Icon size={14} style={{ color: '#78C833' }} />
+                          style={{ background: '#22C35D15' }}>
+                          <Icon size={14} style={{ color: '#22C35D' }} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -550,7 +550,7 @@ export default function BoilerplatesTab({ project }) {
                   <button
                     onClick={genereerModalPrompt}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-white text-sm font-semibold"
-                    style={{ background: '#78C833' }}
+                    style={{ background: '#22C35D' }}
                   >
                     <Zap size={14} /> Genereer aanpassingsprompt
                   </button>

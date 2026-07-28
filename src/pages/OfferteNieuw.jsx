@@ -30,7 +30,7 @@ async function genereerNummer() {
   return `OFF-${new Date().getFullYear()}-${String((count ?? 0) + 1).padStart(3, '0')}`
 }
 
-const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] bg-white'
+const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] bg-white'
 const lbl = 'block text-xs font-semibold text-gray-500 mb-1'
 
 function Sectie({ stap, titel, children }) {
@@ -81,7 +81,7 @@ function TotaalSamenvatting({ blokken, uurtarief }) {
       <div className="border-t border-gray-200 pt-3">
         <div className="flex justify-between text-base font-bold">
           <span className="text-gray-900">Totaal incl. BTW</span>
-          <span style={{ color: '#78C833' }}>€ {fmt(incl)}</span>
+          <span style={{ color: '#22C35D' }}>€ {fmt(incl)}</span>
         </div>
       </div>
 
@@ -361,7 +361,7 @@ export default function OfferteNieuw() {
             <div className="flex items-center gap-3 pb-8">
               <button type="submit" disabled={opslaanBezig}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50 shadow-sm transition-opacity hover:opacity-90"
-                style={{ background: '#78C833' }}>
+                style={{ background: '#22C35D' }}>
                 <Save size={15} />
                 {opslaanBezig ? 'Opslaan...' : 'Offerte opslaan'}
               </button>

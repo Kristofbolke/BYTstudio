@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useInstellingen } from '../context/InstellingenContext'
 
-const BYT_GREEN = '#78C833'
+const BYT_GREEN = '#22C35D'
 
 // Kleuren uit het BYT-logo
 const BLOKKEN = ['#7ed957', '#ff0000', '#ff751f']
@@ -36,8 +36,8 @@ export default function Banner() {
     <div style={{
       width: '100%',
       height: '68px',
-      background: '#0a0a0a',
-      borderBottom: '1px solid rgba(126,217,87,0.18)',
+      background: '#0B0F0E',
+      borderBottom: '1px solid rgba(34,195,93,0.18)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -52,7 +52,7 @@ export default function Banner() {
 
         {/* < links */}
         <span style={{
-          fontFamily: "'Courier New', monospace",
+          fontFamily: "'IBM Plex Mono', monospace",
           fontWeight: 700,
           fontSize: '22px',
           color: BYT_GREEN,
@@ -88,7 +88,7 @@ export default function Banner() {
 
         {/* > rechts */}
         <span style={{
-          fontFamily: "'Courier New', monospace",
+          fontFamily: "'IBM Plex Mono', monospace",
           fontWeight: 700,
           fontSize: '22px',
           color: BYT_GREEN,
@@ -122,7 +122,7 @@ export default function Banner() {
           fontSize: '14px',
           fontWeight: 600,
           color: '#ffffff',
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
           letterSpacing: '-0.01em',
           lineHeight: 1.25,
         }}>
@@ -132,7 +132,7 @@ export default function Banner() {
           <div style={{
             fontSize: '11px',
             color: 'rgba(255,255,255,0.45)',
-            fontFamily: "'Inter', system-ui, sans-serif",
+            fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
             marginTop: '2px',
             lineHeight: 1.2,
           }}>

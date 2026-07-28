@@ -1,4 +1,4 @@
-// ProjectDetail.jsx — Detailpagina van één project met 6 tabs
+// ProjectDetail.jsx — Detailpagina van één project met tabs
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -7,8 +7,9 @@ import {
   ChevronLeft, ExternalLink, Trash2, Save, Plus, X,
   CheckCircle, FileText, Palette,
   Info, FolderKanban, ChevronDown, ChevronRight,
-  Receipt, Layers,
+  Receipt, Layers, ClipboardList, Copy, Link2,
 } from 'lucide-react'
+import IntakeFormWizard from '../components/IntakeFormWizard'
 
 // ── Hulpfuncties ─────────────────────────────────────────────────────────────
 function formatDatum(iso) {
@@ -41,6 +42,154 @@ function OpslaanBericht({ tekst }) {
 
 const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 bg-white'
 const lbl = 'block text-xs font-semibold text-gray-500 mb-1'
+
+const BASE_URL = 'https://byt-studio.netlify.app'
+
+// ── Publieke link genereren ───────────────────────────────────────────────────
+function PubliekeLinkKnop({ projectId }) {
+  const [url, setUrl]           = useState('')
+  const [laden, setLaden]       = useState(false)
+  const [gekopieerd, setGekop]  = useState(false)
+
+  async function genereer() {
+    setLaden(true)
+    // Bestaande rij zoeken
+    const { data: bestaand } = await supabase
+      .from('intake_forms')
+      .select('token')
+      .eq('project_id', projectId)
+      .maybeSingle()
+
+    let token
+    if (bestaand) {
+      token = bestaand.token
+    } else {
+      const { data: nieuw } = await supabase
+        .from('intake_forms')
+        .insert({ project_id: projectId })
+        .select('token')
+        .single()
+      token = nieuw?.token
+    }
+    setLaden(false)
+    if (token) setUrl(`${BASE_URL}/intake/${token}`)
+  }
+
+  async function kopieer() {
+    if (!url) return
+    await navigator.clipboard.writeText(url)
+    setGekop(true)
+    setTimeout(() => setGekop(false), 2000)
+  }
+
+  if (!url) {
+    return (
+      <button
+        type="button"
+        onClick={genereer}
+        disabled={laden}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+      >
+        <Link2 size={14} />
+        {laden ? 'Bezig...' : 'Publieke link genereren'}
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      <input
+        readOnly
+        value={url}
+        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 bg-gray-50 font-mono"
+      />
+      <button
+        type="button"
+        onClick={kopieer}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 transition-colors whitespace-nowrap"
+        style={{ color: gekopieerd ? '#17A84B' : undefined }}
+      >
+        {gekopieerd ? <CheckCircle size={14} /> : <Copy size={14} />}
+        {gekopieerd ? 'Gekopieerd!' : 'Kopieer'}
+      </button>
+    </div>
+  )
+}
+
+// ── Tab Intake ────────────────────────────────────────────────────────────────
+function TabIntake({ projectId }) {
+  const [intake, setIntake]   = useState(undefined) // undefined = laden
+  const [fout, setFout]       = useState('')
+
+  useEffect(() => { laad() }, [projectId])
+
+  async function laad() {
+    const { data } = await supabase
+      .from('intake_forms')
+      .select('*')
+      .eq('project_id', projectId)
+      .maybeSingle()
+
+    if (data) {
+      setIntake(data)
+    } else {
+      // Automatisch aanmaken
+      const { data: nieuw, error } = await supabase
+        .from('intake_forms')
+        .insert({ project_id: projectId })
+        .select('*')
+        .single()
+      if (error) { setFout('Kon intake niet aanmaken: ' + error.message); return }
+      setIntake(nieuw)
+    }
+  }
+
+  async function onSave(velden) {
+    if (!intake) return { error: null }
+    const { error } = await supabase
+      .from('intake_forms')
+      .update(velden)
+      .eq('id', intake.id)
+    return { error }
+  }
+
+  async function onSubmit(velden) {
+    if (!intake) return { error: null }
+    const { error } = await supabase
+      .from('intake_forms')
+      .update({
+        ...velden,
+        status:       'submitted',
+        filled_by:    'intern',
+        submitted_at: new Date().toISOString(),
+      })
+      .eq('id', intake.id)
+    return { error }
+  }
+
+  if (intake === undefined) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#22C35D', borderTopColor: 'transparent' }} />
+      </div>
+    )
+  }
+
+  if (fout) return <p className="text-sm text-red-600">{fout}</p>
+
+  return (
+    <div className="max-w-2xl">
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <IntakeFormWizard
+          intake={intake}
+          onSave={onSave}
+          onSubmit={onSubmit}
+          isPublic={false}
+        />
+      </div>
+    </div>
+  )
+}
 
 // ── Tab 1: Overzicht ──────────────────────────────────────────────────────────
 function TabOverzicht({ project, klanten, onBijgewerkt }) {
@@ -136,12 +285,7 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
         <Save size={14} /> {loading ? 'Opslaan...' : 'Wijzigingen opslaan'}
       </button>
 
-      <Link
-        to={`/projecten/${project.id}/intake`}
-        className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-      >
-        📋 Intakeformulier openen →
-      </Link>
+      <PubliekeLinkKnop projectId={project.id} />
     </form>
   )
 }
@@ -339,7 +483,7 @@ function googleFontsLink(fontTitel, fontTekst, gewichtTitel, grootsteTekst) {
 function TabHuisstijl({ projectId }) {
   const leeg = {
     primaire_kleur:   '#185FA5',
-    secundaire_kleur: '#78C833',
+    secundaire_kleur: '#22C35D',
     accent_kleur:     '#f8fafc',
     font_titel:       'Poppins',
     font_titel_eigen: '',
@@ -1384,7 +1528,7 @@ function TabOffertes({ projectId, klantId }) {
                           </button>
                           <button onClick={() => zetOmNaarFactuur(o)} disabled={bezigFactuur === o.id}
                             className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-white disabled:opacity-60"
-                            style={{ background: '#78C833' }}>
+                            style={{ background: '#22C35D' }}>
                             {bezigFactuur === o.id ? '...' : '✓ Bevestig'}
                           </button>
                         </div>
@@ -1392,7 +1536,7 @@ function TabOffertes({ projectId, klantId }) {
                         <button
                           onClick={() => setBevestigOffId(o.id)}
                           className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors"
-                          style={{ color: '#78C833', borderColor: '#78C833', background: '#f0fae5' }}>
+                          style={{ color: '#22C35D', borderColor: '#22C35D', background: '#f0fae5' }}>
                           → Factuur
                         </button>
                       )
@@ -1608,7 +1752,7 @@ function TabFacturatie({ projectId, klantId }) {
         <button
           onClick={() => navigate(nieuweFactuurUrl())}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
-          style={{ background: '#78C833' }}>
+          style={{ background: '#22C35D' }}>
           <Plus size={14} /> Eerste factuur aanmaken
         </button>
       </div>
@@ -1632,7 +1776,7 @@ function TabFacturatie({ projectId, klantId }) {
           <button
             onClick={() => navigate(nieuweFactuurUrl())}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
-            style={{ background: '#78C833' }}>
+            style={{ background: '#22C35D' }}>
             <Plus size={14} /> Nieuwe factuur
           </button>
         </div>
@@ -1692,7 +1836,7 @@ function TabFacturatie({ projectId, klantId }) {
                   onClick={() => navigate(`/facturen/${f.id}`)}
                   className="hover:bg-green-50/30 cursor-pointer transition-colors group">
                   {/* Nummer */}
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800 group-hover:text-[#78C833]">
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800 group-hover:text-[#17A84B]">
                     {f.factuur_nummer}
                   </td>
                   {/* Type badge */}
@@ -1795,6 +1939,7 @@ function TabFacturatie({ projectId, klantId }) {
 // ── Tabs definitie ────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'overzicht',  label: 'Overzicht',  icon: FolderKanban },
+  { key: 'intake',     label: 'Intake',     icon: ClipboardList },
   { key: 'huisstijl',  label: 'Huisstijl',  icon: Palette },
   { key: 'offertes',   label: 'Offertes',   icon: FileText },
   { key: 'facturatie', label: 'Facturatie', icon: Receipt },
@@ -1910,6 +2055,7 @@ export default function ProjectDetail() {
       {/* Tab inhoud */}
       <div>
         {actieveTab === 'overzicht'  && <TabOverzicht  project={project} klanten={klanten} onBijgewerkt={laadProject} />}
+        {actieveTab === 'intake'     && <TabIntake     projectId={project.id} />}
         {actieveTab === 'huisstijl'  && <TabHuisstijl  projectId={project.id} />}
         {actieveTab === 'offertes'   && <TabOffertes   projectId={project.id} klantId={project.klant_id} />}
         {actieveTab === 'facturatie' && <TabFacturatie projectId={project.id} klantId={project.klant_id} />}

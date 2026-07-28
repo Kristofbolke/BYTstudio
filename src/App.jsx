@@ -4,7 +4,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
-import Banner from './components/Banner'
+import AppHeader from './components/AppHeader'
+import SplashScreen from './components/SplashScreen'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Klanten from './pages/Klanten'
@@ -26,9 +27,14 @@ import BoilerplateDetail from './pages/BoilerplateDetail'
 import AdresConfigurator from './pages/AdresConfigurator'
 import Intake from './pages/Intake'
 import Vragenlijst from './pages/Vragenlijst'
+import IntakePubliek from './pages/IntakePubliek'
 
 export default function App() {
   const [user, setUser] = useState(undefined)
+  const [splashDone, setSplashDone] = useState(false)
+
+  // Publieke routes renderen altijd zonder app-shell, ongeacht auth-status
+  const isPubliekeIntake = window.location.pathname.startsWith('/intake/')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -43,19 +49,18 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Laden
-  if (user === undefined) {
+  // Publieke intake-pagina — altijd tonen, ook tijdens laden en zonder login
+  if (isPubliekeIntake) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 24, background: '#0a0a0a' }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: '12px 24px' }}>
-          <img src="/logo-byt.png" alt="Build Your Tools" style={{ height: 52, objectFit: 'contain' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #78C833', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-          <span style={{ color: '#78C833', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Laden</span>
-        </div>
-      </div>
+      <Routes>
+        <Route path="/intake/:token" element={<IntakePubliek />} />
+      </Routes>
     )
+  }
+
+  // Splash screen — tonen zolang niet klaar
+  if (!splashDone) {
+    return <SplashScreen authReady={user !== undefined} onDone={() => setSplashDone(true)} />
   }
 
   // Niet ingelogd
@@ -64,6 +69,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login onLogin={setUser} />} />
         <Route path="/vragenlijst/:token" element={<Vragenlijst />} />
+        <Route path="/intake/:token" element={<IntakePubliek />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     )
@@ -71,13 +77,14 @@ export default function App() {
 
   // Ingelogd
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <Sidebar user={user} onLogout={() => setUser(null)} />
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-        <Banner />
-        <TopBar />
-        <main style={{ flex: 1, overflowY: 'auto' }}>
-          <div style={{ padding: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <AppHeader />
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <Sidebar user={user} onLogout={() => setUser(null)} />
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+          <TopBar />
+          <main style={{ flex: 1, overflowY: 'auto' }}>
+            <div style={{ padding: '24px' }}>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard"     element={<Dashboard />} />
@@ -103,7 +110,8 @@ export default function App() {
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   )

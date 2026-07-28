@@ -1,14 +1,14 @@
 // OfferteBuilder.jsx — Gestructureerde offerte-builder v2
 // Blokken: Ontwikkelingskosten | Recurrente abonnementskosten | Onderhoud & support
 
-const BYT = '#78C833'
+const BYT = '#22C35D'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n) {
   return Number(n ?? 0).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
-const inp = 'px-2.5 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] bg-white w-full'
-const inpSm = 'px-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] bg-white'
+const inp = 'px-2.5 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] bg-white w-full'
+const inpSm = 'px-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] bg-white'
 
 // ── Standaard blokken ────────────────────────────────────────────────────────
 export const DEFAULT_BLOKKEN = [
@@ -131,7 +131,7 @@ export function vlakItemsVoorFactuur(blokken, uurtarief) {
 function Toggle({ checked, onChange }) {
   return (
     <button type="button" onClick={() => onChange(!checked)}
-      className={`w-9 h-5 rounded-full transition-all flex-shrink-0 relative ${checked ? 'bg-[#78C833]' : 'bg-gray-200 hover:bg-gray-300'}`}>
+      className={`w-9 h-5 rounded-full transition-all flex-shrink-0 relative ${checked ? 'bg-[#22C35D]' : 'bg-gray-200 hover:bg-gray-300'}`}>
       <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-4' : 'translate-x-0.5'}`} />
     </button>
   )
@@ -150,7 +150,7 @@ function BlokSubtotaal({ subtotaal, btw, btwBedrag, totaal, onBtwChange }) {
             <span>BTW</span>
             <input type="number" min="0" max="100" value={btw}
               onChange={e => onBtwChange(Number(e.target.value))}
-              className="w-11 px-1.5 py-0.5 rounded border border-gray-200 text-xs text-center focus:outline-none focus:border-[#78C833]" />
+              className="w-11 px-1.5 py-0.5 rounded border border-gray-200 text-xs text-center focus:outline-none focus:border-[#22C35D]" />
             <span>%</span>
           </div>
           <span>€ {fmt(btwBedrag)}</span>
@@ -216,7 +216,7 @@ function BlokOntwikkeling({ blok, uurtarief, onChange }) {
                   <button key={key} type="button" disabled={!item.actief}
                     onClick={() => updateItem(item.id, 'modus', key)}
                     className={`flex-1 py-1.5 font-semibold transition-colors ${
-                      item.modus === key && item.actief ? 'bg-[#78C833] text-white' : 'text-gray-400 hover:bg-gray-50 disabled:hover:bg-white'
+                      item.modus === key && item.actief ? 'bg-[#22C35D] text-white' : 'text-gray-400 hover:bg-gray-50 disabled:hover:bg-white'
                     }`}>
                     {lbl}
                   </button>
@@ -256,7 +256,7 @@ function BlokOntwikkeling({ blok, uurtarief, onChange }) {
                 <input value={item.detail}
                   onChange={e => updateItem(item.id, 'detail', e.target.value)}
                   placeholder="Toelichting, modules, details..."
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-gray-100 text-xs text-gray-500 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#78C833]/20 focus:border-[#78C833] focus:bg-white transition-colors" />
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-gray-100 text-xs text-gray-500 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#22C35D]/20 focus:border-[#22C35D] focus:bg-white transition-colors" />
               </div>
             )}
           </div>
@@ -405,7 +405,7 @@ function BlokSupport({ blok, onChange }) {
                 <span className="absolute left-2.5 top-2 text-gray-500 text-xs">€</span>
                 <input type="number" min="0" step="5" value={p.prijs}
                   onChange={e => updatePakket(p.id, 'prijs', e.target.value, e)}
-                  className="w-full pl-5 pr-[44px] py-2 rounded-lg border border-gray-200 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] bg-white" />
+                  className="w-full pl-5 pr-[44px] py-2 rounded-lg border border-gray-200 text-sm text-right font-bold focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] bg-white" />
                 <span className="absolute right-2.5 top-2 text-gray-400 text-xs">/maand</span>
               </div>
             </div>

@@ -164,7 +164,7 @@ export default function Facturen() {
           </button>
           <button onClick={() => navigate('/facturen/nieuw')}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-opacity hover:opacity-90"
-            style={{ background: '#78C833' }}>
+            style={{ background: '#22C35D' }}>
             <Plus size={15} /> Nieuwe factuur
           </button>
         </div>
@@ -194,7 +194,7 @@ export default function Facturen() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   filterTab === s.key ? 'text-white' : 'text-gray-500 bg-gray-50 hover:bg-gray-100'
                 }`}
-                style={filterTab === s.key ? { background: s.kleur ?? '#78C833' } : {}}>
+                style={filterTab === s.key ? { background: s.kleur ?? '#22C35D' } : {}}>
                 {s.label}
                 {s.key !== 'alle' && (
                   <span className="ml-1.5 opacity-70">{facturen.filter(f => f.status === s.key).length}</span>
@@ -204,7 +204,7 @@ export default function Facturen() {
             {/* Voorschot filter */}
             <button onClick={() => setFilterTab('voorschot')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                filterTab === 'voorschot' ? 'bg-[#78C833] text-white' : 'text-gray-500 bg-gray-50 hover:bg-gray-100'
+                filterTab === 'voorschot' ? 'bg-[#22C35D] text-white' : 'text-gray-500 bg-gray-50 hover:bg-gray-100'
               }`}>
               Voorschot <span className="ml-1.5 opacity-70">{facturen.filter(f => f.is_voorschot).length}</span>
             </button>
@@ -213,7 +213,7 @@ export default function Facturen() {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={zoekterm} onChange={e => setZoekterm(e.target.value)}
               placeholder="Zoek factuur, klant..."
-              className="pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#78C833]/20 focus:border-[#78C833] w-52" />
+              className="pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] w-52" />
           </div>
         </div>
 
@@ -221,7 +221,7 @@ export default function Facturen() {
           <div className="px-5 py-10 text-center">
             <AlertTriangle size={28} className="mx-auto mb-3" style={{ color: '#dc2626' }} />
             <p className="text-sm font-medium text-gray-500">{fout}</p>
-            <button onClick={initialiseer} className="mt-4 px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{ background: '#78C833' }}>
+            <button onClick={initialiseer} className="mt-4 px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{ background: '#22C35D' }}>
               Opnieuw proberen
             </button>
           </div>
@@ -244,7 +244,7 @@ export default function Facturen() {
             {!zoekterm && filterTab === 'alle' && (
               <button onClick={() => navigate('/facturen/nieuw')}
                 className="mt-4 px-4 py-2 rounded-xl text-white text-sm font-semibold"
-                style={{ background: '#78C833' }}>
+                style={{ background: '#22C35D' }}>
                 Eerste factuur aanmaken
               </button>
             )}
@@ -275,7 +275,7 @@ export default function Facturen() {
                   return (
                     <tr key={f.id} className="hover:bg-gray-50/60 transition-colors">
                       <td className="px-5 py-3 font-mono text-xs font-semibold text-gray-700">
-                        <Link to={`/facturen/${f.id}`} className="hover:text-[#78C833] transition-colors">
+                        <Link to={`/facturen/${f.id}`} className="hover:text-[#17A84B] transition-colors">
                           {f.factuur_nummer}
                           {f.is_voorschot && <span className="ml-1 text-blue-400">V</span>}
                           {f.is_creditnota && <span className="ml-1 text-red-400">CN</span>}
@@ -299,7 +299,7 @@ export default function Facturen() {
                       <td className="px-3 py-3"><StatusBadge status={f.status} /></td>
                       <td className="px-5 py-3 text-right">
                         <Link to={`/facturen/${f.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#78C833] hover:text-[#78C833] transition-colors">
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 border border-gray-200 hover:border-[#22C35D] hover:text-[#17A84B] transition-colors">
                           Open
                         </Link>
                       </td>

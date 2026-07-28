@@ -8,23 +8,27 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #f4f4f5;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background-color: #F4F6F5;
   margin: 0;
 }
 
-/* Sidebar scrollbar — donker */
+h1, h2, h3, .font-display {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* Sidebar scrollbar — donker, groen-getint grijs */
 aside ::-webkit-scrollbar { width: 4px; }
 aside ::-webkit-scrollbar-track { background: transparent; }
-aside ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+aside ::-webkit-scrollbar-thumb { background: #4D534F; border-radius: 4px; }
 
-/* Main content scrollbar — licht */
+/* Main content scrollbar — licht, groen-getint grijs */
 main ::-webkit-scrollbar { width: 6px; }
-main ::-webkit-scrollbar-track { background: #f4f4f5; }
-main ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-main ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+main ::-webkit-scrollbar-track { background: #F4F6F5; }
+main ::-webkit-scrollbar-thumb { background: #D5DAD8; border-radius: 4px; }
+main ::-webkit-scrollbar-thumb:hover { background: #929996; }
 
 /* Kaarten krijgen subtielere schaduw */
-.bg-white {
+.bg-white, .bg-paper {
   --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }

@@ -6,7 +6,7 @@ import {
   CheckCircle, Copy, Save, ChevronDown, X, Zap,
 } from 'lucide-react'
 
-const BYT_GREEN = '#78C833'
+const BYT_GREEN = '#22C35D'
 
 const TYPE_CFG = {
   component:    { label: 'Component',    bg: '#dbeafe', tekst: '#1d4ed8' },

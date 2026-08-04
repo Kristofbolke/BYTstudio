@@ -890,10 +890,10 @@ export default function Instellingen() {
                 style={{ background: '#0B0F0E', border: '1px solid rgba(34,195,93,0.15)', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 20 }}
               >
                 <img
-                  src={inst.logo_url || '/assets/logo/logo-reversed.svg'}
+                  src={inst.logo_url || '/assets/logo/studio-byt-logo-negative.svg'}
                   alt="Logo"
                   style={{ height: 48, objectFit: 'contain', flexShrink: 0 }}
-                  onError={e => { e.target.src = '/assets/logo/logo-reversed.svg' }}
+                  onError={e => { e.target.src = '/assets/logo/studio-byt-logo-negative.svg' }}
                 />
                 {(inst.banner_titel || inst.banner_subtitel) && (
                   <>

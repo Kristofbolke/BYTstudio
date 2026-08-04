@@ -75,7 +75,7 @@ export default function SplashScreen({ authReady, onDone }) {
 
         {/* Volledig logo */}
         <img
-          src="/assets/logo/logo-reversed.svg"
+          src="/assets/logo/studio-byt-logo-negative.svg"
           alt="Build Your Tools"
           style={{ height: 40, objectFit: 'contain' }}
         />

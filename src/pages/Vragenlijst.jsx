@@ -458,7 +458,7 @@ function Wrapper({ children }) {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ background: '#fff', borderRadius: 12, padding: '10px 20px', display: 'inline-block', marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-            <img src="/logo-byt.png" alt="Build Your Tools" style={{ height: 40, objectFit: 'contain' }} />
+            <img src="/assets/logo/studio-byt-logo-color.svg" alt="Build Your Tools" style={{ height: 40, objectFit: 'contain' }} />
           </div>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#111827', margin: '0 0 4px' }}>
             Vragenlijst

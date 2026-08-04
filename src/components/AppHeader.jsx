@@ -2,7 +2,7 @@
 // Leest banner_zichtbaar, banner_titel, banner_subtitel en logo_url uit InstellingenContext
 import { useInstellingen } from '../context/InstellingenContext'
 
-const FALLBACK_LOGO = '/assets/logo/logo-reversed.svg'
+const FALLBACK_LOGO = '/assets/logo/studio-byt-logo-negative.svg'
 
 export default function AppHeader() {
   const { instellingen, laden } = useInstellingen()

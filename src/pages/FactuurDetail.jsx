@@ -840,7 +840,7 @@ function PrintLayout({ factuur, items, instellingen }) {
       <div className="fp-header">
         {/* Links: bedrijfsgegevens */}
         <div className="fp-bedrijf-blok">
-          <img src="/logo-byt.png" alt="Build Your Tools" className="fp-logo" />
+          <img src="/assets/logo/png/studio-byt-logo-color-1600w.png" alt="Build Your Tools" className="fp-logo" />
           {!inst.logo && (
             <div className="fp-bedrijf-naam">{bedrijfNaam}</div>
           )}

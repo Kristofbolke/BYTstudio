@@ -122,7 +122,7 @@ function Wrapper({ children }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <img
-          src="/assets/logo/logo-reversed.svg"
+          src="/assets/logo/studio-byt-logo-negative.svg"
           alt="Build Your Tools"
           style={{ height: 32, objectFit: 'contain' }}
         />

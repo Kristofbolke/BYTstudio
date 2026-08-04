@@ -53,23 +53,35 @@ function PubliekeLinkKnop({ projectId }) {
 
   async function genereer() {
     setLaden(true)
-    // Bestaande rij zoeken
+    // Bestaande rij zoeken — bij eventuele duplicaten de oudste nemen
     const { data: bestaand } = await supabase
       .from('intake_forms')
       .select('token')
       .eq('project_id', projectId)
+      .order('created_at', { ascending: true })
+      .limit(1)
       .maybeSingle()
 
-    let token
-    if (bestaand) {
-      token = bestaand.token
-    } else {
-      const { data: nieuw } = await supabase
+    let token = bestaand?.token
+    if (!token) {
+      const { data: nieuw, error } = await supabase
         .from('intake_forms')
         .insert({ project_id: projectId })
         .select('token')
         .single()
-      token = nieuw?.token
+      if (error) {
+        // Race met een gelijktijdige aanmaak — opnieuw ophalen
+        const { data: herhaald } = await supabase
+          .from('intake_forms')
+          .select('token')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        token = herhaald?.token
+      } else {
+        token = nieuw?.token
+      }
     }
     setLaden(false)
     if (token) setUrl(`${BASE_URL}/intake/${token}`)
@@ -124,24 +136,40 @@ function TabIntake({ projectId }) {
   useEffect(() => { laad() }, [projectId])
 
   async function laad() {
+    // Bij eventuele duplicaten de oudste rij nemen
     const { data } = await supabase
       .from('intake_forms')
       .select('*')
       .eq('project_id', projectId)
+      .order('created_at', { ascending: true })
+      .limit(1)
       .maybeSingle()
 
     if (data) {
       setIntake(data)
-    } else {
-      // Automatisch aanmaken
-      const { data: nieuw, error } = await supabase
-        .from('intake_forms')
-        .insert({ project_id: projectId })
-        .select('*')
-        .single()
-      if (error) { setFout('Kon intake niet aanmaken: ' + error.message); return }
-      setIntake(nieuw)
+      return
     }
+
+    // Automatisch aanmaken
+    const { data: nieuw, error } = await supabase
+      .from('intake_forms')
+      .insert({ project_id: projectId })
+      .select('*')
+      .single()
+
+    if (!error) { setIntake(nieuw); return }
+
+    // Race met een gelijktijdige aanmaak — opnieuw ophalen in plaats van foutmelding
+    const { data: herhaald } = await supabase
+      .from('intake_forms')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (herhaald) { setIntake(herhaald); return }
+    setFout('Kon intake niet aanmaken: ' + error.message)
   }
 
   async function onSave(velden) {

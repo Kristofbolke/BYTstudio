@@ -8,6 +8,7 @@ import {
   CheckCircle, FileText, Palette,
   Info, FolderKanban, ChevronDown, ChevronRight,
   Receipt, Layers, ClipboardList, Copy, Link2,
+  Eye, EyeOff, Server, Database,
 } from 'lucide-react'
 import IntakeFormWizard from '../components/IntakeFormWizard'
 
@@ -42,6 +43,34 @@ function OpslaanBericht({ tekst }) {
 
 const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 bg-white'
 const lbl = 'block text-xs font-semibold text-gray-500 mb-1'
+
+// ── Wachtwoordveld met tonen/verbergen ─────────────────────────────────────────
+function WachtwoordVeld({ label, value, onChange, placeholder }) {
+  const [tonen, setTonen] = useState(false)
+  return (
+    <div>
+      <label className={lbl}>{label}</label>
+      <div className="relative">
+        <input
+          type={tonen ? 'text' : 'password'}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoComplete="new-password"
+          className={inp + ' pr-10'}
+        />
+        <button
+          type="button"
+          onClick={() => setTonen(t => !t)}
+          tabIndex={-1}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          {tonen ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 const BASE_URL = 'https://byt-studio.netlify.app'
 
@@ -226,8 +255,20 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
     beschrijving: project.beschrijving ?? '',
     status: project.status ?? 'intake',
     github_url: project.github_url ?? '',
-    netlify_url: project.netlify_url ?? '',
     klant_id: project.klant_id ?? '',
+    // Hosting (Netlify/Vercel)
+    hosting_provider:     project.hosting_provider ?? 'netlify',
+    hosting_login:        project.hosting_login ?? '',
+    hosting_wachtwoord:   project.hosting_wachtwoord ?? '',
+    hosting_type_account: project.hosting_type_account ?? '',
+    netlify_url:          project.netlify_url ?? '',
+    // Supabase
+    supabase_login:        project.supabase_login ?? '',
+    supabase_wachtwoord:   project.supabase_wachtwoord ?? '',
+    supabase_organisatie:  project.supabase_organisatie ?? '',
+    supabase_project:      project.supabase_project ?? '',
+    supabase_type_account: project.supabase_type_account ?? '',
+    supabase_url:          project.supabase_url ?? '',
   })
   const [loading, setLoading] = useState(false)
   const [fout, setFout] = useState('')
@@ -244,8 +285,18 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
       beschrijving: form.beschrijving || null,
       status: form.status,
       github_url: form.github_url || null,
-      netlify_url: form.netlify_url || null,
       klant_id: form.klant_id || null,
+      hosting_provider:     form.hosting_provider || null,
+      hosting_login:        form.hosting_login || null,
+      hosting_wachtwoord:   form.hosting_wachtwoord || null,
+      hosting_type_account: form.hosting_type_account || null,
+      netlify_url:          form.netlify_url || null,
+      supabase_login:        form.supabase_login || null,
+      supabase_wachtwoord:   form.supabase_wachtwoord || null,
+      supabase_organisatie:  form.supabase_organisatie || null,
+      supabase_project:      form.supabase_project || null,
+      supabase_type_account: form.supabase_type_account || null,
+      supabase_url:          form.supabase_url || null,
     }).eq('id', project.id)
     setLoading(false)
     if (error) { setFout('Opslaan mislukt: ' + error.message); return }
@@ -287,15 +338,83 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
           <textarea value={form.beschrijving} onChange={e => stelIn('beschrijving', e.target.value)}
             rows={4} className={inp + ' resize-none'} placeholder="Omschrijving van het project..." />
         </div>
-        <div>
+        <div className="col-span-2">
           <label className={lbl}>GitHub URL</label>
           <input value={form.github_url} onChange={e => stelIn('github_url', e.target.value)}
             placeholder="https://github.com/..." className={inp} />
         </div>
-        <div>
-          <label className={lbl}>Netlify URL</label>
-          <input value={form.netlify_url} onChange={e => stelIn('netlify_url', e.target.value)}
-            placeholder="https://....netlify.app" className={inp} />
+      </div>
+
+      {/* ── Hosting: Netlify of Vercel ────────────────────────────────────── */}
+      <div className="border border-gray-200 rounded-xl p-4 space-y-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+          <Server size={13} /> Hosting-account
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={lbl}>Provider</label>
+            <div className="relative">
+              <select value={form.hosting_provider} onChange={e => stelIn('hosting_provider', e.target.value)}
+                className={inp + ' appearance-none pr-8'}>
+                <option value="netlify">Netlify</option>
+                <option value="vercel">Vercel</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Type account</label>
+            <input value={form.hosting_type_account} onChange={e => stelIn('hosting_type_account', e.target.value)}
+              placeholder="bv. Free, Pro, Team..." className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>Login</label>
+            <input value={form.hosting_login} onChange={e => stelIn('hosting_login', e.target.value)}
+              placeholder="e-mailadres van het account" className={inp} />
+          </div>
+          <WachtwoordVeld label="Wachtwoord" value={form.hosting_wachtwoord}
+            onChange={v => stelIn('hosting_wachtwoord', v)} placeholder="Wachtwoord van het account" />
+          <div className="col-span-2">
+            <label className={lbl}>Project URL</label>
+            <input value={form.netlify_url} onChange={e => stelIn('netlify_url', e.target.value)}
+              placeholder="https://....netlify.app of .vercel.app" className={inp} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Supabase ─────────────────────────────────────────────────────── */}
+      <div className="border border-gray-200 rounded-xl p-4 space-y-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+          <Database size={13} /> Supabase-account
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={lbl}>Organisatie</label>
+            <input value={form.supabase_organisatie} onChange={e => stelIn('supabase_organisatie', e.target.value)}
+              placeholder="Naam van de Supabase-organisatie" className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>Project</label>
+            <input value={form.supabase_project} onChange={e => stelIn('supabase_project', e.target.value)}
+              placeholder="Naam van het Supabase-project" className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>Type account</label>
+            <input value={form.supabase_type_account} onChange={e => stelIn('supabase_type_account', e.target.value)}
+              placeholder="bv. Free, Pro, Team..." className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>Login</label>
+            <input value={form.supabase_login} onChange={e => stelIn('supabase_login', e.target.value)}
+              placeholder="e-mailadres van het account" className={inp} />
+          </div>
+          <WachtwoordVeld label="Wachtwoord" value={form.supabase_wachtwoord}
+            onChange={v => stelIn('supabase_wachtwoord', v)} placeholder="Wachtwoord van het account" />
+          <div>
+            <label className={lbl}>Project URL</label>
+            <input value={form.supabase_url} onChange={e => stelIn('supabase_url', e.target.value)}
+              placeholder="https://supabase.com/dashboard/project/..." className={inp} />
+          </div>
         </div>
       </div>
 
@@ -1628,8 +1747,16 @@ function TabInfo({ project, onVerwijderd }) {
           <a href={project.netlify_url} target="_blank" rel="noopener"
             className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
             <ExternalLink size={14} /> {project.netlify_url}
+            <span className="text-xs text-gray-400">({project.hosting_provider === 'vercel' ? 'Vercel' : 'Netlify'})</span>
           </a>
-        ) : <p className="text-sm text-gray-400">Geen Netlify URL</p>}
+        ) : <p className="text-sm text-gray-400">Geen hosting-URL</p>}
+        {project.supabase_url ? (
+          <a href={project.supabase_url} target="_blank" rel="noopener"
+            className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
+            <ExternalLink size={14} /> {project.supabase_url}
+            <span className="text-xs text-gray-400">(Supabase)</span>
+          </a>
+        ) : <p className="text-sm text-gray-400">Geen Supabase URL</p>}
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2 text-sm">

@@ -1,9 +1,10 @@
 // src/pages/Boilerplates.jsx — Boilerplate bibliotheek met twee-kolom layout
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {
   Search, ExternalLink, Tag, Package, Code2, Layers, Wrench,
-  CheckCircle, Copy, Save, ChevronDown, X, Zap,
+  CheckCircle, Copy, Save, ChevronDown, X, Zap, Plus,
 } from 'lucide-react'
 
 const BYT_GREEN = '#22C35D'
@@ -361,9 +362,18 @@ export default function Boilerplates() {
     <div className="max-w-7xl mx-auto">
 
       {/* Paginatitel */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Boilerplates</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Selecteer een boilerplate en koppel die aan een project</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Boilerplates</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Selecteer een boilerplate en koppel die aan een project</p>
+        </div>
+        <Link
+          to="/boilerplates/nieuw"
+          className="flex items-center gap-1.5 text-sm font-semibold text-white px-4 py-2.5 rounded-xl shadow-sm transition-opacity hover:opacity-90 flex-shrink-0"
+          style={{ background: BYT_GREEN }}
+        >
+          <Plus size={15} /> Nieuwe boilerplate toevoegen
+        </Link>
       </div>
 
       <div className="flex gap-6 items-start">

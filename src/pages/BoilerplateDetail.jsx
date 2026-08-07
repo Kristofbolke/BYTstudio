@@ -122,9 +122,9 @@ export default function BoilerplateDetail() {
     }
 
     if (isNieuw) {
-      const { data, error } = await supabase.from('boilerplates').insert(payload).select().single()
+      const { error } = await supabase.from('boilerplates').insert(payload)
       if (error) { setFout('Opslaan mislukt: ' + error.message); setOpslaan(false); return }
-      navigate(`/boilerplates/${data.id}`, { replace: true })
+      navigate('/boilerplates')
     } else {
       const { error } = await supabase.from('boilerplates').update(payload).eq('id', id)
       if (error) { setFout('Opslaan mislukt: ' + error.message); setOpslaan(false); return }

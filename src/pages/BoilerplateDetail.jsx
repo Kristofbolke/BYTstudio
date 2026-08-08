@@ -28,6 +28,9 @@ const LEEG = {
   aanpassingsprompt_template: '',
   tags_json: [],
   actief: true,
+  status: 'boilerplate',
+  sleutel: '',
+  geschatte_bouwtijd: '',
 }
 
 const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 bg-white'
@@ -68,8 +71,17 @@ export default function BoilerplateDetail() {
     setForm({
       ...LEEG,
       ...data,
+      type: data.type ?? '',
+      categorie: data.categorie ?? '',
+      beschrijving: data.beschrijving ?? '',
+      versie: data.versie ?? '1.0',
+      github_url: data.github_url ?? '',
+      bestand_pad: data.bestand_pad ?? '',
+      aanpassingsprompt_template: data.aanpassingsprompt_template ?? '',
       afhankelijkheden_json: data.afhankelijkheden_json ?? [],
       tags_json: data.tags_json ?? [],
+      sleutel: data.sleutel ?? '',
+      geschatte_bouwtijd: data.geschatte_bouwtijd ?? '',
     })
     document.title = `${data.naam} — BYT Studio`
     setLaden(false)
@@ -104,6 +116,7 @@ export default function BoilerplateDetail() {
   async function handleOpslaan(e) {
     e.preventDefault()
     if (!form.naam.trim()) { setFout('Naam is verplicht.'); return }
+    if (form.status === 'gepland' && !form.sleutel.trim()) { setFout('Sleutel is verplicht bij status \'Gepland\'.'); return }
     setOpslaan(true); setFout(''); setOk('')
 
     const payload = {
@@ -118,6 +131,10 @@ export default function BoilerplateDetail() {
       aanpassingsprompt_template: form.aanpassingsprompt_template.trim() || null,
       tags_json: form.tags_json,
       actief: form.actief,
+      status: form.status || 'boilerplate',
+      sleutel: form.sleutel.trim() || null,
+      geschatte_bouwtijd: form.geschatte_bouwtijd === '' || form.geschatte_bouwtijd == null
+        ? null : Number(form.geschatte_bouwtijd),
       bijgewerkt_op: new Date().toISOString(),
     }
 
@@ -190,6 +207,14 @@ export default function BoilerplateDetail() {
             <input className={inp} style={{ '--tw-ring-color': `${BYT_GREEN}30` }}
               value={form.naam} onChange={stel('naam')} placeholder="Adres & Contact Module" />
           </div>
+          <div>
+            <label className={lbl}>Status</label>
+            <select className={inp} style={{ '--tw-ring-color': `${BYT_GREEN}30` }}
+              value={form.status} onChange={stel('status')}>
+              <option value="boilerplate">Boilerplate — bewezen, herbruikbaar</option>
+              <option value="gepland">Gepland — nog te bouwen</option>
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={lbl}>Type</label>
@@ -216,6 +241,21 @@ export default function BoilerplateDetail() {
               rows={3} value={form.beschrijving} onChange={stel('beschrijving')}
               placeholder="Korte omschrijving van wat deze boilerplate doet…" />
           </div>
+          {form.status === 'gepland' && (
+            <div className="grid grid-cols-2 gap-4 pt-1 border-t border-gray-50">
+              <div>
+                <label className={lbl}>Sleutel *</label>
+                <input className={`${inp} font-mono text-xs`} style={{ '--tw-ring-color': `${BYT_GREEN}30` }}
+                  value={form.sleutel} onChange={stel('sleutel')} placeholder="login, factuur, klanten…" />
+                <p className="text-xs text-gray-400 mt-1">Stabiele identifier, gebruikt in projectselecties. Verplicht bij status 'Gepland'.</p>
+              </div>
+              <div>
+                <label className={lbl}>Geschatte bouwtijd (uren)</label>
+                <input type="number" min="0" step="0.5" className={inp} style={{ '--tw-ring-color': `${BYT_GREEN}30` }}
+                  value={form.geschatte_bouwtijd} onChange={stel('geschatte_bouwtijd')} placeholder="6" />
+              </div>
+            </div>
+          )}
         </Sectie>
 
         {/* Links */}

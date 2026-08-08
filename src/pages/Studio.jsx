@@ -12,7 +12,6 @@ import MeldingenTab         from '../components/studio/MeldingenTab'
 import AiCheckTab           from '../components/studio/AiCheckTab'
 import FeatureConfigurator  from '../components/studio/FeatureConfigurator'
 import PromptTemplates      from '../components/studio/PromptTemplates'
-import AppModules           from '../components/studio/AppModules'
 import BlokkensBuilder      from '../components/studio/BlokkensBuilder'
 import Projectdocumentatie  from '../components/studio/Projectdocumentatie'
 
@@ -27,7 +26,6 @@ const TABS = [
   { key: 'aicheck',        label: 'AI-check',             icon: Lightbulb },
   { key: 'features',       label: 'Feature-configurator', emoji: '⚙️' },
   { key: 'prompts',        label: 'Prompt-templates',     emoji: '💬' },
-  { key: 'modules',        label: 'App-modules',          emoji: '🧩' },
   { key: 'blokken',        label: 'Blokken-builder',      emoji: '🏗️' },
   { key: 'documentatie',   label: 'Projectdocumentatie',  emoji: '📄' },
 ]
@@ -104,7 +102,7 @@ export default function Studio() {
   return (
     <PageWrapper
       title="Studio"
-      description="Configureer klant-apps: features, prompts, modules en documentatie."
+      description="Configureer klant-apps: features, prompts, boilerplates en documentatie."
     >
       {/* ── Projectselector balk ─────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-4 flex-wrap">
@@ -213,7 +211,6 @@ export default function Studio() {
                 {actieveTab === 'aicheck'       && <AiCheckTab          project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'features'      && <FeatureConfigurator project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'prompts'      && <PromptTemplates     project={project} huisstijl={huisstijl} />}
-                {actieveTab === 'modules'      && <AppModules          project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'blokken'      && <BlokkensBuilder     project={project} huisstijl={huisstijl} />}
                 {actieveTab === 'documentatie' && <Projectdocumentatie project={project} huisstijl={huisstijl} />}
               </>

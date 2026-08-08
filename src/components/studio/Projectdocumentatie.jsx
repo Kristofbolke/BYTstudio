@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { MODULES_DATA } from './modulesData'
 import AICheck from '../AICheck'
 import {
   Copy, Check, ChevronDown, ChevronRight,
@@ -139,10 +138,11 @@ function dienstenVoorFeatures(featuresJson) {
 }
 
 // ── Sectie 3: Prijsraming ─────────────────────────────────────────────────────
-function ureninitState(geselecteerdeModuleKeys) {
+// mod-catalogus komt uit boilerplates (status = 'gepland'), zie moduleCatalogus-state hieronder.
+function ureninitState(geselecteerdeModuleKeys, catalogus) {
   const staat = {}
   geselecteerdeModuleKeys.forEach(key => {
-    const mod = MODULES_DATA.find(m => m.key === key)
+    const mod = catalogus.find(m => m.key === key)
     if (mod) staat[key] = mod.tijd
   })
   return staat
@@ -153,7 +153,7 @@ const STAPPEN = {
   intake: [
     'Huisstijl invullen in het Huisstijl-tabblad',
     'Features selecteren in de Feature-configurator',
-    'App-modules kiezen in App-modules tabblad',
+    "Modules kiezen in Boilerplates-tabblad (filter 'Gepland')",
     'Offerte genereren en versturen naar klant',
   ],
   offerte: [
@@ -194,10 +194,12 @@ const STATUS_LABEL = {
 export default function Projectdocumentatie({ project, huisstijl }) {
   const navigate = useNavigate()
 
-  const [featuresJson,  setFeaturesJson]  = useState(null)
-  const [uurtarief,     setUurtarief]     = useState(75)
-  const [btw,           setBtw]           = useState(21)
-  const [uren,          setUren]          = useState({})
+  const [featuresJson,     setFeaturesJson]     = useState(null)
+  const [moduleCatalogus,  setModuleCatalogus]  = useState([])   // uit boilerplates, status = 'gepland'
+  const [moduleKeys,       setModuleKeys]       = useState([])   // geselecteerde keys uit features_json.modules
+  const [uurtarief,        setUurtarief]        = useState(75)
+  const [btw,              setBtw]              = useState(21)
+  const [uren,             setUren]             = useState({})
   const [diensten,      setDiensten]      = useState({})   // { [key]: aangemaakt: bool }
   const [stappen,       setStappen]       = useState({})   // { [stap]: afgevinkt: bool }
   const [envGekopieerd,  setEnvGekopieerd]  = useState(false)
@@ -207,6 +209,14 @@ export default function Projectdocumentatie({ project, huisstijl }) {
   useEffect(() => {
     supabase.from('instellingen').select('uurtarief').limit(1).single()
       .then(({ data }) => { if (data?.uurtarief) setUurtarief(Number(data.uurtarief)) })
+    supabase.from('boilerplates')
+      .select('sleutel, naam, categorie, geschatte_bouwtijd')
+      .eq('status', 'gepland').eq('actief', true).order('naam')
+      .then(({ data }) => setModuleCatalogus(
+        (data ?? [])
+          .filter(m => m.sleutel)
+          .map(m => ({ key: m.sleutel, naam: m.naam, categorie: m.categorie, tijd: Number(m.geschatte_bouwtijd) || 0 }))
+      ))
   }, [])
 
   useEffect(() => {
@@ -215,17 +225,21 @@ export default function Projectdocumentatie({ project, huisstijl }) {
       .then(({ data }) => {
         const fj = data?.features_json ?? {}
         setFeaturesJson(fj)
-        const modules = Array.isArray(fj.modules) ? fj.modules : []
-        setUren(ureninitState(modules))
+        setModuleKeys(Array.isArray(fj.modules) ? fj.modules : [])
       })
     supabase.from('handleidingen').select('id, type').eq('project_id', project.id)
       .then(({ data }) => setHandleidingen(data ?? []))
   }, [project?.id])
 
+  // Uren pas (her)berekenen zodra zowel de projectselectie als de catalogus geladen zijn
+  useEffect(() => {
+    setUren(ureninitState(moduleKeys, moduleCatalogus))
+  }, [moduleKeys, moduleCatalogus])
+
   // ── Berekeningen ──────────────────────────────────────────────────────────
   const geselecteerdeModuleKeys = Object.keys(uren)
   const geselecteerdeModules    = geselecteerdeModuleKeys
-    .map(key => MODULES_DATA.find(m => m.key === key))
+    .map(key => moduleCatalogus.find(m => m.key === key))
     .filter(Boolean)
 
   const subtotaalUren  = Object.values(uren).reduce((s, u) => s + Number(u), 0)
@@ -303,7 +317,7 @@ Doelgroep: developer die het project overneemt of onderhoudt.`
         <p className="text-xs text-gray-500">
           Gegenereerd op basis van{' '}
           <strong>{geselecteerdeModuleKeys.length} geselecteerde modules</strong>.
-          Selecteer modules in het App-modules tabblad om de structuur aan te passen.
+          Selecteer modules via het Boilerplates-tabblad (filter 'Gepland') om de structuur aan te passen.
         </p>
         <div className="relative">
           <pre className="text-xs font-mono text-gray-600 bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 overflow-x-auto leading-relaxed whitespace-pre">
@@ -395,7 +409,7 @@ Doelgroep: developer die het project overneemt of onderhoudt.`
 
         {geselecteerdeModules.length === 0 ? (
           <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 px-3 py-2.5 rounded-xl">
-            Selecteer modules in het App-modules tabblad om een prijsraming te genereren.
+            Selecteer modules via het Boilerplates-tabblad (filter 'Gepland') om een prijsraming te genereren.
           </p>
         ) : (
           <div className="border border-gray-100 rounded-xl overflow-hidden">

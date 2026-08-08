@@ -138,7 +138,7 @@ export default function HandleidingNieuw() {
       .then(({ data }) => {
         if (!data) return
         setProject(data)
-        setModuleNamen(moduleNamenVanProject(data.features_json))
+        moduleNamenVanProject(data.features_json).then(setModuleNamen)
       })
   }, [projectId])
 

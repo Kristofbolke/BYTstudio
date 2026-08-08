@@ -1,13 +1,21 @@
 // handleidingGenerators.js — Gedeelde handleiding content generators
-import { MODULES_DATA } from '../components/studio/modulesData'
+import { supabase } from './supabase'
 
 function formatDatumLang() {
   return new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
-export function moduleNamenVanProject(featuresJson) {
+// Module-namen komen uit boilerplates (status = 'gepland'); async omdat de
+// catalogus niet langer statisch in de code staat.
+export async function moduleNamenVanProject(featuresJson) {
   const keys = featuresJson?.modules ?? []
-  return MODULES_DATA.filter(m => keys.includes(m.key)).map(m => m.naam)
+  if (keys.length === 0) return []
+  const { data } = await supabase
+    .from('boilerplates')
+    .select('sleutel, naam')
+    .eq('status', 'gepland')
+    .in('sleutel', keys)
+  return (data ?? []).map(m => m.naam)
 }
 
 export function genereerGebruiker(projectNaam, moduleNamen) {

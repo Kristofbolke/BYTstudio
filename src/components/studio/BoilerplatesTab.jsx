@@ -71,7 +71,7 @@ export default function BoilerplatesTab({ project }) {
         .eq('project_id', projectId)
         .order('aangemaakt_op'),
       supabase.from('boilerplates')
-        .select('*').eq('actief', true).order('naam'),
+        .select('*').eq('actief', true).eq('status', 'boilerplate').order('naam'),
     ])
     setGekoppeld(pb ?? [])
     setBibliotheek(bib ?? [])

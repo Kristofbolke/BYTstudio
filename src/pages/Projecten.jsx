@@ -1,6 +1,6 @@
 // Projecten.jsx — Kanban-bord met projecten gegroepeerd per status
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Plus, Search, X, FolderKanban, Calendar, ChevronDown } from 'lucide-react'
 
@@ -37,8 +37,8 @@ function formatDatum(iso) {
 // ── Nieuw project modal ───────────────────────────────────────────────────────
 const LEEG = { naam: '', beschrijving: '', klant_id: '', status: 'intake', github_url: '', netlify_url: '' }
 
-function ProjectModal({ onSluit, onOpgeslagen }) {
-  const [form, setForm] = useState(LEEG)
+function ProjectModal({ onSluit, onOpgeslagen, klantIdVooraf }) {
+  const [form, setForm] = useState(klantIdVooraf ? { ...LEEG, klant_id: klantIdVooraf } : LEEG)
   const [klanten, setKlanten] = useState([])
   const [loading, setLoading] = useState(false)
   const [fout, setFout] = useState('')
@@ -218,10 +218,12 @@ function KanbanKolom({ status, projecten, onKaartKlik }) {
 export default function Projecten() {
   useEffect(() => { document.title = 'Projecten — BYT Studio' }, [])
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const klantIdUitUrl = searchParams.get('klant_id')
   const [projecten, setProjecten] = useState([])
   const [loading, setLoading] = useState(true)
   const [zoekterm, setZoekterm] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(!!klantIdUitUrl)
 
   async function laadProjecten() {
     setLoading(true)
@@ -295,8 +297,9 @@ export default function Projecten() {
 
       {modalOpen && (
         <ProjectModal
-          onSluit={() => setModalOpen(false)}
-          onOpgeslagen={() => { setModalOpen(false); laadProjecten() }}
+          klantIdVooraf={klantIdUitUrl}
+          onSluit={() => { setModalOpen(false); if (klantIdUitUrl) setSearchParams({}) }}
+          onOpgeslagen={() => { setModalOpen(false); if (klantIdUitUrl) setSearchParams({}); laadProjecten() }}
         />
       )}
     </div>

@@ -32,7 +32,7 @@ export default function Login({ onLogin }) {
     setResetLaden(true)
     setFout('')
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/instellingen`,
+      redirectTo: `${window.location.origin}/wachtwoord-instellen`,
     })
     setResetLaden(false)
     if (error) setFout('Kon de e-mail niet versturen. Controleer het e-mailadres.')

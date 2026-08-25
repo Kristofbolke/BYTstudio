@@ -9,6 +9,7 @@ import SplashScreen from './components/SplashScreen'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Klanten from './pages/Klanten'
+import KlantDetail from './pages/KlantDetail'
 import Projecten from './pages/Projecten'
 import ProjectDetail from './pages/ProjectDetail'
 import Studio from './pages/Studio'
@@ -28,6 +29,7 @@ import AdresConfigurator from './pages/AdresConfigurator'
 import Intake from './pages/Intake'
 import Vragenlijst from './pages/Vragenlijst'
 import IntakePubliek from './pages/IntakePubliek'
+import WachtwoordInstellen from './pages/WachtwoordInstellen'
 
 export default function App() {
   const [user, setUser] = useState(undefined)
@@ -35,6 +37,10 @@ export default function App() {
 
   // Publieke routes renderen altijd zonder app-shell, ongeacht auth-status
   const isPubliekeIntake = window.location.pathname.startsWith('/intake/')
+  // Uitnodigings-/herstel-link: altijd volledig scherm tonen, ook al pikt supabase-js
+  // automatisch een sessie op uit de link (anders zou de gebruiker naar het dashboard
+  // springen zonder ooit een wachtwoord te kiezen).
+  const isWachtwoordInstellen = window.location.pathname.startsWith('/wachtwoord-instellen')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -54,6 +60,15 @@ export default function App() {
     return (
       <Routes>
         <Route path="/intake/:token" element={<IntakePubliek />} />
+      </Routes>
+    )
+  }
+
+  // Wachtwoord-instellen (uitnodiging / herstel) — altijd volledig scherm, buiten de app-shell
+  if (isWachtwoordInstellen) {
+    return (
+      <Routes>
+        <Route path="/wachtwoord-instellen" element={<WachtwoordInstellen />} />
       </Routes>
     )
   }
@@ -89,6 +104,7 @@ export default function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard"     element={<Dashboard />} />
               <Route path="/klanten"       element={<Klanten />} />
+              <Route path="/klanten/:id"   element={<KlantDetail />} />
               <Route path="/projecten"     element={<Projecten />} />
               <Route path="/projecten/:id" element={<ProjectDetail />} />
               <Route path="/studio"        element={<Studio />} />

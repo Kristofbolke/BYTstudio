@@ -562,7 +562,9 @@ export default function Instellingen() {
   async function stuurResetLink() {
     if (!authEmail) return
     setResetVerzonden(false)
-    const { error } = await supabase.auth.resetPasswordForEmail(authEmail)
+    const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+      redirectTo: `${window.location.origin}/wachtwoord-instellen`,
+    })
     if (!error) setResetVerzonden(true)
   }
 

@@ -8,7 +8,7 @@ import {
   CheckCircle, FileText, Palette,
   Info, FolderKanban, ChevronDown, ChevronRight,
   Receipt, Layers, ClipboardList, Copy, Link2,
-  Eye, EyeOff, Server, Database,
+  Key, Server, Database,
 } from 'lucide-react'
 import IntakeFormWizard from '../components/IntakeFormWizard'
 
@@ -44,30 +44,21 @@ function OpslaanBericht({ tekst }) {
 const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 bg-white'
 const lbl = 'block text-xs font-semibold text-gray-500 mb-1'
 
-// ── Wachtwoordveld met tonen/verbergen ─────────────────────────────────────────
-function WachtwoordVeld({ label, value, onChange, placeholder }) {
-  const [tonen, setTonen] = useState(false)
+// ── Wachtwoordmanager-knoppen (i.p.v. login/wachtwoord rechtstreeks opslaan) ────
+function WachtwoordManagerKnoppen() {
   return (
-    <div>
-      <label className={lbl}>{label}</label>
-      <div className="relative">
-        <input
-          type={tonen ? 'text' : 'password'}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete="new-password"
-          className={inp + ' pr-10'}
-        />
-        <button
-          type="button"
-          onClick={() => setTonen(t => !t)}
-          tabIndex={-1}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-        >
-          {tonen ? <EyeOff size={15} /> : <Eye size={15} />}
-        </button>
+    <div className="col-span-2 space-y-2">
+      <div className="flex gap-3">
+        <a href="https://vault.bitwarden.com" target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition">
+          <Key size={13} /> Open Bitwarden
+        </a>
+        <a href="https://passwords.google.com" target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition">
+          <Key size={13} /> Open Google Wachtwoorden
+        </a>
       </div>
+      <p className="text-[11px] text-gray-400">Bewaar logingegevens veilig in een wachtwoordmanager.</p>
     </div>
   )
 }
@@ -249,6 +240,58 @@ function TabIntake({ projectId }) {
 }
 
 // ── Tab 1: Overzicht ──────────────────────────────────────────────────────────
+// ── Intake-banner (intake_forms) ────────────────────────────────────────────
+function IntakeBanner({ projectId }) {
+  const navigate = useNavigate()
+  const [intake, setIntake] = useState(null)
+  const [laden, setLaden] = useState(true)
+
+  useEffect(() => {
+    supabase.from('intake_forms').select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => { setIntake(data ?? null); setLaden(false) })
+  }, [projectId])
+
+  if (laden) return null
+
+  const ingevuld = intake?.status === 'submitted'
+  const ingevuldDoorLabel = intake?.filled_by === 'klant' ? 'Klant' : 'Intern'
+
+  if (ingevuld) {
+    return (
+      <div className="flex items-center justify-between gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+        <div className="flex items-center gap-2 text-sm text-green-700 min-w-0">
+          <CheckCircle size={15} className="flex-shrink-0" />
+          <span className="truncate">
+            Intake ontvangen op {formatDatum(intake.submitted_at)} — Ingevuld door: {ingevuldDoorLabel}
+          </span>
+        </div>
+        <button
+          onClick={() => navigate(`/projecten/${projectId}/intake-detail`)}
+          className="flex items-center gap-1 text-xs font-semibold text-green-700 hover:text-green-800 whitespace-nowrap flex-shrink-0"
+        >
+          Bekijk intake <ChevronRight size={12} />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+      <span className="text-sm text-gray-500">Nog geen intake ontvangen</span>
+      <button
+        onClick={() => navigate(`/projecten/${projectId}/intake-detail`)}
+        className="flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap"
+      >
+        Intake aanmaken <ChevronRight size={12} />
+      </button>
+    </div>
+  )
+}
+
 function TabOverzicht({ project, klanten, onBijgewerkt }) {
   const [form, setForm] = useState({
     naam: project.naam ?? '',
@@ -258,13 +301,9 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
     klant_id: project.klant_id ?? '',
     // Hosting (Netlify/Vercel)
     hosting_provider:     project.hosting_provider ?? 'netlify',
-    hosting_login:        project.hosting_login ?? '',
-    hosting_wachtwoord:   project.hosting_wachtwoord ?? '',
     hosting_type_account: project.hosting_type_account ?? '',
     netlify_url:          project.netlify_url ?? '',
     // Supabase
-    supabase_login:        project.supabase_login ?? '',
-    supabase_wachtwoord:   project.supabase_wachtwoord ?? '',
     supabase_organisatie:  project.supabase_organisatie ?? '',
     supabase_project:      project.supabase_project ?? '',
     supabase_type_account: project.supabase_type_account ?? '',
@@ -287,12 +326,8 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
       github_url: form.github_url || null,
       klant_id: form.klant_id || null,
       hosting_provider:     form.hosting_provider || null,
-      hosting_login:        form.hosting_login || null,
-      hosting_wachtwoord:   form.hosting_wachtwoord || null,
       hosting_type_account: form.hosting_type_account || null,
       netlify_url:          form.netlify_url || null,
-      supabase_login:        form.supabase_login || null,
-      supabase_wachtwoord:   form.supabase_wachtwoord || null,
       supabase_organisatie:  form.supabase_organisatie || null,
       supabase_project:      form.supabase_project || null,
       supabase_type_account: form.supabase_type_account || null,
@@ -306,7 +341,9 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
   }
 
   return (
-    <form onSubmit={opslaan} className="space-y-4 max-w-2xl">
+    <div className="space-y-4 max-w-2xl">
+      <IntakeBanner projectId={project.id} />
+      <form onSubmit={opslaan} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <label className={lbl}>Projectnaam <span className="text-red-400">*</span></label>
@@ -367,18 +404,12 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
             <input value={form.hosting_type_account} onChange={e => stelIn('hosting_type_account', e.target.value)}
               placeholder="bv. Free, Pro, Team..." className={inp} />
           </div>
-          <div>
-            <label className={lbl}>Login</label>
-            <input value={form.hosting_login} onChange={e => stelIn('hosting_login', e.target.value)}
-              placeholder="e-mailadres van het account" className={inp} />
-          </div>
-          <WachtwoordVeld label="Wachtwoord" value={form.hosting_wachtwoord}
-            onChange={v => stelIn('hosting_wachtwoord', v)} placeholder="Wachtwoord van het account" />
           <div className="col-span-2">
             <label className={lbl}>Project URL</label>
             <input value={form.netlify_url} onChange={e => stelIn('netlify_url', e.target.value)}
               placeholder="https://....netlify.app of .vercel.app" className={inp} />
           </div>
+          <WachtwoordManagerKnoppen />
         </div>
       </div>
 
@@ -404,17 +435,11 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
               placeholder="bv. Free, Pro, Team..." className={inp} />
           </div>
           <div>
-            <label className={lbl}>Login</label>
-            <input value={form.supabase_login} onChange={e => stelIn('supabase_login', e.target.value)}
-              placeholder="e-mailadres van het account" className={inp} />
-          </div>
-          <WachtwoordVeld label="Wachtwoord" value={form.supabase_wachtwoord}
-            onChange={v => stelIn('supabase_wachtwoord', v)} placeholder="Wachtwoord van het account" />
-          <div>
             <label className={lbl}>Project URL</label>
             <input value={form.supabase_url} onChange={e => stelIn('supabase_url', e.target.value)}
               placeholder="https://supabase.com/dashboard/project/..." className={inp} />
           </div>
+          <WachtwoordManagerKnoppen />
         </div>
       </div>
 
@@ -433,7 +458,8 @@ function TabOverzicht({ project, klanten, onBijgewerkt }) {
       </button>
 
       <PubliekeLinkKnop projectId={project.id} />
-    </form>
+      </form>
+    </div>
   )
 }
 

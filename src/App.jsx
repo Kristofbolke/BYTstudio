@@ -12,6 +12,7 @@ import Klanten from './pages/Klanten'
 import KlantDetail from './pages/KlantDetail'
 import Projecten from './pages/Projecten'
 import ProjectDetail from './pages/ProjectDetail'
+import IntakeDetail from './pages/IntakeDetail'
 import Studio from './pages/Studio'
 import Offertes from './pages/Offertes'
 import OfferteNieuw from './pages/OfferteNieuw'
@@ -26,7 +27,6 @@ import FactuurDetail from './pages/FactuurDetail'
 import Boilerplates from './pages/Boilerplates'
 import BoilerplateDetail from './pages/BoilerplateDetail'
 import AdresConfigurator from './pages/AdresConfigurator'
-import Intake from './pages/Intake'
 import Vragenlijst from './pages/Vragenlijst'
 import IntakePubliek from './pages/IntakePubliek'
 import WachtwoordInstellen from './pages/WachtwoordInstellen'
@@ -120,7 +120,7 @@ export default function App() {
               <Route path="/boilerplates"  element={<Boilerplates />} />
               <Route path="/boilerplates/:id" element={<BoilerplateDetail />} />
               <Route path="/projecten/:id/adres-configurator" element={<AdresConfigurator />} />
-              <Route path="/projecten/:id/intake" element={<Intake />} />
+              <Route path="/projecten/:id/intake-detail" element={<IntakeDetail />} />
               <Route path="/vragenlijst/:token" element={<Vragenlijst />} />
               <Route path="/instellingen"  element={<Instellingen />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

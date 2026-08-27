@@ -70,40 +70,52 @@
     margin-bottom: 12mm;
   }
 
-  /* ── Bedrijfs- en offerte-header ────────────────────────────── */
-  .op-header {
+  /* ── Bedrijfsheader: 3 kolommen (30% / 30% / 40%) met scheidingslijnen ──
+     De kolommen zijn box-sizing:border-box zodat padding/border binnen de
+     percentagebreedte vallen — samen exact 100%, geen aparte divider-elementen
+     met eigen margin (die telden extra op en duwden kolom 3 buiten de A4). */
+  .op-header-3kolom {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    align-items: stretch;
+    min-height: 25mm;
     margin-bottom: 10mm;
+    width: 100%;
   }
 
-  .op-bedrijf-naam {
-    font-size: 18pt;
-    font-weight: 700;
-    color: var(--hs-primair, #185FA5) !important;
-    margin-bottom: 2mm;
-    line-height: 1.2;
-  }
-
-  .op-bedrijf-details {
-    font-size: 8.5pt;
-    color: #555 !important;
-    line-height: 1.6;
-  }
-
-  /* ── Afzender: logo + juridische/commerciële naam ─────────────── */
-  .op-afzender {
+  .op-kolom-logo {
+    box-sizing: border-box;
+    flex: 0 0 30%;
+    max-width: 30%;
     display: flex;
-    align-items: flex-start;
-    gap: 6mm;
+    align-items: center;
+    justify-content: flex-start;
+    padding-right: 5mm;
+    border-right: 1px solid #ddd;
   }
 
-  .op-logo {
-    max-width: 120px;
-    max-height: 22mm;
+  .op-hoofdlogo {
+    max-width: 160px;
+    max-height: 30mm;
     object-fit: contain;
-    flex-shrink: 0;
+  }
+
+  .op-kolom-juridisch {
+    box-sizing: border-box;
+    flex: 0 0 30%;
+    max-width: 30%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 5mm;
+    border-right: 1px solid #ddd;
+  }
+
+  .op-secundair-logo {
+    max-width: 80px;
+    max-height: 16mm;
+    object-fit: contain;
+    margin-bottom: 2mm;
+    align-self: flex-start;
   }
 
   .op-juridische-naam {
@@ -111,12 +123,7 @@
     font-weight: 700;
     color: #1a1a1a !important;
     line-height: 1.2;
-  }
-
-  .op-commerciele-naam {
-    font-size: 9.5pt;
-    color: #888 !important;
-    margin-bottom: 2mm;
+    margin-bottom: 1.5mm;
   }
 
   .op-afzender-adres {
@@ -125,8 +132,17 @@
     line-height: 1.6;
   }
 
-  .op-offerte-blok {
+  .op-kolom-document {
+    box-sizing: border-box;
+    flex: 0 0 40%;
+    max-width: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
     text-align: right;
+    padding-left: 5mm;
+    overflow-wrap: break-word;
   }
 
   .op-offerte-label {
@@ -146,6 +162,17 @@
 
   .op-offerte-meta strong {
     color: #000 !important;
+  }
+
+  .op-status-badge {
+    display: inline-block;
+    margin-top: 2mm;
+    padding: 1mm 3mm;
+    border-radius: 999px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    background: var(--badge-bg, #f1f5f9) !important;
+    color: var(--badge-kleur, #64748b) !important;
   }
 
   /* ── Scheidingslijn ─────────────────────────────────────────── */
@@ -406,47 +433,52 @@
     print-color-adjust: exact;
   }
 
-  /* ── Header: twee kolommen ────────────────────────────────── */
-  .fp-header {
+  /* ── Bedrijfsheader: 3 kolommen (30% / 30% / 40%) met scheidingslijnen ──
+     box-sizing:border-box zodat padding/border binnen de percentagebreedte
+     vallen — samen exact 100%, geen aparte divider-elementen met eigen
+     margin (die telden extra op en duwden kolom 3 buiten de A4). */
+  .fp-header-3kolom {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    align-items: stretch;
+    min-height: 25mm;
     margin-bottom: 6mm;
-    gap: 15mm;
+    width: 100%;
   }
 
-  .fp-bedrijf-blok {
-    flex: 1;
-  }
-
-  .fp-logo {
-    max-height: 14mm;
-    max-width: 50mm;
-    object-fit: contain;
-    margin-bottom: 3mm;
-    display: block;
-  }
-
-  .fp-bedrijf-naam {
-    font-size: 15pt;
-    font-weight: 700;
-    color: var(--fp-primair, #22C35D) !important;
-    line-height: 1.2;
-    margin-bottom: 1.5mm;
-  }
-
-  /* ── Afzender: logo + juridische/commerciële naam ─────────────── */
-  .fp-afzender {
+  .fp-kolom-logo {
+    box-sizing: border-box;
+    flex: 0 0 30%;
+    max-width: 30%;
     display: flex;
-    align-items: flex-start;
-    gap: 5mm;
-    margin-bottom: 3mm;
+    align-items: center;
+    justify-content: flex-start;
+    padding-right: 5mm;
+    border-right: 1px solid #ddd;
   }
 
-  .fp-afzender .fp-logo {
-    max-width: 120px;
-    max-height: 20mm;
-    margin-bottom: 0;
+  .fp-hoofdlogo {
+    max-width: 160px;
+    max-height: 30mm;
+    object-fit: contain;
+  }
+
+  .fp-kolom-juridisch {
+    box-sizing: border-box;
+    flex: 0 0 30%;
+    max-width: 30%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 5mm;
+    border-right: 1px solid #ddd;
+  }
+
+  .fp-secundair-logo {
+    max-width: 80px;
+    max-height: 16mm;
+    object-fit: contain;
+    margin-bottom: 2mm;
+    align-self: flex-start;
   }
 
   .fp-juridische-naam {
@@ -454,11 +486,7 @@
     font-weight: 700;
     color: #1a1a1a !important;
     line-height: 1.2;
-  }
-
-  .fp-commerciele-naam {
-    font-size: 9pt;
-    color: #888 !important;
+    margin-bottom: 1.5mm;
   }
 
   .fp-bedrijf-details {
@@ -472,15 +500,23 @@
     font-weight: 600;
   }
 
-  .fp-factuur-blok {
+  .fp-kolom-document {
+    box-sizing: border-box;
+    flex: 0 0 40%;
+    max-width: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
     text-align: right;
-    flex-shrink: 0;
+    padding-left: 5mm;
+    overflow-wrap: break-word;
   }
 
   .fp-factuur-titel {
-    font-size: 26pt;
+    font-size: 24pt;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     color: var(--fp-primair, #22C35D) !important;
     line-height: 1;
     margin-bottom: 3mm;
@@ -494,6 +530,17 @@
 
   .fp-factuur-meta strong {
     color: #1a1a1a !important;
+  }
+
+  .fp-status-badge {
+    display: inline-block;
+    margin-top: 2mm;
+    padding: 1mm 3mm;
+    border-radius: 999px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    background: var(--badge-bg, #f1f5f9) !important;
+    color: var(--badge-kleur, #64748b) !important;
   }
 
   /* ── Primaire kleurlijn onder header ─────────────────────── */

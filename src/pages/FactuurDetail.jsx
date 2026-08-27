@@ -821,7 +821,6 @@ function PrintLayout({ factuur, items, instellingen }) {
   const inst = instellingen ?? {}
   const bedrijfNaam       = inst.bedrijfsnaam    ?? 'Build Your Tools'
   const juridischeNaam    = inst.juridische_naam || 'Jogoo BV'
-  const bedrijfAdres   = inst.adres           ?? ''
   const bedrijfAdresRegels = [
     inst.adres,
     [inst.postcode, inst.gemeente].filter(Boolean).join(' '),
@@ -837,35 +836,32 @@ function PrintLayout({ factuur, items, instellingen }) {
 
   const primair = '#22C35D'
 
+  const printStatusCfg = statusCfg(factuur.status)
+
   return createPortal(
     <div
       className="factuur-print-content"
       style={{ '--fp-primair': primair }}
     >
-      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
-      <div className="fp-header">
-        {/* Links: bedrijfsgegevens */}
-        <div className="fp-bedrijf-blok">
-          <div className="fp-afzender">
-            <img src="/logo-byt.png" alt="Build Your Tools" className="fp-logo" />
-            <div>
-              <div className="fp-juridische-naam">{juridischeNaam}</div>
-              <div className="fp-commerciele-naam">{bedrijfNaam}</div>
-            </div>
-          </div>
+      {/* ── HEADER: bedrijfsheader 3 kolommen ─────────────────────────────── */}
+      <div className="fp-header-3kolom">
+        <div className="fp-kolom-logo">
+          <img src={inst.logo_url || '/logo-byt.png'} alt="Logo" className="fp-hoofdlogo" />
+        </div>
+        <div className="fp-kolom-juridisch">
+          {inst.secundair_logo_url && (
+            <img src={inst.secundair_logo_url} alt="" className="fp-secundair-logo" />
+          )}
+          <div className="fp-juridische-naam">{juridischeNaam}</div>
           <div className="fp-bedrijf-details">
             {bedrijfAdresRegels.map((r, i) => <span key={i}>{r}<br /></span>)}
             {bedrijfBtw   && <span>{bedrijfBtw}<br /></span>}
             {bedrijfEmail && <span>{bedrijfEmail}<br /></span>}
             {bedrijfTel   && <span>{bedrijfTel}<br /></span>}
-            {bedrijfWeb   && <span>{bedrijfWeb}<br /></span>}
-            {iban         && <span><strong>IBAN:</strong> {iban}<br /></span>}
-            {bic          && <span><strong>BIC:</strong> {bic}</span>}
+            {bedrijfWeb   && <span>{bedrijfWeb}</span>}
           </div>
         </div>
-
-        {/* Rechts: factuurinfo */}
-        <div className="fp-factuur-blok">
+        <div className="fp-kolom-document">
           {isCreditnota && <div className="fp-creditnota-badge">CREDITNOTA</div>}
           <div className="fp-factuur-titel">
             {isCreditnota ? 'CREDITNOTA' : (factuur.is_voorschot ? 'VOORSCHOT' : 'FACTUUR')}
@@ -880,6 +876,9 @@ function PrintLayout({ factuur, items, instellingen }) {
               <><span>Ref. offerte: </span><strong>{factuur.offertes.offerte_nummer}</strong><br /></>
             )}
           </div>
+          <span className="fp-status-badge" style={{ '--badge-bg': printStatusCfg.bg, '--badge-kleur': printStatusCfg.kleur }}>
+            {printStatusCfg.label}
+          </span>
         </div>
       </div>
 

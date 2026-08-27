@@ -155,28 +155,39 @@ function PrintLayoutV2({ offerte, form, instelling, klant, primairKleur }) {
     [instelling?.postcode, instelling?.gemeente].filter(Boolean).join(' '),
   ].filter(Boolean)
 
+  const statusCfg = STATUSSEN.find(s => s.key === form.status) ?? STATUSSEN[0]
+
   return createPortal(
     <div className="offerte-print" style={{ '--hs-primair': accent }}>
       <div className="op-header-balk" />
-      <div className="op-header">
-        <div className="op-afzender">
-          <img src="/logo-byt.png" alt="Build Your Tools" className="op-logo" />
-          <div>
-            <div className="op-juridische-naam">{instelling?.juridische_naam || 'Jogoo BV'}</div>
-            <div className="op-commerciele-naam">{instelling?.bedrijfsnaam || 'Build Your Tools'}</div>
-            <div className="op-afzender-adres">
-              {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
-              {instelling?.btw_nummer && <div>{instelling.btw_nummer}</div>}
-            </div>
+
+      <div className="op-header-3kolom">
+        <div className="op-kolom-logo">
+          <img src={instelling?.logo_url || '/logo-byt.png'} alt="Logo" className="op-hoofdlogo" />
+        </div>
+        <div className="op-kolom-juridisch">
+          {instelling?.secundair_logo_url && (
+            <img src={instelling.secundair_logo_url} alt="" className="op-secundair-logo" />
+          )}
+          <div className="op-juridische-naam">{instelling?.juridische_naam || 'Jogoo BV'}</div>
+          <div className="op-afzender-adres">
+            {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
+            {instelling?.btw_nummer && <div>{instelling.btw_nummer}</div>}
+            {instelling?.email && <div>{instelling.email}</div>}
+            {instelling?.telefoon && <div>{instelling.telefoon}</div>}
+            {instelling?.website && <div>{instelling.website}</div>}
           </div>
         </div>
-        <div className="op-offerte-blok">
+        <div className="op-kolom-document">
           <div className="op-offerte-label">OFFERTE</div>
           <div className="op-offerte-meta">
             <div><strong>{form.offerte_nummer}</strong></div>
             <div>Datum: {new Date(offerte.aangemaakt_op).toLocaleDateString('nl-BE')}</div>
             {form.geldig_tot && <div>Geldig tot: {new Date(form.geldig_tot).toLocaleDateString('nl-BE')}</div>}
           </div>
+          <span className="op-status-badge" style={{ '--badge-bg': statusCfg.bg, '--badge-kleur': statusCfg.kleur }}>
+            {statusCfg.label}
+          </span>
         </div>
       </div>
 
@@ -363,33 +374,34 @@ function PrintLayout({ offerte, form, instelling, klant, primairKleur }) {
   ].filter(Boolean)
 
   const accent = primairKleur || '#185FA5'
+  const statusCfg = STATUSSEN.find(s => s.key === form.status) ?? STATUSSEN[0]
 
   return createPortal(
     <div className="offerte-print" style={{ '--hs-primair': accent }}>
       {/* Accentlijn bovenaan (huisstijlkleur) */}
       <div className="op-header-balk" />
 
-      {/* ── Documenthoofd ── */}
-      <div className="op-header">
-        {/* Links: logo + juridische/commerciële naam */}
-        <div className="op-afzender">
-          <img src="/logo-byt.png" alt="Build Your Tools" className="op-logo" />
-          <div>
-            <div className="op-juridische-naam">
-              {instelling?.juridische_naam || 'Jogoo BV'}
-            </div>
-            <div className="op-commerciele-naam">
-              {instelling?.bedrijfsnaam || 'Build Your Tools'}
-            </div>
-            <div className="op-afzender-adres">
-              {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
-              {instelling?.btw_nummer && <div>{instelling.btw_nummer}</div>}
-            </div>
+      {/* ── Bedrijfsheader: 3 kolommen ── */}
+      <div className="op-header-3kolom">
+        <div className="op-kolom-logo">
+          <img src={instelling?.logo_url || '/logo-byt.png'} alt="Logo" className="op-hoofdlogo" />
+        </div>
+        <div className="op-kolom-juridisch">
+          {instelling?.secundair_logo_url && (
+            <img src={instelling.secundair_logo_url} alt="" className="op-secundair-logo" />
+          )}
+          <div className="op-juridische-naam">
+            {instelling?.juridische_naam || 'Jogoo BV'}
+          </div>
+          <div className="op-afzender-adres">
+            {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
+            {instelling?.btw_nummer && <div>{instelling.btw_nummer}</div>}
+            {instelling?.email && <div>{instelling.email}</div>}
+            {instelling?.telefoon && <div>{instelling.telefoon}</div>}
+            {instelling?.website && <div>{instelling.website}</div>}
           </div>
         </div>
-
-        {/* Rechts: Offerte meta */}
-        <div className="op-offerte-blok">
+        <div className="op-kolom-document">
           <div className="op-offerte-label">OFFERTE</div>
           <div className="op-offerte-meta">
             <div><strong>{form.offerte_nummer}</strong></div>
@@ -398,6 +410,9 @@ function PrintLayout({ offerte, form, instelling, klant, primairKleur }) {
               <div>Geldig tot: {formatDatumKort(form.geldig_tot)}</div>
             )}
           </div>
+          <span className="op-status-badge" style={{ '--badge-bg': statusCfg.bg, '--badge-kleur': statusCfg.kleur }}>
+            {statusCfg.label}
+          </span>
         </div>
       </div>
 

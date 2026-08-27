@@ -395,6 +395,8 @@ Enkelvoudige configuratierij (altijd precies 1 rij).
 | standaard_projectstatus | text | nee, default `'intake'` |
 | standaard_handleiding_versie | text | nee, default `'v1.0'` |
 | standaard_auteur_handleiding | text | nee, default `'Build Your Tools'` |
+| juridische_naam | text | nee — migratie 025, **nog niet uitgevoerd in Supabase** |
+| secundair_logo_url | text | nee — migratie 026, **nog niet uitgevoerd in Supabase** |
 
 ### ai_checks
 | Kolom | Type | Verplicht |

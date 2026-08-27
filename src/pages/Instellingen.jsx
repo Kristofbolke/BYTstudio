@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { useInstellingen } from '../context/InstellingenContext'
-import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2, Package, Plus, X, Edit3 } from 'lucide-react'
+import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2, Package, Plus, X, Edit3, Image, Upload, Copy } from 'lucide-react'
 
 const LEGE_INST = {
   eigenaar_naam: '',
@@ -12,12 +12,15 @@ const LEGE_INST = {
   bedrijfsnaam: 'Build Your Tools',
   btw_nummer: '',
   adres: '',
+  postcode: '',
+  gemeente: '',
   email: '',
   telefoon: '',
   website: '',
   iban: '',
   bic: '',
   logo_url: '',
+  secundair_logo_url: '',
   uurtarief: 75,
   btw_percentage: 21,
   marge_percentage: 15,
@@ -508,6 +511,14 @@ export default function Instellingen() {
   const [berichtBanner, setBerichtBanner] = useState('')
   const [ladenApp, setLadenApp] = useState(false)
   const [berichtApp, setBerichtApp] = useState('')
+  const [ladenLogos, setLadenLogos] = useState(false)
+  const [berichtLogos, setBerichtLogos] = useState('')
+
+  // Logo-upload UI-staat
+  const [uploadenHoofdlogo, setUploadenHoofdlogo] = useState(false)
+  const [uploadenSecundairLogo, setUploadenSecundairLogo] = useState(false)
+  const [hoofdlogoUrlGekopieerd, setHoofdlogoUrlGekopieerd] = useState(false)
+  const [secundairLogoUrlGekopieerd, setSecundairLogoUrlGekopieerd] = useState(false)
 
   // App-beheer UI-staat
   const [resetVerzonden, setResetVerzonden] = useState(false)
@@ -545,6 +556,31 @@ export default function Instellingen() {
 
   function stellNum(veld) {
     return e => setInst(prev => ({ ...prev, [veld]: parseFloat(e.target.value) || 0 }))
+  }
+
+  function handleLogoUpload(veld, setUploaden) {
+    return async e => {
+      const file = e.target.files?.[0]
+      if (!file) return
+      if (!file.type.startsWith('image/')) { setBerichtLogos('Fout: enkel afbeeldingen toegestaan.'); e.target.value = ''; return }
+      if (file.size > 2 * 1024 * 1024) { setBerichtLogos('Fout: bestand is te groot (max 2MB).'); e.target.value = ''; return }
+      setUploaden(true); setBerichtLogos('')
+      const ext = file.name.split('.').pop()
+      const pad = `instellingen/${veld}-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('huisstijl-logos').upload(pad, file, { upsert: true })
+      if (uploadError) { setBerichtLogos('Fout: upload mislukt: ' + uploadError.message); setUploaden(false); e.target.value = ''; return }
+      const { data } = supabase.storage.from('huisstijl-logos').getPublicUrl(pad)
+      setInst(prev => ({ ...prev, [veld]: data.publicUrl }))
+      setUploaden(false)
+      e.target.value = ''
+    }
+  }
+
+  async function kopieerUrl(veld, setGekopieerd) {
+    if (!inst[veld]) return
+    await navigator.clipboard.writeText(inst[veld])
+    setGekopieerd(true)
+    setTimeout(() => setGekopieerd(false), 2000)
   }
 
   async function slaOp(velden, setLadenFn, setBerichtFn, succesMsg = 'Opgeslagen.') {
@@ -638,7 +674,7 @@ export default function Instellingen() {
           icon={Building2}
           titel="Jouw gegevens"
           subtitel="Deze gegevens verschijnen op offertes, facturen en handleidingen."
-          onOpslaan={() => slaOp(['eigenaar_naam','juridische_naam','bedrijfsnaam','btw_nummer','adres','email','telefoon','website','iban','bic','logo_url'], setLadenBedrijf, setBerichtBedrijf, 'Gegevens opgeslagen.')}
+          onOpslaan={() => slaOp(['eigenaar_naam','juridische_naam','bedrijfsnaam','btw_nummer','adres','postcode','gemeente','email','telefoon','website','iban','bic'], setLadenBedrijf, setBerichtBedrijf, 'Gegevens opgeslagen.')}
           laden={ladenBedrijf}
           bericht={berichtBedrijf}
           opslaanLabel="Gegevens opslaan"
@@ -659,9 +695,17 @@ export default function Instellingen() {
               <Veld label="BTW-nummer">
                 <input className={inputKlasse} value={inst.btw_nummer} onChange={stel('btw_nummer')} placeholder="BE 0XXX.XXX.XXX" />
               </Veld>
-              <Veld label="Adres">
-                <input className={inputKlasse} value={inst.adres} onChange={stel('adres')} placeholder="Straat 1, 9000 Gent" />
+              <Veld label="Straat en nummer">
+                <input className={inputKlasse} value={inst.adres} onChange={stel('adres')} placeholder="Straat 1" />
               </Veld>
+              <div className="grid grid-cols-2 gap-3">
+                <Veld label="Postcode">
+                  <input className={inputKlasse} value={inst.postcode} onChange={stel('postcode')} placeholder="9000" />
+                </Veld>
+                <Veld label="Gemeente">
+                  <input className={inputKlasse} value={inst.gemeente} onChange={stel('gemeente')} placeholder="Gent" />
+                </Veld>
+              </div>
             </div>
             {/* Rechts */}
             <div className="space-y-4">
@@ -687,22 +731,97 @@ export default function Instellingen() {
             </Veld>
           </div>
 
-          {/* Logo */}
-          <Veld label="Logo URL (wordt ook getoond in de app-header en op het loginscherm)">
-            <input className={inputKlasse} value={inst.logo_url} onChange={stel('logo_url')} placeholder="https://... link naar je logo (PNG of SVG)" />
-            <p className="text-xs text-gray-400 mt-1">Gebruik een publieke URL. Het logo verschijnt bovenaan de app en in afgedrukte documenten. Laat leeg voor het standaard BYT-logo.</p>
-          </Veld>
-          {inst.logo_url && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <img
-                src={inst.logo_url}
-                alt="Logo voorvertoning"
-                style={{ maxHeight: 80, maxWidth: 200, objectFit: 'contain' }}
-                onError={e => { e.target.style.display = 'none' }}
-              />
-              <span className="text-xs text-gray-400">Voorvertoning</span>
+        </SectieKaart>
+
+        {/* 1b. Logo's */}
+        <SectieKaart
+          icon={Image}
+          titel="Logo's"
+          subtitel="Logo's die verschijnen op offertes en facturen (ook getoond in de app-header en op het loginscherm)."
+          onOpslaan={() => slaOp(['logo_url','secundair_logo_url'], setLadenLogos, setBerichtLogos, 'Logo\'s opgeslagen.')}
+          laden={ladenLogos}
+          bericht={berichtLogos}
+          opslaanLabel="Logo's opslaan"
+        >
+          <div className="grid grid-cols-2 gap-6">
+            {/* Hoofdlogo */}
+            <div>
+              <Veld label="Hoofdlogo (commercieel)">
+                <div className="flex gap-3 items-center">
+                  {inst.logo_url ? (
+                    <img
+                      src={inst.logo_url} alt="Hoofdlogo voorvertoning"
+                      className="h-14 w-28 object-contain rounded-lg border border-gray-200 bg-gray-50 flex-shrink-0"
+                      onError={e => { e.target.style.display = 'none' }}
+                    />
+                  ) : (
+                    <div className="h-14 w-28 rounded-lg border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                      <Image size={18} className="text-gray-300" />
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition cursor-pointer w-fit">
+                    <Upload size={12} />
+                    {uploadenHoofdlogo ? 'Uploaden...' : 'Upload'}
+                    <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                      onChange={handleLogoUpload('logo_url', setUploadenHoofdlogo)} disabled={uploadenHoofdlogo} className="hidden" />
+                  </label>
+                </div>
+              </Veld>
+              <div className="flex gap-2 mt-2">
+                <input
+                  className={inputKlasse}
+                  value={inst.logo_url}
+                  onChange={stel('logo_url')}
+                  placeholder="https://... link naar het hoofdlogo"
+                />
+                <button type="button" onClick={() => kopieerUrl('logo_url', setHoofdlogoUrlGekopieerd)} disabled={!inst.logo_url}
+                  className="flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  style={{ color: hoofdlogoUrlGekopieerd ? '#17A84B' : undefined }}>
+                  {hoofdlogoUrlGekopieerd ? <CheckCircle size={13} /> : <Copy size={13} />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">BYT logo — verschijnt links op offertes en facturen.</p>
             </div>
-          )}
+
+            {/* Secundair logo */}
+            <div>
+              <Veld label="Secundair logo (juridisch)">
+                <div className="flex gap-3 items-center">
+                  {inst.secundair_logo_url ? (
+                    <img
+                      src={inst.secundair_logo_url} alt="Secundair logo voorvertoning"
+                      className="h-14 w-28 object-contain rounded-lg border border-gray-200 bg-gray-50 flex-shrink-0"
+                      onError={e => { e.target.style.display = 'none' }}
+                    />
+                  ) : (
+                    <div className="h-14 w-28 rounded-lg border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                      <Image size={18} className="text-gray-300" />
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition cursor-pointer w-fit">
+                    <Upload size={12} />
+                    {uploadenSecundairLogo ? 'Uploaden...' : 'Upload'}
+                    <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                      onChange={handleLogoUpload('secundair_logo_url', setUploadenSecundairLogo)} disabled={uploadenSecundairLogo} className="hidden" />
+                  </label>
+                </div>
+              </Veld>
+              <div className="flex gap-2 mt-2">
+                <input
+                  className={inputKlasse}
+                  value={inst.secundair_logo_url}
+                  onChange={stel('secundair_logo_url')}
+                  placeholder="https://... link naar het secundair logo"
+                />
+                <button type="button" onClick={() => kopieerUrl('secundair_logo_url', setSecundairLogoUrlGekopieerd)} disabled={!inst.secundair_logo_url}
+                  className="flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                  style={{ color: secundairLogoUrlGekopieerd ? '#17A84B' : undefined }}>
+                  {secundairLogoUrlGekopieerd ? <CheckCircle size={13} /> : <Copy size={13} />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Jogoo BV logo — verschijnt naast de officiële bedrijfsgegevens.</p>
+            </div>
+          </div>
         </SectieKaart>
 
         {/* 2. Financiële standaarden */}

@@ -1,5 +1,6 @@
 // HandleidingDetail.jsx — Weergave en bewerking van één handleiding
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
@@ -487,7 +488,7 @@ export default function HandleidingDetail() {
       </PageWrapper>
 
       {/* ── PRINT-ONLY INHOUD ─────────────────────────────────────────────────── */}
-      {handleiding && (
+      {handleiding && createPortal(
         <div
           className="handleiding-print-content"
           style={{ '--hs-primair': primairKleur }}
@@ -541,7 +542,8 @@ export default function HandleidingDetail() {
             <span>{projectNaam} — {badge.short} handleiding</span>
             <span>Gegenereerd door Build Your Tools — {nu}</span>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── VERWIJDER BEVESTIGING ──────────────────────────────────────────────── */}

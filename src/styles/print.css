@@ -1032,3 +1032,142 @@
     print-color-adjust: exact;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HUISSTIJLDOCUMENT PRINT STIJLEN — 1-pager brand sheet per project
+   Geïmporteerd in ProjectDetail.jsx (TabHuisstijl)
+   --hs-primair wordt via inline style op .huisstijl-print gezet
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Verberg op scherm */
+.huisstijl-print {
+  display: none;
+}
+
+@media print {
+
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  /* Verberg alle UI-chrome */
+  body > *,
+  #root > * {
+    display: none !important;
+  }
+
+  /* Toon enkel het huisstijl-printblok */
+  .huisstijl-print {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    color: #1a1a1a;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    padding: 15mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .huisstijl-print * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .huisstijl-print .hsp-balk {
+    background: var(--hs-primair, #185FA5) !important;
+    height: 6px;
+    width: 100%;
+    margin: -15mm -15mm 10mm -15mm;
+    width: calc(100% + 30mm);
+  }
+
+  .huisstijl-print .hsp-logo {
+    max-height: 22mm;
+    max-width: 60mm;
+    object-fit: contain;
+    margin-bottom: 6mm;
+  }
+
+  .huisstijl-print h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    margin: 0 0 2mm;
+    color: #1a1a1a !important;
+  }
+
+  .huisstijl-print .hsp-slogan {
+    font-size: 11pt;
+    color: #555 !important;
+    margin-bottom: 10mm;
+  }
+
+  .huisstijl-print h2 {
+    font-size: 11pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888 !important;
+    margin: 9mm 0 4mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .huisstijl-print .hsp-kleuren {
+    display: flex;
+    gap: 6mm;
+  }
+
+  .huisstijl-print .hsp-swatch {
+    flex: 1;
+    border-radius: 3mm;
+    padding: 8mm 4mm;
+    text-align: center;
+    /* Kleur wordt per swatch inline gezet (leesbareTekstkleur in ProjectDetail.jsx)
+       o.b.v. de helderheid van de achtergrondkleur — niet hier hardcoden, anders
+       is een lichte accentkleur (bv. #f8fafc) onleesbaar met witte tekst. */
+  }
+
+  .huisstijl-print .hsp-swatch-label {
+    display: block;
+    font-size: 8.5pt;
+    opacity: 0.85;
+  }
+
+  .huisstijl-print .hsp-swatch-hex {
+    display: block;
+    margin-top: 2mm;
+    font-size: 10.5pt;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+  }
+
+  .huisstijl-print .hsp-font-sample {
+    padding: 4mm 0;
+    border-bottom: 1px solid #f1f1f1;
+  }
+
+  .huisstijl-print .hsp-font-label {
+    display: block;
+    font-size: 8.5pt;
+    color: #888 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1mm;
+  }
+
+  .huisstijl-print .hsp-meta {
+    margin-top: 10mm;
+    font-size: 8.5pt;
+    color: #888 !important;
+  }
+
+  .huisstijl-print .hsp-meta p {
+    margin: 0.5mm 0;
+  }
+}

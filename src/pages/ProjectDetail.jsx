@@ -1,5 +1,6 @@
 // ProjectDetail.jsx — Detailpagina van één project met tabs
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { statusCfg, StatusBadge, STATUSSEN } from './Projecten'
@@ -8,9 +9,10 @@ import {
   CheckCircle, FileText, Palette,
   Info, FolderKanban, ChevronDown, ChevronRight,
   Receipt, Layers, ClipboardList, Copy, Link2,
-  Key, Server, Database,
+  Key, Server, Database, Upload, ImagePlus, Printer,
 } from 'lucide-react'
 import IntakeFormWizard from '../components/IntakeFormWizard'
+import '../styles/print.css'
 
 // ── Hulpfuncties ─────────────────────────────────────────────────────────────
 function formatDatum(iso) {
@@ -652,8 +654,18 @@ function googleFontsLink(fontTitel, fontTekst, gewichtTitel, grootsteTekst) {
   return `<link href="https://fonts.googleapis.com/css2?${fonts.join('&')}&display=swap" rel="stylesheet">`
 }
 
+// Leesbare tekstkleur (wit of donker) o.b.v. de helderheid van een hex-achtergrondkleur —
+// voorkomt onleesbare witte tekst op een lichte accentkleur in de kleurenswatches.
+function leesbareTekstkleur(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '')
+  if (!m) return '#fff'
+  const [r, g, b] = [m[1], m[2], m[3]].map(h => parseInt(h, 16))
+  const helderheid = (r * 299 + g * 587 + b * 114) / 1000
+  return helderheid > 165 ? '#1a1a1a' : '#fff'
+}
+
 // ── TabHuisstijl (volledig) ───────────────────────────────────────────────────
-function TabHuisstijl({ projectId }) {
+function TabHuisstijl({ projectId, projectNaam }) {
   const leeg = {
     primaire_kleur:   '#185FA5',
     secundaire_kleur: '#22C35D',
@@ -733,8 +745,33 @@ function TabHuisstijl({ projectId }) {
   const [bevestigLaad,        setBevestigLaad]        = useState(null)   // sjabloon-object
   const [verwijderBevestig,   setVerwijderBevestig]   = useState(null)   // id
   const [hernoem,             setHernoem]             = useState(null)   // { id, naam }
+  const [uploaden,            setUploaden]            = useState(false)
+  const [logoUrlGekopieerd,   setLogoUrlGekopieerd]   = useState(false)
 
   function stelIn(v, w) { setForm(f => ({ ...f, [v]: w })) }
+
+  async function kopieerLogoUrl() {
+    if (!form.logo_url) return
+    await navigator.clipboard.writeText(form.logo_url)
+    setLogoUrlGekopieerd(true)
+    setTimeout(() => setLogoUrlGekopieerd(false), 2000)
+  }
+
+  async function handleLogoUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setFout('Enkel afbeeldingen toegestaan.'); e.target.value = ''; return }
+    if (file.size > 2 * 1024 * 1024) { setFout('Bestand is te groot (max 2MB).'); e.target.value = ''; return }
+    setUploaden(true); setFout('')
+    const ext = file.name.split('.').pop()
+    const pad = `${projectId}/logo-${Date.now()}.${ext}`
+    const { error: uploadError } = await supabase.storage.from('huisstijl-logos').upload(pad, file, { upsert: true })
+    if (uploadError) { setFout('Upload mislukt: ' + uploadError.message); setUploaden(false); e.target.value = ''; return }
+    const { data } = supabase.storage.from('huisstijl-logos').getPublicUrl(pad)
+    stelIn('logo_url', data.publicUrl)
+    setUploaden(false)
+    e.target.value = ''
+  }
 
   const effectiefFontTitel = form.font_titel === 'Eigen lettertype invoeren'
     ? (form.font_titel_eigen || 'sans-serif')
@@ -1016,19 +1053,52 @@ function TabHuisstijl({ projectId }) {
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Logo &amp; Identiteit</p>
         <div className="space-y-3">
 
-          {/* Logo URL + preview */}
+          {/* Logo upload + preview */}
           <div>
-            <label className={lbl}>Logo URL</label>
-            <div className="flex gap-3 items-start">
-              <input value={form.logo_url} onChange={e => stelIn('logo_url', e.target.value)}
-                placeholder="https://..." className={inp} />
-              {form.logo_url && (
+            <label className={lbl}>Logo</label>
+            <div className="flex gap-3 items-center">
+              {form.logo_url ? (
                 <img
                   src={form.logo_url} alt="Logo preview"
-                  className="h-10 w-20 object-contain rounded-lg border border-gray-200 bg-gray-50 flex-shrink-0"
+                  className="h-14 w-28 object-contain rounded-lg border border-gray-200 bg-gray-50 flex-shrink-0"
                   onError={e => { e.target.style.display = 'none' }}
                 />
+              ) : (
+                <div className="h-14 w-28 rounded-lg border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                  <ImagePlus size={18} className="text-gray-300" />
+                </div>
               )}
+              <div className="flex flex-col gap-1.5">
+                <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition cursor-pointer w-fit">
+                  <Upload size={12} />
+                  {uploaden ? 'Uploaden...' : form.logo_url ? 'Vervang logo' : 'Logo uploaden'}
+                  <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    onChange={handleLogoUpload} disabled={uploaden} className="hidden" />
+                </label>
+                {form.logo_url && (
+                  <button type="button" onClick={() => stelIn('logo_url', '')}
+                    className="text-xs text-red-500 hover:text-red-700 transition w-fit">
+                    Logo verwijderen
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">PNG, JPG, SVG of WebP — max 2MB.</p>
+
+            <label className={lbl + ' mt-3'}>Logo URL</label>
+            <div className="flex gap-2">
+              <input
+                value={form.logo_url}
+                onChange={e => stelIn('logo_url', e.target.value)}
+                placeholder="Nog geen logo geüpload"
+                className={inp}
+              />
+              <button type="button" onClick={kopieerLogoUrl} disabled={!form.logo_url}
+                className="flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                style={{ color: logoUrlGekopieerd ? '#17A84B' : undefined }}>
+                {logoUrlGekopieerd ? <CheckCircle size={13} /> : <Copy size={13} />}
+                {logoUrlGekopieerd ? 'Gekopieerd!' : 'Kopieer'}
+              </button>
             </div>
           </div>
 
@@ -1297,7 +1367,70 @@ Gebruik geen andere kleuren tenzij functioneel nodig
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition">
           ↑ Laad uit sjabloon
         </button>
+
+        <button type="button" onClick={() => window.print()}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition">
+          <Printer size={14} /> Exporteer als PDF
+        </button>
       </div>
+
+      {/* ── Printblok (alleen zichtbaar bij window.print()) — 1-pager brand sheet ──
+          Via createPortal rechtstreeks als kind van <body> gerenderd: het printblok
+          zit anders diep genest onder de app-shell-wrapper, en die wrapper krijgt
+          tijdens het afdrukken zelf `display:none` (om alle UI-chrome te verbergen).
+          Een display:none-voorouder verbergt ALTIJD zijn volledige subtree, ongeacht
+          welke display-waarde een nakomeling zelf declareert (ook niet met
+          !important) — dus zonder portal bleef het printblok onzichtbaar en
+          leverde "Exporteer als PDF" een leeg wit blad op. ── */}
+      {createPortal(
+      <div className="huisstijl-print" style={{ '--hs-primair': form.primaire_kleur }}>
+        <div className="hsp-balk" />
+        {form.logo_url && <img src={form.logo_url} alt="Logo" className="hsp-logo" />}
+        <h1>{projectNaam}</h1>
+        {form.bedrijfsslogan && <p className="hsp-slogan">{form.bedrijfsslogan}</p>}
+
+        <h2>Kleuren</h2>
+        <div className="hsp-kleuren">
+          <div className="hsp-swatch" style={{ background: form.primaire_kleur, color: leesbareTekstkleur(form.primaire_kleur) }}>
+            <span className="hsp-swatch-label">Primair</span>
+            <span className="hsp-swatch-hex">{form.primaire_kleur}</span>
+          </div>
+          <div className="hsp-swatch" style={{ background: form.secundaire_kleur, color: leesbareTekstkleur(form.secundaire_kleur) }}>
+            <span className="hsp-swatch-label">Secundair</span>
+            <span className="hsp-swatch-hex">{form.secundaire_kleur}</span>
+          </div>
+          <div className="hsp-swatch" style={{ background: form.accent_kleur, color: leesbareTekstkleur(form.accent_kleur) }}>
+            <span className="hsp-swatch-label">Accent</span>
+            <span className="hsp-swatch-hex">{form.accent_kleur}</span>
+          </div>
+        </div>
+
+        <h2>Typografie</h2>
+        <div className="hsp-font-sample" style={{ fontFamily: effectiefFontTitel, fontWeight: form.font_gewicht }}>
+          <span className="hsp-font-label">Titel — {effectiefFontTitel}</span>
+          Aa Bb Cc — Voorbeeldtekst
+        </div>
+        <div className="hsp-font-sample" style={{ fontFamily: effectiefFontTekst }}>
+          <span className="hsp-font-label">Tekst — {effectiefFontTekst}</span>
+          Aa Bb Cc — Voorbeeldtekst
+        </div>
+
+        {(form.sector || form.stijlomschrijving) && (
+          <>
+            <h2>Over de stijl</h2>
+            {form.sector && <p>Sector: {form.sector}</p>}
+            {form.stijlomschrijving && <p>{form.stijlomschrijving}</p>}
+          </>
+        )}
+
+        <div className="hsp-meta">
+          {form.website && <p>{form.website}</p>}
+          {form.email && <p>{form.email}</p>}
+          {form.adres && <p>{form.adres}</p>}
+        </div>
+      </div>,
+      document.body
+      )}
 
       {/* ── Modal: Opslaan als sjabloon ──────────────────────────────────────── */}
       {sjabloonOpslaanOpen && (
@@ -2237,7 +2370,7 @@ export default function ProjectDetail() {
       <div>
         {actieveTab === 'overzicht'  && <TabOverzicht  project={project} klanten={klanten} onBijgewerkt={laadProject} />}
         {actieveTab === 'intake'     && <TabIntake     projectId={project.id} />}
-        {actieveTab === 'huisstijl'  && <TabHuisstijl  projectId={project.id} />}
+        {actieveTab === 'huisstijl'  && <TabHuisstijl  projectId={project.id} projectNaam={project.naam} />}
         {actieveTab === 'offertes'   && <TabOffertes   projectId={project.id} klantId={project.klant_id} />}
         {actieveTab === 'facturatie' && <TabFacturatie projectId={project.id} klantId={project.klant_id} />}
         {actieveTab === 'info'       && <TabInfo       project={project} onVerwijderd={() => {}} />}

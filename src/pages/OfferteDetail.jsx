@@ -1,5 +1,6 @@
 // OfferteDetail.jsx — Detailpagina van één offerte
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {
@@ -154,7 +155,7 @@ function PrintLayoutV2({ offerte, form, instelling, klant, primairKleur }) {
     [instelling?.postcode, instelling?.gemeente].filter(Boolean).join(' '),
   ].filter(Boolean)
 
-  return (
+  return createPortal(
     <div className="offerte-print" style={{ '--hs-primair': accent }}>
       <div className="op-header-balk" />
       <div className="op-header">
@@ -333,7 +334,8 @@ function PrintLayoutV2({ offerte, form, instelling, klant, primairKleur }) {
         nalatigheidsintrest van 10% per jaar verschuldigd, alsook een forfaitaire schadevergoeding van €40.
         {instelling?.iban && <span> — IBAN: {instelling.iban}{instelling.bic ? ` — BIC: ${instelling.bic}` : ''}</span>}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -359,7 +361,7 @@ function PrintLayout({ offerte, form, instelling, klant, primairKleur }) {
 
   const accent = primairKleur || '#185FA5'
 
-  return (
+  return createPortal(
     <div className="offerte-print" style={{ '--hs-primair': accent }}>
       {/* Accentlijn bovenaan (huisstijlkleur) */}
       <div className="op-header-balk" />
@@ -531,7 +533,8 @@ function PrintLayout({ offerte, form, instelling, klant, primairKleur }) {
           <span> — IBAN: {instelling.iban}{instelling.bic ? ` — BIC: ${instelling.bic}` : ''}</span>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

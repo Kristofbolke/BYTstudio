@@ -1,5 +1,6 @@
 // FactuurDetail.jsx — Detailpagina van één factuur (4 tabbladen)
 import { useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useInstellingen } from '../context/InstellingenContext'
@@ -92,7 +93,7 @@ export default function FactuurDetail() {
     setLaden(true)
     const { data, error } = await supabase
       .from('facturen')
-      .select('*, klanten(naam, bedrijfsnaam, email, adres, btw_nummer), projecten(naam), offertes(nummer)')
+      .select('*, klanten(naam, bedrijfsnaam, email, adres, btw_nummer), projecten(naam), offertes(offerte_nummer)')
       .eq('id', id)
       .single()
     if (error || !data) { setFout('Factuur niet gevonden.'); setLaden(false); return }
@@ -831,7 +832,7 @@ function PrintLayout({ factuur, items, instellingen }) {
 
   const primair = '#22C35D'
 
-  return (
+  return createPortal(
     <div
       className="factuur-print-content"
       style={{ '--fp-primair': primair }}
@@ -867,8 +868,8 @@ function PrintLayout({ factuur, items, instellingen }) {
             {factuur.verval_datum && (
               <><span>Vervaldatum: </span><strong>{datumNL(factuur.verval_datum)}</strong><br /></>
             )}
-            {factuur.offertes?.nummer && (
-              <><span>Ref. offerte: </span><strong>{factuur.offertes.nummer}</strong><br /></>
+            {factuur.offertes?.offerte_nummer && (
+              <><span>Ref. offerte: </span><strong>{factuur.offertes.offerte_nummer}</strong><br /></>
             )}
           </div>
         </div>
@@ -889,13 +890,13 @@ function PrintLayout({ factuur, items, instellingen }) {
       </div>
 
       {/* ── PROJECT SECTIE ────────────────────────────────────────────────── */}
-      {(factuur.projecten?.naam || factuur.offertes?.nummer) && (
+      {(factuur.projecten?.naam || factuur.offertes?.offerte_nummer) && (
         <div className="fp-project">
           {factuur.projecten?.naam && (
             <div><strong>Betreft:</strong> {factuur.projecten.naam}</div>
           )}
-          {factuur.offertes?.nummer && (
-            <div><strong>Referentie:</strong> {factuur.offertes.nummer}</div>
+          {factuur.offertes?.offerte_nummer && (
+            <div><strong>Referentie:</strong> {factuur.offertes.offerte_nummer}</div>
           )}
         </div>
       )}
@@ -1021,6 +1022,7 @@ function PrintLayout({ factuur, items, instellingen }) {
         </span>
         <span>{bedrijfNaam}{bedrijfEmail ? ` · ${bedrijfEmail}` : ''}</span>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

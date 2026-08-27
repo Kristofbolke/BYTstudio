@@ -819,8 +819,13 @@ function PrintLayout({ factuur, items, instellingen }) {
 
   // Bedrijfsgegevens uit instellingen
   const inst = instellingen ?? {}
-  const bedrijfNaam    = inst.bedrijfsnaam    ?? 'Build Your Tools'
+  const bedrijfNaam       = inst.bedrijfsnaam    ?? 'Build Your Tools'
+  const juridischeNaam    = inst.juridische_naam || 'Jogoo BV'
   const bedrijfAdres   = inst.adres           ?? ''
+  const bedrijfAdresRegels = [
+    inst.adres,
+    [inst.postcode, inst.gemeente].filter(Boolean).join(' '),
+  ].filter(Boolean)
   const bedrijfBtw     = inst.btw_nummer      ?? ''
   const bedrijfEmail   = inst.email           ?? ''
   const bedrijfTel     = inst.telefoon        ?? ''
@@ -841,13 +846,16 @@ function PrintLayout({ factuur, items, instellingen }) {
       <div className="fp-header">
         {/* Links: bedrijfsgegevens */}
         <div className="fp-bedrijf-blok">
-          <img src="/assets/logo/png/studio-byt-logo-color-1600w.png" alt="Build Your Tools" className="fp-logo" />
-          {!inst.logo && (
-            <div className="fp-bedrijf-naam">{bedrijfNaam}</div>
-          )}
+          <div className="fp-afzender">
+            <img src="/logo-byt.png" alt="Build Your Tools" className="fp-logo" />
+            <div>
+              <div className="fp-juridische-naam">{juridischeNaam}</div>
+              <div className="fp-commerciele-naam">{bedrijfNaam}</div>
+            </div>
+          </div>
           <div className="fp-bedrijf-details">
-            {bedrijfAdres && <span>{bedrijfAdres}<br /></span>}
-            {bedrijfBtw   && <span><strong>BTW:</strong> {bedrijfBtw}<br /></span>}
+            {bedrijfAdresRegels.map((r, i) => <span key={i}>{r}<br /></span>)}
+            {bedrijfBtw   && <span>{bedrijfBtw}<br /></span>}
             {bedrijfEmail && <span>{bedrijfEmail}<br /></span>}
             {bedrijfTel   && <span>{bedrijfTel}<br /></span>}
             {bedrijfWeb   && <span>{bedrijfWeb}<br /></span>}

@@ -92,6 +92,39 @@
     line-height: 1.6;
   }
 
+  /* ── Afzender: logo + juridische/commerciële naam ─────────────── */
+  .op-afzender {
+    display: flex;
+    align-items: flex-start;
+    gap: 6mm;
+  }
+
+  .op-logo {
+    max-width: 120px;
+    max-height: 22mm;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .op-juridische-naam {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1a1a1a !important;
+    line-height: 1.2;
+  }
+
+  .op-commerciele-naam {
+    font-size: 9.5pt;
+    color: #888 !important;
+    margin-bottom: 2mm;
+  }
+
+  .op-afzender-adres {
+    font-size: 8.5pt;
+    color: #555 !important;
+    line-height: 1.6;
+  }
+
   .op-offerte-blok {
     text-align: right;
   }
@@ -400,6 +433,32 @@
     color: var(--fp-primair, #22C35D) !important;
     line-height: 1.2;
     margin-bottom: 1.5mm;
+  }
+
+  /* ── Afzender: logo + juridische/commerciële naam ─────────────── */
+  .fp-afzender {
+    display: flex;
+    align-items: flex-start;
+    gap: 5mm;
+    margin-bottom: 3mm;
+  }
+
+  .fp-afzender .fp-logo {
+    max-width: 120px;
+    max-height: 20mm;
+    margin-bottom: 0;
+  }
+
+  .fp-juridische-naam {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a1a1a !important;
+    line-height: 1.2;
+  }
+
+  .fp-commerciele-naam {
+    font-size: 9pt;
+    color: #888 !important;
   }
 
   .fp-bedrijf-details {

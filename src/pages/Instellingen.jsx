@@ -8,6 +8,7 @@ import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, D
 
 const LEGE_INST = {
   eigenaar_naam: '',
+  juridische_naam: '',
   bedrijfsnaam: 'Build Your Tools',
   btw_nummer: '',
   adres: '',
@@ -637,7 +638,7 @@ export default function Instellingen() {
           icon={Building2}
           titel="Jouw gegevens"
           subtitel="Deze gegevens verschijnen op offertes, facturen en handleidingen."
-          onOpslaan={() => slaOp(['eigenaar_naam','bedrijfsnaam','btw_nummer','adres','email','telefoon','website','iban','bic','logo_url'], setLadenBedrijf, setBerichtBedrijf, 'Gegevens opgeslagen.')}
+          onOpslaan={() => slaOp(['eigenaar_naam','juridische_naam','bedrijfsnaam','btw_nummer','adres','email','telefoon','website','iban','bic','logo_url'], setLadenBedrijf, setBerichtBedrijf, 'Gegevens opgeslagen.')}
           laden={ladenBedrijf}
           bericht={berichtBedrijf}
           opslaanLabel="Gegevens opslaan"
@@ -649,7 +650,10 @@ export default function Instellingen() {
               <Veld label="Naam eigenaar">
                 <input className={inputKlasse} value={inst.eigenaar_naam} onChange={stel('eigenaar_naam')} placeholder="Voornaam Achternaam" />
               </Veld>
-              <Veld label="Bedrijfsnaam">
+              <Veld label="Juridische naam (vennootschap)">
+                <input className={inputKlasse} value={inst.juridische_naam} onChange={stel('juridische_naam')} placeholder="Jogoo BV" />
+              </Veld>
+              <Veld label="Bedrijfsnaam (commercieel)">
                 <input className={inputKlasse} value={inst.bedrijfsnaam} onChange={stel('bedrijfsnaam')} placeholder="Build Your Tools" />
               </Veld>
               <Veld label="BTW-nummer">

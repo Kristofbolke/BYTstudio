@@ -159,12 +159,15 @@ function PrintLayoutV2({ offerte, form, instelling, klant, primairKleur }) {
     <div className="offerte-print" style={{ '--hs-primair': accent }}>
       <div className="op-header-balk" />
       <div className="op-header">
-        <div>
-          <div className="op-bedrijf-naam">{instelling?.bedrijfsnaam || 'Build Your Tools'}</div>
-          <div className="op-bedrijf-details">
-            {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
-            {instelling?.btw_nummer && <div>BTW: {instelling.btw_nummer}</div>}
-            {instelling?.email     && <div>{instelling.email}</div>}
+        <div className="op-afzender">
+          <img src="/logo-byt.png" alt="Build Your Tools" className="op-logo" />
+          <div>
+            <div className="op-juridische-naam">{instelling?.juridische_naam || 'Jogoo BV'}</div>
+            <div className="op-commerciele-naam">{instelling?.bedrijfsnaam || 'Build Your Tools'}</div>
+            <div className="op-afzender-adres">
+              {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
+              {instelling?.btw_nummer && <div>{instelling.btw_nummer}</div>}
+            </div>
           </div>
         </div>
         <div className="op-offerte-blok">
@@ -368,16 +371,20 @@ function PrintLayout({ offerte, form, instelling, klant, primairKleur }) {
 
       {/* ── Documenthoofd ── */}
       <div className="op-header">
-        {/* Links: BYT Studio gegevens */}
-        <div>
-          <div className="op-bedrijf-naam">
-            {instelling?.bedrijfsnaam || 'Build Your Tools'}
-          </div>
-          <div className="op-bedrijf-details">
-            {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
-            {instelling?.btw_nummer && <div>BTW: {instelling.btw_nummer}</div>}
-            {instelling?.email     && <div>{instelling.email}</div>}
-            {instelling?.telefoon  && <div>{instelling.telefoon}</div>}
+        {/* Links: logo + juridische/commerciële naam */}
+        <div className="op-afzender">
+          <img src="/logo-byt.png" alt="Build Your Tools" className="op-logo" />
+          <div>
+            <div className="op-juridische-naam">
+              {instelling?.juridische_naam || 'Jogoo BV'}
+            </div>
+            <div className="op-commerciele-naam">
+              {instelling?.bedrijfsnaam || 'Build Your Tools'}
+            </div>
+            <div className="op-afzender-adres">
+              {bedrijfAdresRegels.map((r, i) => <div key={i}>{r}</div>)}
+              {instelling?.btw_nummer && <div>{instelling.btw_nummer}</div>}
+            </div>
           </div>
         </div>
 

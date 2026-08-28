@@ -12,12 +12,30 @@ const MEDEWERKERS_OPTIES = ['1-5', '6-15', '16-50', '50+']
 const ONDERNEMINGSVORM_OPTIES = ['Eenmanszaak', 'BV', 'NV', 'VZW', 'Andere']
 const TIJD_VERLOREN_OPTIES = ['Minder dan 1u/dag', '1-2u/dag', '2-4u/dag', 'Meer dan 4u/dag', 'Weet niet']
 const TYPE_APP_OPTIES = [
-  { key: 'web',       label: 'Web app (desktop + laptop)' },
-  { key: 'mobiel',     label: 'Mobiele app (smartphone)' },
-  { key: 'pwa',        label: 'PWA (werkt op alle toestellen)' },
-  { key: 'intern',     label: 'Intern beheersysteem' },
-  { key: 'klanten',    label: 'Klanten-portaal' },
-  { key: 'geen_idee',  label: 'Nog geen idee' },
+  {
+    key: 'web', label: 'Web app (desktop + laptop)',
+    help: 'Werkt via de browser op computer en laptop. Geen installatie nodig.',
+  },
+  {
+    key: 'mobiel', label: 'Mobiele app (smartphone)',
+    help: 'Geïnstalleerd op iPhone of Android. Werkt ook offline.',
+  },
+  {
+    key: 'pwa', label: 'PWA (werkt op alle toestellen)',
+    help: 'Progressive Web App — de beste van twee werelden. Werkt als website én als app op smartphone, tablet en desktop. Geen app store nodig, wel offline beschikbaar.',
+  },
+  {
+    key: 'intern', label: 'Intern beheersysteem',
+    help: 'Een afgeschermde tool voor uw medewerkers. Klanten hebben geen toegang. Ideaal voor planning, tijdsregistratie, voorraadbeheer, rapportage of interne workflows.',
+  },
+  {
+    key: 'klanten', label: 'Klanten-portaal',
+    help: 'Een beveiligde omgeving waar uw klanten kunnen inloggen. Ideaal voor het opvolgen van bestellingen, dossiers of reservaties.',
+  },
+  {
+    key: 'geen_idee', label: 'Nog geen idee',
+    help: 'Geen probleem — we helpen u tijdens het intakegesprek de juiste keuze maken.',
+  },
 ]
 const PRIORITEIT_OPTIES = ['Zo snel mogelijk', 'Binnen 3 maanden', 'Binnen 6 maanden', 'Geen haast']
 const BUDGET_OPTIES = [
@@ -40,7 +58,6 @@ const GEBRUIKERS_TYPE_OPTIES = ['Alleen onze medewerkers', 'Alleen onze klanten'
 const AANTAL_GEBRUIKERS_OPTIES = ['1-5', '6-20', '21-100', '100+']
 const IT_BEKWAAMHEID_OPTIES = ['Beginner', 'Gemiddeld', 'Gevorderd']
 const TALEN_OPTIES = ['Nederlands', 'Frans', 'Engels']
-const HOSTING_OPTIES = ['Netlify (aanbevolen)', 'Vercel', 'Bestaande hosting behouden', 'Geen voorkeur']
 const TECHNISCHE_KENNIS_OPTIES = ['Geen IT', 'Basis IT kennis', 'Eigen IT afdeling', 'Externe IT partner']
 
 const LEEG = {
@@ -54,7 +71,7 @@ const LEEG = {
   features: [],
   apparaten: [], gebruikers_type: '', aantal_gebruikers: '', it_bekwaamheid: '',
   interface_talen: [], integraties_nodig: '',
-  hosting_voorkeur: '', technische_kennis_bedrijf: '', opmerkingen: '',
+  technische_kennis_bedrijf: '', opmerkingen: '',
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -89,11 +106,11 @@ function RadioKaarten({ opties, waarde, onChange, render }) {
             key={key}
             type="button"
             onClick={() => onChange(key)}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-sm text-left transition-colors ${
+            className={`flex items-start gap-2.5 px-4 py-2.5 rounded-xl border text-sm text-left transition-colors ${
               actief ? 'border-[#22C35D] bg-[#22C35D]/5 text-gray-900 font-semibold' : 'border-gray-200 text-gray-600 hover:border-gray-300'
             }`}
           >
-            <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${actief ? 'border-[#22C35D] bg-[#22C35D]' : 'border-gray-300'}`} />
+            <span className={`w-4 h-4 mt-0.5 rounded-full border-2 flex-shrink-0 ${actief ? 'border-[#22C35D] bg-[#22C35D]' : 'border-gray-300'}`} />
             {render ? render(o) : label}
           </button>
         )
@@ -132,6 +149,7 @@ export default function PubliekIntake() {
   const [stap, setStap] = useState(1)
   const [form, setForm] = useState(LEEG)
   const [sectoren, setSectoren] = useState([])
+  const [logoUrl, setLogoUrl] = useState('/logo-byt.png')
   const [bezig, setBezig] = useState(false)
   const [uploadenLogo, setUploadenLogo] = useState(false)
   const [uploadenDoc, setUploadenDoc] = useState(false)
@@ -142,6 +160,8 @@ export default function PubliekIntake() {
     document.title = 'Intakeformulier — Build Your Tools'
     supabase.from('sectoren').select('naam').eq('actief', true).order('naam')
       .then(({ data }) => setSectoren(data ?? []))
+    supabase.from('instellingen').select('logo_url').limit(1).single()
+      .then(({ data }) => { if (data?.logo_url) setLogoUrl(data.logo_url) })
   }, [])
 
   function stel(veld, waarde) { setForm(f => ({ ...f, [veld]: waarde })) }
@@ -229,7 +249,7 @@ export default function PubliekIntake() {
       <div className="max-w-[720px] mx-auto px-4 pt-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src="/logo-byt.png" alt="Build Your Tools" className="h-10 mx-auto mb-4" />
+          <img src={logoUrl} alt="Build Your Tools" className="h-10 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white">Vertel ons over uw project</h1>
           <p className="text-sm text-slate-400 mt-1">Wij nemen binnen 2 werkdagen contact met u op.</p>
         </div>
@@ -373,7 +393,17 @@ export default function PubliekIntake() {
           <Kaart>
             <h2 className="text-lg font-bold text-gray-900">De gewenste app</h2>
             <Veld label="Type app">
-              <RadioKaarten opties={TYPE_APP_OPTIES} waarde={form.type_app} onChange={v => stel('type_app', v)} />
+              <RadioKaarten
+                opties={TYPE_APP_OPTIES}
+                waarde={form.type_app}
+                onChange={v => stel('type_app', v)}
+                render={o => (
+                  <span>
+                    <span className="block">{o.label}</span>
+                    <span className="block font-normal text-xs text-gray-400 mt-0.5">{o.help}</span>
+                  </span>
+                )}
+              />
             </Veld>
             <Veld label="Wat moet de app doen?" verplicht>
               <textarea rows={4} className={inputCls + ' resize-none'} value={form.omschrijving_app} onChange={e => stel('omschrijving_app', e.target.value)} />
@@ -441,9 +471,6 @@ export default function PubliekIntake() {
         {stap === 7 && (
           <Kaart>
             <h2 className="text-lg font-bold text-gray-900">Afronden</h2>
-            <Veld label="Hosting voorkeur">
-              <RadioKaarten opties={HOSTING_OPTIES} waarde={form.hosting_voorkeur} onChange={v => stel('hosting_voorkeur', v)} />
-            </Veld>
             <Veld label="Technische kennis bedrijf">
               <select className={inputCls} value={form.technische_kennis_bedrijf} onChange={e => stel('technische_kennis_bedrijf', e.target.value)}>
                 <option value="">— Kies —</option>

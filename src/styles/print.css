@@ -1323,3 +1323,216 @@
     margin: 0.5mm 0;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HUISSTIJL BRIEFING PRINT STIJLEN — blanco intake-template
+   Geïmporteerd in HuisstijlBriefing.jsx
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Verberg op scherm */
+.hb-print {
+  display: none;
+}
+
+@media print {
+
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  /* Verberg alle UI-chrome */
+  body > *,
+  #root > * {
+    display: none !important;
+  }
+
+  /* Toon enkel het briefingblok */
+  .hb-print {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    color: #1a1a1a;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.5;
+    padding: 15mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .hb-print * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .hb-balk {
+    background: #185FA5 !important;
+    height: 6px;
+    width: calc(100% + 30mm);
+    margin: -15mm -15mm 8mm -15mm;
+  }
+
+  .hb-header {
+    display: flex;
+    align-items: center;
+    gap: 6mm;
+    margin-bottom: 6mm;
+  }
+
+  .hb-logo {
+    max-height: 20mm;
+    max-width: 45mm;
+    object-fit: contain;
+  }
+
+  .hb-print h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    margin: 0 0 1mm;
+    color: #1a1a1a !important;
+  }
+
+  .hb-subtitel {
+    font-size: 10pt;
+    color: #555 !important;
+    margin: 0;
+  }
+
+  .hb-meta {
+    display: flex;
+    gap: 8mm;
+    flex-wrap: wrap;
+    font-size: 9pt;
+    color: #444 !important;
+    padding: 3mm 0;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 7mm;
+  }
+
+  .hb-print h2 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888 !important;
+    margin: 7mm 0 4mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .hb-print h2:first-of-type {
+    margin-top: 0;
+  }
+
+  /* ── Sectie 1: kleuren ── */
+  .hb-kleuren {
+    display: flex;
+    gap: 6mm;
+    margin-bottom: 5mm;
+  }
+
+  .hb-kleurvak {
+    flex: 1;
+  }
+
+  .hb-swatch-leeg {
+    width: 60px;
+    height: 60px;
+    border: 1.5px dashed #aaa;
+    border-radius: 2mm;
+    margin-bottom: 2mm;
+  }
+
+  .hb-kleur-label {
+    font-size: 9pt;
+    font-weight: 700;
+    margin: 0 0 2mm;
+    color: #1a1a1a !important;
+  }
+
+  .hb-veld {
+    font-size: 8.5pt;
+    color: #444 !important;
+    margin: 0 0 1.5mm;
+    white-space: nowrap;
+  }
+
+  .hb-lijn {
+    display: inline-block;
+    min-width: 22mm;
+    border-bottom: 1px dotted #999;
+    margin-left: 1mm;
+  }
+
+  .hb-lijn-lang {
+    min-width: 60mm;
+  }
+
+  .hb-veld-dubbel {
+    display: flex;
+    gap: 6mm;
+    font-size: 8.5pt;
+    color: #444 !important;
+    margin: 0 0 1.5mm;
+  }
+
+  .hb-label-vrij {
+    font-size: 8.5pt;
+    color: #666 !important;
+    margin: 3mm 0 2mm;
+  }
+
+  .hb-schrijfkader {
+    border: 1.5px dashed #ccc;
+    border-radius: 2mm;
+    padding: 3mm 4mm;
+    margin-bottom: 5mm;
+  }
+
+  .hb-schrijfkader-klein {
+    padding: 5mm 4mm;
+  }
+
+  .hb-schrijflijn {
+    border-bottom: 1px dotted #ccc;
+    height: 6mm;
+  }
+
+  .hb-schrijflijn:last-child {
+    border-bottom: none;
+  }
+
+  /* ── Sectie 2: typografie ── */
+  .hb-typo-blok {
+    margin-bottom: 4mm;
+  }
+
+  .hb-font-titel {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #1a1a1a !important;
+    margin: 0 0 1.5mm;
+  }
+
+  /* ── Sectie 3: logo & slogan ── */
+  .hb-logovak {
+    width: 100%;
+    height: 30mm;
+    border: 1.5px dashed #aaa;
+    border-radius: 2mm;
+    margin-bottom: 4mm;
+  }
+
+  /* ── Sectie 5: contactgegevens ── */
+  .hb-contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10mm;
+    row-gap: 1mm;
+  }
+}

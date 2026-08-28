@@ -13,6 +13,7 @@ import KlantDetail from './pages/KlantDetail'
 import Projecten from './pages/Projecten'
 import ProjectDetail from './pages/ProjectDetail'
 import IntakeDetail from './pages/IntakeDetail'
+import HuisstijlBriefing from './pages/HuisstijlBriefing'
 import Studio from './pages/Studio'
 import Offertes from './pages/Offertes'
 import OfferteNieuw from './pages/OfferteNieuw'
@@ -121,6 +122,7 @@ export default function App() {
               <Route path="/boilerplates/:id" element={<BoilerplateDetail />} />
               <Route path="/projecten/:id/adres-configurator" element={<AdresConfigurator />} />
               <Route path="/projecten/:id/intake-detail" element={<IntakeDetail />} />
+              <Route path="/projecten/:id/huisstijl-briefing" element={<HuisstijlBriefing />} />
               <Route path="/vragenlijst/:token" element={<Vragenlijst />} />
               <Route path="/instellingen"  element={<Instellingen />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

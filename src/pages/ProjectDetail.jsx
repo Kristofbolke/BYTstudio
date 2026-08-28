@@ -1361,6 +1361,12 @@ Gebruik geen andere kleuren tenzij functioneel nodig
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition">
           <Printer size={14} /> Exporteer als PDF
         </button>
+
+        <button type="button"
+          onClick={() => window.open(`/projecten/${projectId}/huisstijl-briefing`, '_blank')}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition">
+          📄 Blanco briefing voor klant
+        </button>
       </div>
 
       {/* ── Printblok (alleen zichtbaar bij window.print()) — 1-pager brand sheet ──

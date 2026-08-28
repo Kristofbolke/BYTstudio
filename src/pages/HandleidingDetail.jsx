@@ -287,7 +287,6 @@ export default function HandleidingDetail() {
   const klantNaam   = handleiding?.projecten?.klanten?.bedrijfsnaam || handleiding?.projecten?.klanten?.naam || ''
   const primairKleur = huisstijl?.primaire_kleur ?? '#185FA5'
   const tocItems    = extractH2(opgeslagenInhoud)
-  const nu          = new Date().toLocaleDateString('nl-BE', { day: '2-digit', month: 'long', year: 'numeric' })
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -539,8 +538,14 @@ export default function HandleidingDetail() {
 
           {/* Paginavoettekst */}
           <div className="hp-voettekst">
-            <span>{projectNaam} — {badge.short} handleiding</span>
-            <span>Gegenereerd door Build Your Tools — {nu}</span>
+            <div>
+              BYT — Build Your Tools<br />
+              www.buildyourtools.be
+            </div>
+            <div className="hp-voettekst-rechts">
+              © {new Date().getFullYear()} Jogoo BV<br />
+              Alle rechten voorbehouden
+            </div>
           </div>
         </div>,
         document.body

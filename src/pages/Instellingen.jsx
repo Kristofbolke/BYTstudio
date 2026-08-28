@@ -1157,13 +1157,14 @@ export default function Instellingen() {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
                 >
                   <Trash2 size={14} />
-                  Alle testdata verwijderen
+                  Verwijder alle demodata
                 </button>
               ) : (
                 <div className="space-y-3">
+                  <p className="text-sm font-semibold text-red-800">Demodata verwijderen</p>
                   <p className="text-sm text-red-700">
-                    Dit verwijdert alle klanten, projecten, offertes en handleidingen die zijn aangemaakt voor testdoeleinden.
-                    Typ <strong>VERWIJDER</strong> om te bevestigen.
+                    Ben je zeker dat je alle demodata wil verwijderen? Echte klanten, projecten
+                    en facturen worden NIET verwijderd. Typ <strong>VERWIJDER</strong> om te bevestigen.
                   </p>
                   <input
                     className="w-full px-3 py-2 rounded-lg border border-red-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-300"

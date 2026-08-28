@@ -819,7 +819,6 @@ function PrintLayout({ factuur, items, instellingen }) {
 
   // Bedrijfsgegevens uit instellingen
   const inst = instellingen ?? {}
-  const bedrijfNaam       = inst.bedrijfsnaam    ?? 'Build Your Tools'
   const juridischeNaam    = inst.juridische_naam || 'Jogoo BV'
   const bedrijfAdresRegels = [
     inst.adres,
@@ -1027,7 +1026,16 @@ function PrintLayout({ factuur, items, instellingen }) {
           van {intrest}% per jaar, alsook een forfaitaire schadevergoeding van € {fmt(forfait)}.
           Toepasselijk recht: Belgisch recht. {bedrijfBtw && `BTW: ${bedrijfBtw}.`}
         </span>
-        <span>{bedrijfNaam}{bedrijfEmail ? ` · ${bedrijfEmail}` : ''}</span>
+        <div className="fp-footer-branding">
+          <div>
+            BYT — Build Your Tools<br />
+            www.buildyourtools.be
+          </div>
+          <div className="fp-footer-rechts">
+            © {new Date().getFullYear()} Jogoo BV<br />
+            Alle rechten voorbehouden
+          </div>
+        </div>
       </div>
     </div>,
     document.body

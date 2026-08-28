@@ -348,6 +348,17 @@ function PrintLayoutV2({ offerte, form, instelling, klant, primairKleur }) {
         nalatigheidsintrest van 10% per jaar verschuldigd, alsook een forfaitaire schadevergoeding van €40.
         {instelling?.iban && <span> — IBAN: {instelling.iban}{instelling.bic ? ` — BIC: ${instelling.bic}` : ''}</span>}
       </div>
+
+      <div className="op-footer">
+        <div>
+          BYT — Build Your Tools<br />
+          www.buildyourtools.be
+        </div>
+        <div className="op-footer-rechts">
+          © {new Date().getFullYear()} Jogoo BV<br />
+          Alle rechten voorbehouden
+        </div>
+      </div>
     </div>,
     document.body
   )
@@ -554,6 +565,17 @@ function PrintLayout({ offerte, form, instelling, klant, primairKleur }) {
         {instelling?.iban && (
           <span> — IBAN: {instelling.iban}{instelling.bic ? ` — BIC: ${instelling.bic}` : ''}</span>
         )}
+      </div>
+
+      <div className="op-footer">
+        <div>
+          BYT — Build Your Tools<br />
+          www.buildyourtools.be
+        </div>
+        <div className="op-footer-rechts">
+          © {new Date().getFullYear()} Jogoo BV<br />
+          Alle rechten voorbehouden
+        </div>
       </div>
     </div>,
     document.body

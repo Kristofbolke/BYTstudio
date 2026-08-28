@@ -344,6 +344,29 @@
     line-height: 1.6;
   }
 
+  /* ── Paginavoettekst (herhaalt op elke pagina) ─────────────────── */
+  .op-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #e5e7eb;
+    padding: 2mm 5mm;
+    font-size: 10px;
+    line-height: 1.5;
+    color: #6b7280 !important;
+    background: #fff !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .op-footer-rechts {
+    text-align: right;
+  }
+
   .op-voettekst-titel {
     font-weight: 600;
     font-size: 8pt;
@@ -806,6 +829,24 @@
     color: #999 !important;
     background: #fff !important;
     line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fp-footer-branding {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 2mm;
+    padding-top: 2mm;
+    border-top: 1px solid #e5e7eb;
+    font-size: 10px;
+    line-height: 1.5;
+    color: #6b7280 !important;
+  }
+
+  .fp-footer-rechts {
+    text-align: right;
   }
 
   .fp-voettekst-tekst {
@@ -1127,15 +1168,20 @@
     left: 0;
     right: 0;
     border-top: 1px solid #e5e7eb;
-    padding: 3mm 5mm;
-    font-size: 7.5pt;
-    color: #9ca3af !important;
+    padding: 2mm 5mm;
+    font-size: 10px;
+    line-height: 1.5;
+    color: #6b7280 !important;
     background: #fff !important;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .hp-voettekst-rechts {
+    text-align: right;
   }
 }
 

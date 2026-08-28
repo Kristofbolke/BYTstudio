@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Plus, Search, X, FolderKanban, Calendar, ChevronDown } from 'lucide-react'
+import { Plus, Search, X, FolderKanban, Calendar, ChevronDown, Trash2, CheckCircle } from 'lucide-react'
 
 // ── Constanten ───────────────────────────────────────────────────────────────
 export const STATUSSEN = [
@@ -149,8 +149,40 @@ function ProjectModal({ onSluit, onOpgeslagen, klantIdVooraf }) {
   )
 }
 
+// ── BevestigVerwijder ─────────────────────────────────────────────────────────
+function BevestigVerwijder({ naam, onBevestig, onAnnuleer, loading, fout }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <h3 className="font-semibold text-gray-900 mb-2">Project verwijderen?</h3>
+        <p className="text-sm text-gray-500 mb-6">
+          Ben je zeker dat je project '<strong>{naam}</strong>' wil verwijderen? Dit kan niet ongedaan worden gemaakt.
+        </p>
+        {fout && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-4">{fout}</p>}
+        <div className="flex justify-end gap-3">
+          <button onClick={onAnnuleer} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">Annuleren</button>
+          <button onClick={onBevestig} disabled={loading} className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition disabled:opacity-50">
+            {loading ? 'Verwijderen...' : 'Ja, verwijderen'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function Toast({ tekst }) {
+  if (!tekst) return null
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-lg">
+      <CheckCircle size={15} className="text-green-400" />
+      {tekst}
+    </div>
+  )
+}
+
 // ── Projectkaart ──────────────────────────────────────────────────────────────
-function ProjectKaart({ project, onClick }) {
+function ProjectKaart({ project, onClick, onVerwijder }) {
   const klantNaam = project.klanten?.bedrijfsnaam || project.klanten?.naam || null
   return (
     <div
@@ -161,6 +193,13 @@ function ProjectKaart({ project, onClick }) {
         <p className="text-sm font-semibold text-gray-900 leading-snug group-hover:text-blue-600 transition-colors">
           {project.naam}
         </p>
+        <button
+          onClick={e => { e.stopPropagation(); onVerwijder(project) }}
+          className="p-1 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition flex-shrink-0"
+          title="Project verwijderen"
+        >
+          <Trash2 size={13} />
+        </button>
       </div>
       {klantNaam && (
         <p className="text-xs text-gray-400 mb-2 flex items-center gap-1 truncate">
@@ -183,7 +222,7 @@ function ProjectKaart({ project, onClick }) {
 }
 
 // ── Kanban kolom ─────────────────────────────────────────────────────────────
-function KanbanKolom({ status, projecten, onKaartKlik }) {
+function KanbanKolom({ status, projecten, onKaartKlik, onVerwijder }) {
   const cfg = statusCfg(status.key)
   return (
     <div className="flex flex-col min-w-[240px] w-[240px]">
@@ -206,7 +245,7 @@ function KanbanKolom({ status, projecten, onKaartKlik }) {
           </div>
         ) : (
           projecten.map(p => (
-            <ProjectKaart key={p.id} project={p} onClick={() => onKaartKlik(p.id)} />
+            <ProjectKaart key={p.id} project={p} onClick={() => onKaartKlik(p.id)} onVerwijder={onVerwijder} />
           ))
         )}
       </div>
@@ -224,6 +263,33 @@ export default function Projecten() {
   const [loading, setLoading] = useState(true)
   const [zoekterm, setZoekterm] = useState('')
   const [modalOpen, setModalOpen] = useState(!!klantIdUitUrl)
+  const [verwijderProject, setVerwijderProject] = useState(null)
+  const [verwijderLoading, setVerwijderLoading] = useState(false)
+  const [verwijderFout, setVerwijderFout] = useState('')
+  const [toast, setToast] = useState('')
+
+  function toonToast(tekst) {
+    setToast(tekst)
+    setTimeout(() => setToast(''), 3000)
+  }
+
+  async function handleVerwijder() {
+    setVerwijderLoading(true)
+    setVerwijderFout('')
+    const { error } = await supabase.from('projecten').delete().eq('id', verwijderProject.id)
+    setVerwijderLoading(false)
+    if (error) {
+      setVerwijderFout(
+        error.code === '23503'
+          ? 'Kan project niet verwijderen: er zijn nog facturen aan dit project gekoppeld. Verwijder of ontkoppel deze eerst.'
+          : 'Verwijderen mislukt: ' + error.message
+      )
+      return
+    }
+    setProjecten(prev => prev.filter(p => p.id !== verwijderProject.id))
+    setVerwijderProject(null)
+    toonToast('Project verwijderd')
+  }
 
   async function laadProjecten() {
     setLoading(true)
@@ -289,6 +355,7 @@ export default function Projecten() {
                 status={status}
                 projecten={gefilterd.filter(p => p.status === status.key)}
                 onKaartKlik={id => navigate(`/projecten/${id}`)}
+                onVerwijder={p => { setVerwijderFout(''); setVerwijderProject(p) }}
               />
             ))}
           </div>
@@ -302,6 +369,18 @@ export default function Projecten() {
           onOpgeslagen={() => { setModalOpen(false); if (klantIdUitUrl) setSearchParams({}); laadProjecten() }}
         />
       )}
+
+      {verwijderProject && (
+        <BevestigVerwijder
+          naam={verwijderProject.naam}
+          onBevestig={handleVerwijder}
+          onAnnuleer={() => setVerwijderProject(null)}
+          loading={verwijderLoading}
+          fout={verwijderFout}
+        />
+      )}
+
+      <Toast tekst={toast} />
     </div>
   )
 }

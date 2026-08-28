@@ -88,14 +88,18 @@ export default function FactuurNieuw() {
     async function init() {
       const jaar = new Date().getFullYear()
 
-      // 1. Factuurnummer (COUNT) — eigen try/catch met fallback op -001
+      // 1. Factuurnummer (hoogste bestaand volgnummer + 1) — eigen try/catch met fallback op -001
       try {
-        const { count, error } = await supabase
+        const { data, error } = await supabase
           .from('facturen')
-          .select('id', { count: 'exact', head: true })
-          .gte('factuur_datum', `${jaar}-01-01`)
+          .select('factuur_nummer')
+          .like('factuur_nummer', `FACT-${jaar}-%`)
         if (error) throw error
-        const volg = String((count ?? 0) + 1).padStart(3, '0')
+        const hoogsteVolgnummer = (data ?? []).reduce((hoogste, r) => {
+          const n = parseInt(r.factuur_nummer?.split('-')[2], 10)
+          return Number.isFinite(n) && n > hoogste ? n : hoogste
+        }, 0)
+        const volg = String(hoogsteVolgnummer + 1).padStart(3, '0')
         setForm(f => ({
           ...f,
           factuur_nummer: `FACT-${jaar}-${volg}`,

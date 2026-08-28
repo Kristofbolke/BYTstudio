@@ -26,8 +26,16 @@ function vandaagPlus(dagen) {
 function vandaag() { return new Date().toISOString().split('T')[0] }
 
 async function genereerNummer() {
-  const { count } = await supabase.from('offertes').select('*', { count: 'exact', head: true })
-  return `OFF-${new Date().getFullYear()}-${String((count ?? 0) + 1).padStart(3, '0')}`
+  const jaar = new Date().getFullYear()
+  const { data } = await supabase
+    .from('offertes')
+    .select('offerte_nummer')
+    .like('offerte_nummer', `OFF-${jaar}-%`)
+  const hoogsteVolgnummer = (data ?? []).reduce((hoogste, r) => {
+    const n = parseInt(r.offerte_nummer?.split('-')[2], 10)
+    return Number.isFinite(n) && n > hoogste ? n : hoogste
+  }, 0)
+  return `OFF-${jaar}-${String(hoogsteVolgnummer + 1).padStart(3, '0')}`
 }
 
 const inp = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#22C35D]/20 focus:border-[#22C35D] bg-white'

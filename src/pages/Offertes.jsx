@@ -31,10 +31,17 @@ const LEEG_OFFERTE = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function genereerNummer() {
+async function genereerNummer() {
   const jaar = new Date().getFullYear()
-  const rnd = String(Math.floor(Math.random() * 900) + 100)
-  return `OFF-${jaar}-${rnd}`
+  const { data } = await supabase
+    .from('offertes')
+    .select('offerte_nummer')
+    .like('offerte_nummer', `OFF-${jaar}-%`)
+  const hoogsteVolgnummer = (data ?? []).reduce((hoogste, r) => {
+    const n = parseInt(r.offerte_nummer?.split('-')[2], 10)
+    return Number.isFinite(n) && n > hoogste ? n : hoogste
+  }, 0)
+  return `OFF-${jaar}-${String(hoogsteVolgnummer + 1).padStart(3, '0')}`
 }
 
 function berekenItem(item) {
@@ -84,13 +91,16 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
   const isBewerken = !!offerte?.id
   const [form, setForm] = useState(() => ({
     ...LEEG_OFFERTE,
-    offerte_nummer: genereerNummer(),
     geldig_tot: new Date(Date.now() + 30 * 864e5).toISOString().split('T')[0],
     ...(offerte ?? {}),
     items_json: offerte?.items_json?.length ? offerte.items_json : [{ ...LEEG_ITEM }],
   }))
   const [loading, setLoading] = useState(false)
   const [fout, setFout] = useState('')
+
+  useEffect(() => {
+    if (!isBewerken) genereerNummer().then(nr => setForm(v => ({ ...v, offerte_nummer: nr })))
+  }, [])
 
   function stelIn(veld, waarde) { setForm(v => ({ ...v, [veld]: waarde })) }
 
@@ -118,10 +128,16 @@ function OfferteModal({ offerte, klanten, projecten, onSluit, onOpgeslagen }) {
     setLoading(true)
     setFout('')
     const payload = {
-      ...form,
-      klant_id: form.klant_id || null,
-      project_id: form.project_id || null,
-      items_json: form.items_json,
+      offerte_nummer:   form.offerte_nummer,
+      klant_id:         form.klant_id || null,
+      project_id:       form.project_id || null,
+      status:           form.status,
+      uurtarief:        form.uurtarief,
+      btw_percentage:   form.btw_percentage,
+      marge_percentage: form.marge_percentage,
+      geldig_tot:       form.geldig_tot || null,
+      notities:         form.notities || null,
+      items_json:       form.items_json,
     }
     const { error } = isBewerken
       ? await supabase.from('offertes').update(payload).eq('id', offerte.id)

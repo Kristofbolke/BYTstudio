@@ -28,6 +28,13 @@ main ::-webkit-scrollbar-track { background: #F4F6F5; }
 main ::-webkit-scrollbar-thumb { background: #D5DAD8; border-radius: 4px; }
 main ::-webkit-scrollbar-thumb:hover { background: #929996; }
 
+/* Studio tabbladen — subtiele horizontale scrollbar */
+.studio-tabs-scroll { scrollbar-width: thin; scrollbar-color: #D5DAD8 transparent; }
+.studio-tabs-scroll::-webkit-scrollbar { height: 4px; }
+.studio-tabs-scroll::-webkit-scrollbar-track { background: transparent; }
+.studio-tabs-scroll::-webkit-scrollbar-thumb { background: #D5DAD8; border-radius: 4px; }
+.studio-tabs-scroll::-webkit-scrollbar-thumb:hover { background: #929996; }
+
 /* Kaarten krijgen subtielere schaduw */
 .bg-white, .bg-paper {
   --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);

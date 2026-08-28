@@ -1,5 +1,5 @@
 // Studio.jsx — Hart van BYT Studio: configureer klant-apps per project
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
@@ -50,6 +50,22 @@ export default function Studio() {
   const [huisstijl,   setHuisstijl]   = useState(null)
   const [laden,       setLaden]       = useState(false)
   const [actieveTab,  setActieveTab]  = useState('bouwproces')
+  const tabsRef = useRef(null)
+  const [scrollLinks, setScrollLinks] = useState(false)
+  const [scrollRechts, setScrollRechts] = useState(false)
+
+  function updateScrollIndicators() {
+    const el = tabsRef.current
+    if (!el) return
+    setScrollLinks(el.scrollLeft > 4)
+    setScrollRechts(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
+
+  useEffect(() => {
+    updateScrollIndicators()
+    window.addEventListener('resize', updateScrollIndicators)
+    return () => window.removeEventListener('resize', updateScrollIndicators)
+  }, [projectId])
 
   // ── Laad alle projecten + herstel localStorage ────────────────────────────
   useEffect(() => {
@@ -175,27 +191,40 @@ export default function Studio() {
           <div className="rounded-full overflow-hidden" style={{ height: 4, background: accentKleur }} />
 
           {/* Tabs */}
-          <div className="border-b border-gray-200 overflow-x-auto">
-            <div className="flex gap-1 min-w-max">
-              {TABS.map(t => {
-                const actief = actieveTab === t.key
-                return (
-                  <button
-                    key={t.key}
-                    onClick={() => setActieveTab(t.key)}
-                    style={actief ? { borderColor: accentKleur } : {}}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                      actief
-                        ? 'text-gray-900'
-                        : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200'
-                    }`}
-                  >
-                    {t.icon ? <t.icon size={14} /> : <span>{t.emoji}</span>}
-                    {t.label}
-                  </button>
-                )
-              })}
+          <div className="relative">
+            <div
+              ref={tabsRef}
+              onScroll={updateScrollIndicators}
+              className="border-b border-gray-200 overflow-x-auto studio-tabs-scroll"
+            >
+              <div className="flex gap-1 min-w-max">
+                {TABS.map(t => {
+                  const actief = actieveTab === t.key
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={() => setActieveTab(t.key)}
+                      style={actief ? { borderColor: accentKleur } : {}}
+                      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                        actief
+                          ? 'text-gray-900'
+                          : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200'
+                      }`}
+                    >
+                      {t.icon ? <t.icon size={14} /> : <span>{t.emoji}</span>}
+                      {t.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
+            {/* Subtiele scroll-indicatoren */}
+            {scrollLinks && (
+              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8" style={{ background: 'linear-gradient(to right, white, transparent)' }} />
+            )}
+            {scrollRechts && (
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8" style={{ background: 'linear-gradient(to left, white, transparent)' }} />
+            )}
           </div>
 
           {/* Tab inhoud */}

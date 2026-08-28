@@ -4,16 +4,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { StatusBadge } from './Projecten'
 import AdresInvoer from '../components/AdresInvoer'
+import SectorSelect from '../components/SectorSelect'
 import {
   ChevronLeft, Plus, X, Pencil, Trash2, CheckCircle,
   Building2, Users, MapPin, Euro, FolderKanban, Star, ChevronRight,
 } from 'lucide-react'
-
-// ── Constanten ───────────────────────────────────────────────────────────────
-const SECTOREN = [
-  'Horeca', 'Retail', 'Bouw', 'IT', 'Zorg', 'Onderwijs',
-  'Evenementen', 'Logistiek', 'Vrije beroepen', 'Andere',
-]
 
 const TALEN = [
   { key: 'NL', label: 'Nederlands' },
@@ -179,10 +174,7 @@ function TabBedrijf({ klant, onBijgewerkt }) {
         </div>
         <div>
           <label className={lbl}>Sector</label>
-          <select value={form.sector} onChange={e => stelIn('sector', e.target.value)} className={inp}>
-            <option value="">— Kies sector —</option>
-            {SECTOREN.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SectorSelect waarde={form.sector} onChange={val => stelIn('sector', val)} />
         </div>
         <div>
           <label className={lbl}>Klant sinds</label>

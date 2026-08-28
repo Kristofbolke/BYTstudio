@@ -12,6 +12,7 @@ import {
   Key, Server, Database, Upload, ImagePlus, Printer,
 } from 'lucide-react'
 import IntakeFormWizard from '../components/IntakeFormWizard'
+import SectorSelect from '../components/SectorSelect'
 import '../styles/print.css'
 
 // ── Hulpfuncties ─────────────────────────────────────────────────────────────
@@ -479,11 +480,6 @@ const FONT_GEWICHTEN = [
   { val: '800', label: '800 — Extra bold' },
 ]
 const FONT_GROOTTES = ['13px','14px','15px','16px']
-const SECTOREN = [
-  'Horeca','Retail','Bouw & vastgoed','Zorg & welzijn','IT & software',
-  'Marketing & communicatie','Onderwijs','Logistiek','Financiën',
-  'Evenementen','Overheid','Sport & recreatie','Overige',
-]
 
 // ── Kleurconversies ──────────────────────────────────────────────────────────
 function hexNaarRgb(hex) {
@@ -1110,14 +1106,7 @@ function TabHuisstijl({ projectId, projectNaam }) {
 
           <div>
             <label className={lbl}>Sector</label>
-            <div className="relative">
-              <select value={form.sector} onChange={e => stelIn('sector', e.target.value)}
-                className={inp + ' appearance-none pr-8'}>
-                <option value="">— Kies een sector —</option>
-                {SECTOREN.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-            </div>
+            <SectorSelect waarde={form.sector} onChange={val => stelIn('sector', val)} />
           </div>
 
           <div>

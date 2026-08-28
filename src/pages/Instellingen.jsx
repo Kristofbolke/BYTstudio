@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { useInstellingen } from '../context/InstellingenContext'
-import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2, Package, Plus, X, Edit3, Image, Upload, Copy } from 'lucide-react'
+import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2, Package, Plus, X, Edit3, Image, Upload, Copy, Tag } from 'lucide-react'
 
 const LEGE_INST = {
   eigenaar_naam: '',
@@ -107,6 +107,192 @@ const LEEG_BP_FORM = {
   naam: '', type: 'component', categorie: '', beschrijving: '', versie: '1.0',
   github_url: '', bestand_pad: '', aanpassingsprompt_template: '',
   actief: true, tags_json: [], afhankelijkheden_json: [],
+}
+
+function SectieSectoren() {
+  const [sectoren, setSectoren] = useState([])
+  const [gebruikt, setGebruikt] = useState(new Set())
+  const [laden, setLaden] = useState(true)
+  const [nieuweNaam, setNieuweNaam] = useState('')
+  const [toevoegenBezig, setToevoegenBezig] = useState(false)
+  const [bewerkId, setBewerkId] = useState(null)
+  const [bewerkNaam, setBewerkNaam] = useState('')
+  const [verwijderId, setVerwijderId] = useState(null)
+  const [verwijderBezig, setVerwijderBezig] = useState(false)
+  const [bericht, setBericht] = useState('')
+
+  async function laadSectoren() {
+    setLaden(true)
+    const [{ data: s }, { data: klantenData }, { data: huisstijlenData }] = await Promise.all([
+      supabase.from('sectoren').select('*').order('naam', { ascending: true }),
+      supabase.from('klanten').select('sector'),
+      supabase.from('huisstijlen').select('extra_json'),
+    ])
+    const inGebruik = new Set()
+    ;(klantenData ?? []).forEach(k => { if (k.sector) inGebruik.add(k.sector) })
+    ;(huisstijlenData ?? []).forEach(h => { const naam = h.extra_json?.sector; if (naam) inGebruik.add(naam) })
+    setSectoren(s ?? [])
+    setGebruikt(inGebruik)
+    setLaden(false)
+  }
+
+  useEffect(() => { laadSectoren() }, [])
+
+  function toonBericht(tekst) {
+    setBericht(tekst)
+    setTimeout(() => setBericht(''), 3000)
+  }
+
+  async function toevoegen() {
+    const naam = nieuweNaam.trim()
+    if (!naam) return
+    setToevoegenBezig(true)
+    const { error } = await supabase.from('sectoren').insert({ naam })
+    setToevoegenBezig(false)
+    if (error) { toonBericht('Fout: ' + error.message); return }
+    setNieuweNaam('')
+    laadSectoren()
+    toonBericht('Sector toegevoegd.')
+  }
+
+  async function toggleActief(sector) {
+    const { error } = await supabase.from('sectoren').update({ actief: !sector.actief }).eq('id', sector.id)
+    if (error) { toonBericht('Fout: ' + error.message); return }
+    laadSectoren()
+  }
+
+  function startBewerken(sector) {
+    setBewerkId(sector.id)
+    setBewerkNaam(sector.naam)
+  }
+
+  async function bewaarNaam(sector) {
+    const naam = bewerkNaam.trim()
+    if (!naam || naam === sector.naam) { setBewerkId(null); return }
+    const { error } = await supabase.from('sectoren').update({ naam }).eq('id', sector.id)
+    if (error) { toonBericht('Fout: ' + error.message); return }
+    setBewerkId(null)
+    laadSectoren()
+    toonBericht('Sector bijgewerkt.')
+  }
+
+  async function verwijderSector(sector) {
+    setVerwijderBezig(true)
+    const { error } = await supabase.from('sectoren').delete().eq('id', sector.id)
+    setVerwijderBezig(false)
+    setVerwijderId(null)
+    if (error) { toonBericht('Fout: ' + error.message); return }
+    laadSectoren()
+    toonBericht('Sector verwijderd.')
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-6 py-5 border-b border-gray-50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#22C35D]/10 flex items-center justify-center">
+            <Tag size={16} className="text-[#22C35D]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Sectoren</p>
+            <p className="text-xs text-gray-400 mt-0.5">Beheer de sectorenlijst die overal in de app als dropdown wordt gebruikt.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-5 space-y-4">
+        <div className="flex gap-2">
+          <input
+            value={nieuweNaam}
+            onChange={e => setNieuweNaam(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); toevoegen() } }}
+            placeholder="Naam nieuwe sector"
+            className={inputKlasse}
+          />
+          <button
+            onClick={toevoegen}
+            disabled={!nieuweNaam.trim() || toevoegenBezig}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 whitespace-nowrap transition-opacity"
+            style={{ background: '#22C35D' }}
+          >
+            <Plus size={14} />
+            {toevoegenBezig ? 'Bezig...' : 'Sector toevoegen'}
+          </button>
+        </div>
+
+        {laden ? (
+          <p className="text-sm text-gray-400">Sectoren laden...</p>
+        ) : sectoren.length === 0 ? (
+          <p className="text-sm text-gray-400">Nog geen sectoren.</p>
+        ) : (
+          <div className="divide-y divide-gray-50 border border-gray-100 rounded-xl overflow-hidden">
+            {sectoren.map(s => {
+              const inGebruik = gebruikt.has(s.naam)
+              return (
+                <div key={s.id} className="flex items-center gap-3 px-4 py-2.5">
+                  {bewerkId === s.id ? (
+                    <input
+                      autoFocus
+                      value={bewerkNaam}
+                      onChange={e => setBewerkNaam(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') bewaarNaam(s) }}
+                      className={inputKlasse + ' flex-1'}
+                    />
+                  ) : (
+                    <span className={`flex-1 text-sm ${s.actief ? 'text-gray-800' : 'text-gray-400'}`}>
+                      {s.naam}
+                      {inGebruik && <span className="ml-2 text-[10px] text-gray-400">(in gebruik)</span>}
+                    </span>
+                  )}
+
+                  <button
+                    onClick={() => toggleActief(s)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-colors ${
+                      s.actief ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {s.actief ? 'Actief' : 'Inactief'}
+                  </button>
+
+                  {bewerkId === s.id ? (
+                    <button onClick={() => bewaarNaam(s)} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="Opslaan">
+                      <CheckCircle size={14} />
+                    </button>
+                  ) : (
+                    <button onClick={() => startBewerken(s)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" title="Naam bewerken">
+                      <Edit3 size={14} />
+                    </button>
+                  )}
+
+                  {verwijderId === s.id ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-red-600">Zeker?</span>
+                      <button onClick={() => verwijderSector(s)} disabled={verwijderBezig}
+                        className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-40">
+                        {verwijderBezig ? '...' : 'Ja'}
+                      </button>
+                      <button onClick={() => setVerwijderId(null)} className="text-xs text-gray-400 hover:underline">Nee</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setVerwijderId(s.id)}
+                      disabled={inGebruik}
+                      title={inGebruik ? 'Sector is in gebruik en kan niet verwijderd worden' : 'Verwijderen'}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-gray-400"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {bericht && <Bericht tekst={bericht} />}
+      </div>
+    </div>
+  )
 }
 
 function SectieBoilerplates() {
@@ -1209,6 +1395,9 @@ export default function Instellingen() {
 
         {/* 5. Boilerplate Bibliotheek */}
         <SectieBoilerplates />
+
+        {/* 6. Sectoren */}
+        <SectieSectoren />
 
       </div>
     </PageWrapper>

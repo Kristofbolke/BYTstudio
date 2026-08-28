@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, Users, FolderKanban, Layers,
-  FileText, BookOpen, Settings, LogOut, Receipt, Package,
+  FileText, BookOpen, Settings, LogOut, Receipt, Package, UserPlus,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -12,6 +12,7 @@ const BYT_GREEN = '#22C35D'
 const navItems = [
   { to: '/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
   { to: '/klanten',       label: 'Klanten',       icon: Users },
+  { to: '/leads',         label: 'Leads',         icon: UserPlus },
   { to: '/projecten',     label: 'Projecten',     icon: FolderKanban },
   { to: '/studio',        label: 'Studio',        icon: Layers },
   { to: '/boilerplates',  label: 'Boilerplates',  icon: Package },

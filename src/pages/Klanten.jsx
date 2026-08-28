@@ -1,6 +1,6 @@
 // Klanten.jsx — Klantenoverzicht met snelle aanmaak; volledige fiche op /klanten/:id
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import {
@@ -22,7 +22,7 @@ const lbl = 'block text-xs font-semibold text-gray-500 mb-1'
 
 // ── KlantModal — snelle aanmaak/bewerking van basisgegevens ───────────────────
 function KlantModal({ klant, onSluit, onOpgeslagen }) {
-  const [formulier, setFormulier] = useState(klant?.id ? klant : LEEG_FORMULIER)
+  const [formulier, setFormulier] = useState(klant ? { ...LEEG_FORMULIER, ...klant } : LEEG_FORMULIER)
   const [loading, setLoading] = useState(false)
   const [fout, setFout] = useState('')
   const isBewerken = !!klant?.id
@@ -116,11 +116,21 @@ function BevestigVerwijder({ naam, onBevestig, onAnnuleer, loading }) {
 export default function Klanten() {
   useEffect(() => { document.title = 'Klanten — BYT Studio' }, [])
   const navigate = useNavigate()
+  const location = useLocation()
   const [klanten, setKlanten] = useState([])
   const [loading, setLoading] = useState(true)
   const [zoekterm, setZoekterm] = useState('')
   const [modalKlant, setModalKlant] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
+
+  // Vooringevulde nieuwe-klant-modal openen, bv. vanuit een omgezette lead
+  useEffect(() => {
+    if (location.state?.vooringevuld) {
+      setModalKlant(location.state.vooringevuld)
+      setModalOpen(true)
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.state])
   const [verwijderKlant, setVerwijderKlant] = useState(null)
   const [verwijderLoading, setVerwijderLoading] = useState(false)
 

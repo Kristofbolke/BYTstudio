@@ -30,6 +30,9 @@ import BoilerplateDetail from './pages/BoilerplateDetail'
 import AdresConfigurator from './pages/AdresConfigurator'
 import Vragenlijst from './pages/Vragenlijst'
 import IntakePubliek from './pages/IntakePubliek'
+import PubliekIntake from './pages/PubliekIntake'
+import Leads from './pages/Leads'
+import LeadDetail from './pages/LeadDetail'
 import WachtwoordInstellen from './pages/WachtwoordInstellen'
 
 export default function App() {
@@ -37,7 +40,7 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false)
 
   // Publieke routes renderen altijd zonder app-shell, ongeacht auth-status
-  const isPubliekeIntake = window.location.pathname.startsWith('/intake/')
+  const isPubliekeIntake = window.location.pathname.startsWith('/intake/') || window.location.pathname === '/intake'
   // Uitnodigings-/herstel-link: altijd volledig scherm tonen, ook al pikt supabase-js
   // automatisch een sessie op uit de link (anders zou de gebruiker naar het dashboard
   // springen zonder ooit een wachtwoord te kiezen).
@@ -60,6 +63,7 @@ export default function App() {
   if (isPubliekeIntake) {
     return (
       <Routes>
+        <Route path="/intake" element={<PubliekIntake />} />
         <Route path="/intake/:token" element={<IntakePubliek />} />
       </Routes>
     )
@@ -106,6 +110,8 @@ export default function App() {
               <Route path="/dashboard"     element={<Dashboard />} />
               <Route path="/klanten"       element={<Klanten />} />
               <Route path="/klanten/:id"   element={<KlantDetail />} />
+              <Route path="/leads"         element={<Leads />} />
+              <Route path="/leads/:id"     element={<LeadDetail />} />
               <Route path="/projecten"     element={<Projecten />} />
               <Route path="/projecten/:id" element={<ProjectDetail />} />
               <Route path="/studio"        element={<Studio />} />

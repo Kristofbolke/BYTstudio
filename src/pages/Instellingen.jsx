@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PageWrapper from '../components/PageWrapper'
 import { useInstellingen } from '../context/InstellingenContext'
+import { genereerIntakeFormulierHtml } from '../lib/genereerIntakeHtml'
 import { Building2, CreditCard, Megaphone, Settings, CheckCircle, AlertCircle, Download, LogOut, Trash2, Package, Plus, X, Edit3, Image, Upload, Copy, Tag } from 'lucide-react'
 
 const LEGE_INST = {
@@ -791,6 +792,14 @@ export default function Instellingen() {
     if (!error) setResetVerzonden(true)
   }
 
+  function downloadIntakeFormulier() {
+    const blob = new Blob([genereerIntakeFormulierHtml()], { type: 'text/html;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'byt-intake-formulier.html'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function downloadCsv(bestandsnaam, rijen, kolommen) {
     const header = kolommen.join(';')
     const body = rijen.map(r => kolommen.map(k => `"${(r[k] ?? '').toString().replace(/"/g, '""')}"`).join(';')).join('\n')
@@ -1325,10 +1334,17 @@ export default function Instellingen() {
                 <Download size={14} />
                 {exporterenProjecten ? 'Exporteren...' : 'Exporteer alle projecten als CSV'}
               </button>
+              <button
+                onClick={downloadIntakeFormulier}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-[#22C35D] hover:text-[#17A84B] transition-colors"
+              >
+                ⬇️ Download intake webformulier
+              </button>
             </div>
             <p className="text-xs text-gray-400 mt-3 leading-relaxed">
               Supabase maakt automatisch dagelijkse backups van alle data (Pro plan).<br />
-              Op het Free plan: exporteer regelmatig via de knoppen hierboven.
+              Op het Free plan: exporteer regelmatig via de knoppen hierboven.<br />
+              Het intake-webformulier is een volledig zelfstandig HTML-bestand (geen server nodig) — te plaatsen op de BYT-website.
             </p>
           </div>
 
